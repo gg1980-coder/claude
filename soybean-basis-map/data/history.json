@@ -1,0 +1,1258 @@
+{
+ "dates": [
+  "2026-09-02",
+  "2026-09-10",
+  "2026-09-17",
+  "2026-09-28"
+ ],
+ "plants": [
+  {
+   "name": "AGP Hastings",
+   "co": "AGP",
+   "town": "Hastings",
+   "st": "NE",
+   "lat": 40.586,
+   "lon": -98.388,
+   "basis": [
+    -25,
+    -25,
+    40,
+    65
+   ],
+   "chg": [
+    -25,
+    0,
+    40,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Lincoln",
+   "co": "ADM",
+   "town": "Lincoln",
+   "st": "NE",
+   "lat": 40.813,
+   "lon": -96.702,
+   "basis": [
+    0,
+    0,
+    50,
+    100
+   ],
+   "chg": [
+    0,
+    0,
+    50,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bunge Council Bluffs",
+   "co": "Bunge",
+   "town": "Council Bluffs",
+   "st": "IA",
+   "lat": 41.262,
+   "lon": -95.861,
+   "basis": [
+    20,
+    40,
+    75,
+    100
+   ],
+   "chg": [
+    -20,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bunge Emporia",
+   "co": "Bunge",
+   "town": "Emporia",
+   "st": "KS",
+   "lat": 38.404,
+   "lon": -96.181,
+   "basis": [
+    40,
+    15,
+    0,
+    40
+   ],
+   "chg": [
+    -15,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Norfolk Crush",
+   "co": "Other",
+   "town": "Norfolk",
+   "st": "NE",
+   "lat": 42.028,
+   "lon": -97.417,
+   "basis": [
+    25,
+    25,
+    50,
+    100
+   ],
+   "chg": [
+    -35,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Platinum Alta",
+   "co": "Other",
+   "town": "Alta",
+   "st": "IA",
+   "lat": 42.673,
+   "lon": -95.29,
+   "basis": [
+    25,
+    25,
+    0,
+    75
+   ],
+   "chg": [
+    0,
+    0,
+    -25,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP David City",
+   "co": "AGP",
+   "town": "David City",
+   "st": "NE",
+   "lat": 41.253,
+   "lon": -97.13,
+   "basis": [
+    25,
+    -20,
+    40,
+    85
+   ],
+   "chg": [
+    0,
+    0,
+    40,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Sioux City",
+   "co": "Cargill",
+   "town": "Sioux City",
+   "st": "IA",
+   "lat": 42.47,
+   "lon": -96.38,
+   "basis": [
+    70,
+    25,
+    75,
+    100
+   ],
+   "chg": [
+    -15,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Iowa Falls",
+   "co": "Cargill",
+   "town": "Iowa Falls",
+   "st": "IA",
+   "lat": 42.522,
+   "lon": -93.251,
+   "basis": [
+    25,
+    25,
+    -30,
+    125
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    15
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Cedar Rapids",
+   "co": "Cargill",
+   "town": "Cedar Rapids",
+   "st": "IA",
+   "lat": 41.978,
+   "lon": -91.668,
+   "basis": [
+    60,
+    -30,
+    -30,
+    70
+   ],
+   "chg": [
+    0,
+    -30,
+    0,
+    -20
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Shell Rock Soy",
+   "co": "Other",
+   "town": "Shell Rock",
+   "st": "IA",
+   "lat": 42.712,
+   "lon": -92.583,
+   "basis": [
+    5,
+    -10,
+    -15,
+    50
+   ],
+   "chg": [
+    -10,
+    0,
+    0,
+    -25
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Des Moines",
+   "co": "ADM",
+   "town": "Des Moines",
+   "st": "IA",
+   "lat": 41.586,
+   "lon": -93.625,
+   "basis": [
+    25,
+    10,
+    40,
+    100
+   ],
+   "chg": [
+    -35,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Sergeant Bluff",
+   "co": "AGP",
+   "town": "Sergeant Bluff",
+   "st": "IA",
+   "lat": 42.404,
+   "lon": -96.358,
+   "basis": [
+    25,
+    20,
+    35,
+    80
+   ],
+   "chg": [
+    -10,
+    -5,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Sheldon",
+   "co": "AGP",
+   "town": "Sheldon",
+   "st": "IA",
+   "lat": 43.181,
+   "lon": -95.856,
+   "basis": [
+    60,
+    60,
+    60,
+    80
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Emmetsburg",
+   "co": "AGP",
+   "town": "Emmetsburg",
+   "st": "IA",
+   "lat": 43.113,
+   "lon": -94.683,
+   "basis": [
+    10,
+    10,
+    25,
+    50
+   ],
+   "chg": [
+    -10,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Eagle Grove",
+   "co": "AGP",
+   "town": "Eagle Grove",
+   "st": "IA",
+   "lat": 42.664,
+   "lon": -93.905,
+   "basis": [
+    10,
+    10,
+    25,
+    80
+   ],
+   "chg": [
+    -10,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Mason City",
+   "co": "AGP",
+   "town": "Mason City",
+   "st": "IA",
+   "lat": 43.154,
+   "lon": -93.201,
+   "basis": [
+    -5,
+    -15,
+    -15,
+    70
+   ],
+   "chg": [
+    -25,
+    0,
+    0,
+    20
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Manning",
+   "co": "AGP",
+   "town": "Manning",
+   "st": "IA",
+   "lat": 41.909,
+   "lon": -95.065,
+   "basis": [
+    65,
+    65,
+    65,
+    25
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Green Bison Spiritwood",
+   "co": "Other",
+   "town": "Spiritwood",
+   "st": "ND",
+   "lat": 46.927,
+   "lon": -98.5,
+   "basis": [
+    -15,
+    -20,
+    -45,
+    -15
+   ],
+   "chg": [
+    -15,
+    -5,
+    0,
+    5
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "NDSP Casselton",
+   "co": "Other",
+   "town": "Casselton",
+   "st": "ND",
+   "lat": 46.901,
+   "lon": -97.211,
+   "basis": [
+    5,
+    -30,
+    -20,
+    -10
+   ],
+   "chg": [
+    5,
+    -5,
+    0,
+    5
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Aberdeen",
+   "co": "AGP",
+   "town": "Aberdeen",
+   "st": "SD",
+   "lat": 45.465,
+   "lon": -98.486,
+   "basis": [
+    -40,
+    -40,
+    -40,
+    30
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP Dawson",
+   "co": "AGP",
+   "town": "Dawson",
+   "st": "MN",
+   "lat": 44.933,
+   "lon": -96.054,
+   "basis": [
+    -65,
+    -60,
+    -60,
+    0
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    35
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "SDSP Volga",
+   "co": "Other",
+   "town": "Volga",
+   "st": "SD",
+   "lat": 44.324,
+   "lon": -96.926,
+   "basis": [
+    -35,
+    -35,
+    -55,
+    0
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "SDSP Mitchell",
+   "co": "Other",
+   "town": "Mitchell",
+   "st": "SD",
+   "lat": 43.709,
+   "lon": -98.03,
+   "basis": [
+    -25,
+    -25,
+    -35,
+    15
+   ],
+   "chg": [
+    10,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "MnSP Brewster",
+   "co": "Other",
+   "town": "Brewster",
+   "st": "MN",
+   "lat": 43.699,
+   "lon": -95.469,
+   "basis": [
+    35,
+    45,
+    0,
+    30
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -40
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Mankato",
+   "co": "ADM",
+   "town": "Mankato",
+   "st": "MN",
+   "lat": 44.164,
+   "lon": -93.999,
+   "basis": [
+    -5,
+    -5,
+    -5,
+    50
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "CHS Mankato",
+   "co": "CHS",
+   "town": "Mankato",
+   "st": "MN",
+   "lat": 44.14,
+   "lon": -94.04,
+   "basis": [
+    0,
+    5,
+    -20,
+    30
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -20
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "CHS Fairmont",
+   "co": "CHS",
+   "town": "Fairmont",
+   "st": "MN",
+   "lat": 43.652,
+   "lon": -94.461,
+   "basis": [
+    5,
+    20,
+    10,
+    70
+   ],
+   "chg": [
+    5,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "AGP St. Joseph",
+   "co": "AGP",
+   "town": "St. Joseph",
+   "st": "MO",
+   "lat": 39.768,
+   "lon": -94.847,
+   "basis": [
+    40,
+    25,
+    25,
+    80
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Kansas City",
+   "co": "Cargill",
+   "town": "Kansas City",
+   "st": "MO",
+   "lat": 39.12,
+   "lon": -94.6,
+   "basis": [
+    30,
+    45,
+    80,
+    80
+   ],
+   "chg": [
+    -55,
+    15,
+    0,
+    -20
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Wichita",
+   "co": "Cargill",
+   "town": "Wichita",
+   "st": "KS",
+   "lat": 37.687,
+   "lon": -97.336,
+   "basis": [
+    -20,
+    -20,
+    -5,
+    40
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Scoular Goodland",
+   "co": "Other",
+   "town": "Goodland",
+   "st": "KS",
+   "lat": 39.351,
+   "lon": -101.71,
+   "basis": [
+    null,
+    -35,
+    -35,
+    -35
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bartlett Cherryvale",
+   "co": "Other",
+   "town": "Cherryvale",
+   "st": "KS",
+   "lat": 37.27,
+   "lon": -95.552,
+   "basis": [
+    10,
+    10,
+    10,
+    20
+   ],
+   "chg": [
+    -30,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Mexico",
+   "co": "ADM",
+   "town": "Mexico",
+   "st": "MO",
+   "lat": 39.17,
+   "lon": -91.883,
+   "basis": [
+    -30,
+    -30,
+    -37,
+    -20
+   ],
+   "chg": [
+    -10,
+    0,
+    -7,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Deerfield",
+   "co": "ADM",
+   "town": "Deerfield",
+   "st": "MO",
+   "lat": 37.834,
+   "lon": -94.505,
+   "basis": [
+    25,
+    15,
+    15,
+    0
+   ],
+   "chg": [
+    35,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Decatur, IL",
+   "co": "ADM",
+   "town": "Decatur",
+   "st": "IL",
+   "lat": 39.855,
+   "lon": -88.919,
+   "basis": [
+    40,
+    -10,
+    -20,
+    -20
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -40
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Bloomington",
+   "co": "Cargill",
+   "town": "Bloomington",
+   "st": "IL",
+   "lat": 40.484,
+   "lon": -88.994,
+   "basis": [
+    30,
+    30,
+    30,
+    20
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Quincy",
+   "co": "ADM",
+   "town": "Quincy",
+   "st": "IL",
+   "lat": 39.936,
+   "lon": -91.41,
+   "basis": [
+    10,
+    -8,
+    -15,
+    50
+   ],
+   "chg": [
+    -5,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Incobrasa Gilman",
+   "co": "Other",
+   "town": "Gilman",
+   "st": "IL",
+   "lat": 40.767,
+   "lon": -87.992,
+   "basis": [
+    40,
+    20,
+    20,
+    -20
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -70
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Lafayette",
+   "co": "Cargill",
+   "town": "Lafayette",
+   "st": "IN",
+   "lat": 40.417,
+   "lon": -86.875,
+   "basis": [
+    20,
+    10,
+    10,
+    -20
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -45
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bunge Decatur, IN",
+   "co": "Bunge",
+   "town": "Decatur",
+   "st": "IN",
+   "lat": 40.831,
+   "lon": -84.937,
+   "basis": [
+    15,
+    5,
+    5,
+    30
+   ],
+   "chg": [
+    5,
+    0,
+    0,
+    -20
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bunge Morristown",
+   "co": "Bunge",
+   "town": "Morristown",
+   "st": "IN",
+   "lat": 39.673,
+   "lon": -85.698,
+   "basis": [
+    70,
+    10,
+    30,
+    -20
+   ],
+   "chg": [
+    0,
+    -25,
+    0,
+    -60
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bunge Bellevue",
+   "co": "Bunge",
+   "town": "Bellevue",
+   "st": "OH",
+   "lat": 41.274,
+   "lon": -82.841,
+   "basis": [
+    20,
+    25,
+    15,
+    10
+   ],
+   "chg": [
+    5,
+    20,
+    0,
+    -55
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Bunge Cairo",
+   "co": "Bunge",
+   "town": "Cairo",
+   "st": "IL",
+   "lat": 37.005,
+   "lon": -89.176,
+   "basis": [
+    0,
+    -15,
+    -30,
+    -3
+   ],
+   "chg": [
+    0,
+    0,
+    -5,
+    11
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "ADM Fostoria",
+   "co": "ADM",
+   "town": "Fostoria",
+   "st": "OH",
+   "lat": 41.157,
+   "lon": -83.417,
+   "basis": [
+    -5,
+    20,
+    30,
+    10
+   ],
+   "chg": [
+    0,
+    15,
+    0,
+    -55
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "LDC Claypool",
+   "co": "Other",
+   "town": "Claypool",
+   "st": "IN",
+   "lat": 41.13,
+   "lon": -85.882,
+   "basis": [
+    50,
+    50,
+    30,
+    -20
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -70
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Cargill Sidney",
+   "co": "Cargill",
+   "town": "Sidney",
+   "st": "OH",
+   "lat": 40.284,
+   "lon": -84.156,
+   "basis": [
+    25,
+    25,
+    50,
+    15
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    -35
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  },
+  {
+   "name": "Zeeland Ithaca",
+   "co": "Other",
+   "town": "Ithaca",
+   "st": "MI",
+   "lat": 43.292,
+   "lon": -84.607,
+   "basis": [
+    0,
+    0,
+    0,
+    -10
+   ],
+   "chg": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "fut": [
+    "SX",
+    "SX",
+    "SX",
+    "SX"
+   ]
+  }
+ ]
+}
