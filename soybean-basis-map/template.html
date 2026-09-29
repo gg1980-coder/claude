@@ -1,0 +1,418 @@
+<title>Soybean Processor Basis Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: header strip with day's summary, then map (left) + ranked bid board (right); stacks on phones. */
+:root {
+  --bg: #f1f3ec;
+  --panel: #fbfcf8;
+  --fg: #1c231e;
+  --muted: #5f6a61;
+  --line: #d6dbd0;
+  --land: #e2e6da;
+  --land-hi: #d5dccb;
+  --border: #fbfcf8;
+  --pos: #2d7a4c;
+  --pos-soft: #a9d2b4;
+  --zero: #ece7c9;
+  --neg: #b4532a;
+  --neg-soft: #eab596;
+  --accent: #2d7a4c;
+  --dot-ring: #1c231e;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111512; --panel: #181e1a; --fg: #e5eae3; --muted: #97a39a; --line: #2b342e;
+    --land: #202824; --land-hi: #29332d; --border: #111512;
+    --pos: #5cc186; --pos-soft: #2f6b47; --zero: #6f6a4c; --neg: #e8845a; --neg-soft: #8a4a30;
+    --accent: #5cc186; --dot-ring: #e5eae3; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111512; --panel: #181e1a; --fg: #e5eae3; --muted: #97a39a; --line: #2b342e;
+  --land: #202824; --land-hi: #29332d; --border: #111512;
+  --pos: #5cc186; --pos-soft: #2f6b47; --zero: #6f6a4c; --neg: #e8845a; --neg-soft: #8a4a30;
+  --accent: #5cc186; --dot-ring: #e5eae3; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 40px; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: end; justify-content: space-between; }
+.eyebrow { font-family: var(--f-data); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; margin: 4px 0 0; text-wrap: balance; letter-spacing: -.01em; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+.stat { display: grid; gap: 0; }
+.stat b { font-family: var(--f-data); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat small { font-size: 12px; color: var(--muted); font-family: var(--f-body); font-weight: 400; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--panel); }
+.seg button, .chip, .ghost {
+  font: 500 13px var(--f-body); color: var(--fg); background: transparent; border: 0; border-radius: 999px;
+  padding: 5px 12px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--panel); }
+.chip[aria-pressed="true"] { border-color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
+.chip .n { font-family: var(--f-data); font-size: 11px; color: var(--muted); margin-left: 4px; }
+.ghost { border: 1px solid var(--line); background: var(--panel); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.mapbox { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+#map { display: block; width: 100%; height: auto; aspect-ratio: 975 / 610; max-width: 100%; touch-action: none; cursor: grab; }
+#map:active { cursor: grabbing; }
+.state { fill: var(--land); stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.state.has { fill: var(--land-hi); }
+.state-lbl { font: 600 10px var(--f-data); fill: var(--muted); opacity: .7; pointer-events: none; letter-spacing: .06em; }
+.dot circle { stroke: var(--dot-ring); stroke-opacity: .55; vector-effect: non-scaling-stroke; cursor: pointer; }
+.dot text { font-family: var(--f-data); font-weight: 700; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+.dot.dim { opacity: .12; }
+.dot.hot circle { stroke-opacity: 1; stroke-width: 2.5; }
+.legend { position: absolute; left: 12px; bottom: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; font-size: 11px; color: var(--muted); max-width: calc(100% - 24px); }
+.legend .bar { height: 10px; width: 220px; max-width: 100%; border-radius: 3px; }
+.legend .ticks { display: flex; justify-content: space-between; font-family: var(--f-data); font-variant-numeric: tabular-nums; width: 220px; max-width: 100%; }
+.zoomctl { position: absolute; right: 12px; top: 12px; display: flex; gap: 6px; }
+@media (max-width: 600px) { .legend { position: static; border: 0; border-top: 1px solid var(--line); border-radius: 0; max-width: none; } }
+.tip { position: absolute; pointer-events: none; background: var(--fg); color: var(--bg); padding: 8px 10px; border-radius: 6px; font-size: 13px; line-height: 1.35; min-width: 170px; transform: translate(-50%, calc(-100% - 14px)); }
+.tip .t { font-weight: 600; }
+.tip .r { display: flex; justify-content: space-between; gap: 14px; font-family: var(--f-data); font-size: 12px; }
+.board { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.board h2 { font: 600 14px var(--f-body); margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.board h2 span { font-weight: 400; color: var(--muted); font-size: 12px; }
+.scroll { max-height: 640px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 500; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 6px 10px; border-bottom: 1px solid var(--line); cursor: pointer; user-select: none; white-space: nowrap; }
+th.num, td.num { text-align: right; }
+td { padding: 6px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+td.num { font-family: var(--f-data); }
+tr { cursor: pointer; }
+tr:hover td, tr.hot td { background: var(--land); }
+tr.dim { display: none; }
+.st { color: var(--muted); font-size: 11px; font-family: var(--f-data); margin-left: 4px; }
+.sw { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.up { color: var(--pos); } .down { color: var(--neg); } .flat { color: var(--muted); }
+footer { color: var(--muted); font-size: 12px; max-width: 90ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Posted processor bids · 9/28/26 · vs. SX (Nov '26 CBOT)</div>
+      <h1>Soybean Crush Plant Basis</h1>
+      <p class="sub">Cash bids for physical soybeans at 48 crushing plants, shown as basis in cents per bushel over or under November futures. Hover or tap a plant for details; drag or scroll to zoom.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Color plants by">
+      <button id="mode-basis" aria-pressed="true">Basis</button>
+      <button id="mode-chg" aria-pressed="false">Change today</button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Filter by processor"></div>
+  </div>
+
+  <div class="main">
+    <div class="mapbox" id="mapbox">
+      <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of US soybean crush plants colored by posted basis"></svg>
+      <div class="zoomctl">
+        <button class="ghost" id="z-belt">Soy belt</button>
+        <button class="ghost" id="z-us">Full USA</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+
+    <section class="board">
+      <h2>Bid board <span id="count"></span></h2>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th data-k="name">Plant</th>
+            <th data-k="basis" class="num">Basis</th>
+            <th data-k="chg" class="num">Chg</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>Basis = cash bid minus November 2026 soybean futures (SX), in cents/bu. "Change" is the move since the previous posting; plants marked Steady are 0. Plant locations are placed at the processing town and are approximate. Source: Soybean Processor Basis sheet dated 9/28/26.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const TOPO = __TOPO__;
+
+// name, company, town, state, lat, lon, basis (c/bu vs SX), change (c)
+const RAW = [
+  ["AGP Hastings","AGP","Hastings","NE",40.586,-98.388,65,0],
+  ["ADM Lincoln","ADM","Lincoln","NE",40.813,-96.702,100,0],
+  ["Bunge Council Bluffs","Bunge","Council Bluffs","IA",41.262,-95.861,100,0],
+  ["Bunge Emporia","Bunge","Emporia","KS",38.404,-96.181,40,0],
+  ["Norfolk Crush","Other","Norfolk","NE",42.028,-97.417,100,0],
+  ["Platinum Alta","Other","Alta","IA",42.673,-95.290,75,0],
+  ["AGP David City","AGP","David City","NE",41.253,-97.130,85,0],
+  ["Cargill Sioux City","Cargill","Sioux City","IA",42.470,-96.380,100,0],
+  ["Cargill Iowa Falls","Cargill","Iowa Falls","IA",42.522,-93.251,125,15],
+  ["Cargill Cedar Rapids","Cargill","Cedar Rapids","IA",41.978,-91.668,70,-20],
+  ["Shell Rock","Other","Shell Rock","IA",42.712,-92.583,50,-25],
+  ["ADM Des Moines","ADM","Des Moines","IA",41.586,-93.625,100,0],
+  ["AGP Sergeant Bluff","AGP","Sergeant Bluff","IA",42.404,-96.358,80,0],
+  ["AGP Sheldon","AGP","Sheldon","IA",43.181,-95.856,80,0],
+  ["AGP Emmetsburg","AGP","Emmetsburg","IA",43.113,-94.683,50,0],
+  ["AGP Eagle Grove","AGP","Eagle Grove","IA",42.664,-93.905,80,0],
+  ["AGP Mason City","AGP","Mason City","IA",43.154,-93.201,70,20],
+  ["AGP Manning","AGP","Manning","IA",41.909,-95.065,25,0],
+  ["Green Bison Spiritwood","Other","Spiritwood","ND",46.927,-98.500,-15,5],
+  ["NDSP Casselton","Other","Casselton","ND",46.901,-97.211,-10,5],
+  ["AGP Aberdeen","AGP","Aberdeen","SD",45.465,-98.486,30,0],
+  ["AGP Dawson","AGP","Dawson","MN",44.933,-96.054,0,35],
+  ["SDSP Volga","Other","Volga","SD",44.324,-96.926,0,0],
+  ["SDSP Mitchell","Other","Mitchell","SD",43.709,-98.030,15,0],
+  ["MnSP Brewster","Other","Brewster","MN",43.699,-95.469,30,-40],
+  ["ADM Mankato","ADM","Mankato","MN",44.164,-93.999,50,0],
+  ["CHS Mankato","CHS","Mankato","MN",44.140,-94.040,30,-20],
+  ["CHS Fairmont","CHS","Fairmont","MN",43.652,-94.461,70,0],
+  ["AGP St. Joseph","AGP","St. Joseph","MO",39.768,-94.847,80,0],
+  ["Cargill Kansas City","Cargill","Kansas City","MO",39.120,-94.600,80,-20],
+  ["Cargill Wichita","Cargill","Wichita","KS",37.687,-97.336,40,0],
+  ["Scoular Goodland","Other","Goodland","KS",39.351,-101.710,-35,0],
+  ["Bartlett Cherryvale","Other","Cherryvale","KS",37.270,-95.552,20,0],
+  ["ADM Mexico","ADM","Mexico","MO",39.170,-91.883,-20,0],
+  ["ADM Deerfield","ADM","Deerfield","MO",37.834,-94.505,0,0],
+  ["ADM Decatur, IL","ADM","Decatur","IL",39.855,-88.919,-20,-40],
+  ["Cargill Bloomington","Cargill","Bloomington","IL",40.484,-88.994,20,0],
+  ["ADM Quincy","ADM","Quincy","IL",39.936,-91.410,50,0],
+  ["Incobrasa Gilman","Other","Gilman","IL",40.767,-87.992,-20,-70],
+  ["Cargill Lafayette","Cargill","Lafayette","IN",40.417,-86.875,-20,-45],
+  ["Bunge Decatur, IN","Bunge","Decatur","IN",40.831,-84.937,30,-20],
+  ["Bunge Morristown","Bunge","Morristown","IN",39.673,-85.698,-20,-60],
+  ["Bunge Bellevue","Bunge","Bellevue","OH",41.274,-82.841,10,-55],
+  ["Bunge Cairo","Bunge","Cairo","IL",37.005,-89.176,-3,11],
+  ["ADM Fostoria","ADM","Fostoria","OH",41.157,-83.417,10,-55],
+  ["LDC Claypool","Other","Claypool","IN",41.130,-85.882,-20,-70],
+  ["Cargill Sidney","Cargill","Sidney","OH",40.284,-84.156,15,-35],
+  ["Zeeland Ithaca","Other","Ithaca","MI",43.292,-84.607,-10,0]
+];
+
+const proj = d3.geoAlbersUsa().scale(1300).translate([487.5, 305]);
+const plants = RAW.map(([name, co, town, st, lat, lon, basis, chg], i) => {
+  const [x, y] = proj([lon, lat]);
+  return { id: i, name, co, town, st, basis, chg, x, y };
+});
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v);
+const fmtChg = v => v === 0 ? "Steady" : fmt(v);
+
+let mode = "basis";
+let company = "All";
+let sortKey = "basis", sortDir = -1;
+
+function scales() {
+  const neg = css("--neg"), negS = css("--neg-soft"), zero = css("--zero"), posS = css("--pos-soft"), pos = css("--pos");
+  return {
+    basis: d3.scaleLinear().domain([-40, -15, 0, 60, 125]).range([neg, negS, zero, posS, pos]).clamp(true),
+    chg: d3.scaleLinear().domain([-70, -25, 0, 20, 40]).range([neg, negS, zero, posS, pos]).clamp(true)
+  };
+}
+function textOn(c) { return d3.hsl(c).l > 0.55 ? "#1c231e" : "#f4f6f1"; }
+
+// ---------- stats
+(function stats() {
+  const b = plants.map(p => p.basis);
+  const avg = d3.mean(b);
+  const hi = plants.reduce((a, p) => p.basis > a.basis ? p : a);
+  const lo = plants.reduce((a, p) => p.basis < a.basis ? p : a);
+  const moved = plants.filter(p => p.chg !== 0);
+  const avgChg = d3.mean(plants, p => p.chg);
+  document.getElementById("stats").innerHTML = [
+    [fmt(Math.round(avg)), "Avg basis, c/bu"],
+    [fmt(hi.basis) + ` <small>${hi.town}, ${hi.st}</small>`, "Strongest bid"],
+    [fmt(lo.basis) + ` <small>${lo.town}, ${lo.st}</small>`, "Weakest bid"],
+    [`${moved.length}<small> / ${plants.length}</small>`, `Plants changed · avg ${fmt(Math.round(avgChg))}c`]
+  ].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+})();
+
+// ---------- map
+const box = document.getElementById("mapbox");
+const svg = d3.select("#map");
+const g = svg.append("g");
+const states = topojson.feature(TOPO, TOPO.objects.states).features;
+const path = d3.geoPath();
+const stAbbr = { "Nebraska":"NE","Iowa":"IA","Kansas":"KS","North Dakota":"ND","South Dakota":"SD","Minnesota":"MN","Missouri":"MO","Illinois":"IL","Indiana":"IN","Ohio":"OH","Michigan":"MI","Wisconsin":"WI","Kentucky":"KY","Oklahoma":"OK","Colorado":"CO","Arkansas":"AR","Tennessee":"TN" };
+const withPlants = new Set(plants.map(p => p.st));
+g.append("g").selectAll("path").data(states).join("path")
+  .attr("class", d => "state" + (withPlants.has(stAbbr[d.properties.name]) ? " has" : ""))
+  .attr("d", path);
+const lblG = g.append("g");
+lblG.selectAll("text").data(states.filter(d => stAbbr[d.properties.name])).join("text")
+  .attr("class", "state-lbl").attr("text-anchor", "middle")
+  .attr("transform", d => {
+    const [x, y] = path.centroid(d);
+    const nudge = { "Michigan": [22, 48], "Illinois": [-8, 34], "Iowa": [-18, 30], "Minnesota": [22, 24], "Missouri": [30, 26], "Ohio": [6, 18], "Indiana": [0, 26], "Kansas": [-40, 0], "Nebraska": [-50, 6] }[d.properties.name] || [0, 0];
+    return `translate(${x + nudge[0]},${y + nudge[1]})`;
+  })
+  .text(d => stAbbr[d.properties.name]);
+
+const dotG = g.append("g");
+const dots = dotG.selectAll("g").data(plants).join("g").attr("class", "dot")
+  .attr("transform", d => `translate(${d.x},${d.y})`);
+dots.append("circle");
+dots.append("text");
+
+let k = 1;
+function sizeDots() {
+  const r = 9 / Math.sqrt(k) * (k > 3 ? 1.25 : 1);
+  dots.select("circle").attr("r", r).attr("stroke-width", 1);
+  dots.select("text").attr("font-size", r * 0.95).attr("opacity", k >= 1.8 && box.clientWidth > 600 ? 1 : 0);
+  lblG.selectAll("text").attr("font-size", 10 / Math.sqrt(k));
+}
+
+function paint() {
+  const s = scales()[mode];
+  dots.select("circle").attr("fill", d => s(d[mode]));
+  dots.select("text").attr("fill", d => textOn(s(d[mode]))).text(d => d[mode] === 0 ? "0" : fmt(d[mode]));
+  // sort so strongest renders on top where plants overlap
+  dots.sort((a, b) => Math.abs(a[mode]) - Math.abs(b[mode]));
+  legend(s);
+  renderRows(s);
+}
+
+function legend(s) {
+  const [lo, hi] = mode === "basis" ? [-40, 125] : [-70, 40];
+  const stops = d3.range(0, 1.001, 0.1).map(t => `${s(lo + t * (hi - lo))} ${t * 100}%`).join(",");
+  const ticks = mode === "basis" ? [-40, 0, 40, 80, 125] : [-70, -40, -20, 0, 20, 40];
+  const title = mode === "basis" ? "Basis vs SX, c/bu" : "Change since last posting, c/bu";
+  document.getElementById("legend").innerHTML =
+    `<div>${title}</div><div class="bar" style="background:linear-gradient(90deg,${stops})"></div>` +
+    `<div class="ticks">${ticks.map(t => `<span>${fmt(t)}</span>`).join("")}</div>`;
+}
+
+// ---------- zoom
+const zoom = d3.zoom().scaleExtent([1, 12]).translateExtent([[-60, 0], [1000, 620]])
+  .on("zoom", e => { k = e.transform.k; g.attr("transform", e.transform); sizeDots(); hideTip(); });
+svg.call(zoom);
+function frame(pad, pts, dur = 600) {
+  const xs = d3.extent(pts, p => p.x), ys = d3.extent(pts, p => p.y);
+  const w = xs[1] - xs[0] + pad * 2, h = ys[1] - ys[0] + pad * 2;
+  const kk = Math.min(12, 0.95 / Math.max(w / 975, h / 610));
+  const cx = (xs[0] + xs[1]) / 2, cy = (ys[0] + ys[1]) / 2;
+  const t = d3.zoomIdentity.translate(487.5, 305).scale(kk).translate(-cx, -cy);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  (dur && !reduce ? svg.transition().duration(dur) : svg).call(zoom.transform, t);
+}
+document.getElementById("z-belt").onclick = () => frame(28, plants);
+document.getElementById("z-us").onclick = () => svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity);
+
+// ---------- tooltip + highlight
+const tip = document.getElementById("tip");
+function showTip(d) {
+  const node = dots.filter(p => p === d).node();
+  const r = node.getBoundingClientRect(), b = box.getBoundingClientRect();
+  const s = scales();
+  const cls = d.chg > 0 ? "up" : d.chg < 0 ? "down" : "";
+  tip.innerHTML = `<div class="t">${d.name}</div><div style="opacity:.75;margin-bottom:4px">${d.town}, ${d.st}</div>` +
+    `<div class="r"><span>Basis</span><span>${fmt(d.basis)} SX</span></div>` +
+    `<div class="r"><span>Change</span><span>${fmtChg(d.chg)}</span></div>`;
+  tip.hidden = false;
+  let x = r.left + r.width / 2 - b.left, y = r.top - b.top;
+  x = Math.max(95, Math.min(b.width - 95, x));
+  if (y < 90) { tip.style.transform = "translate(-50%, 14px)"; y = r.bottom - b.top; } else tip.style.transform = "";
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.hidden = true; }
+function hot(d) {
+  dots.classed("hot", p => p === d);
+  d3.selectAll("#rows tr").classed("hot", p => p === d);
+}
+dots.on("pointerenter", (e, d) => { hot(d); showTip(d); })
+    .on("pointerleave", () => { hot(null); hideTip(); })
+    .on("click", (e, d) => { e.stopPropagation(); hot(d); showTip(d); scrollRow(d); });
+svg.on("click", () => { hot(null); hideTip(); });
+
+function scrollRow(d) {
+  const tr = d3.selectAll("#rows tr").filter(p => p === d).node();
+  if (tr) tr.scrollIntoView({ block: "nearest" });
+}
+
+// ---------- company filter
+const groups = ["All", "ADM", "AGP", "Bunge", "Cargill", "CHS", "Other"];
+const chips = d3.select("#chips").selectAll("button").data(groups).join("button")
+  .attr("class", "chip").attr("aria-pressed", d => d === company)
+  .html(d => `${d === "Other" ? "Independents" : d}<span class="n">${d === "All" ? plants.length : plants.filter(p => p.co === d).length}</span>`)
+  .on("click", (e, d) => { company = d; applyFilter(); });
+function visible(p) { return company === "All" || p.co === company; }
+function applyFilter() {
+  chips.attr("aria-pressed", d => d === company);
+  dots.classed("dim", p => !visible(p));
+  d3.selectAll("#rows tr").classed("dim", p => !visible(p));
+  const vis = plants.filter(visible);
+  const avg = d3.mean(vis, p => p.basis);
+  document.getElementById("count").textContent = `${vis.length} plants · avg ${fmt(Math.round(avg))}`;
+}
+
+// ---------- table
+function renderRows(s) {
+  const sorted = plants.slice().sort((a, b) => {
+    const va = a[sortKey], vb = b[sortKey];
+    return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * sortDir || a.name.localeCompare(b.name);
+  });
+  const sb = scales().basis;
+  d3.select("#rows").selectAll("tr").data(sorted, d => d.id).join(enter => {
+    const tr = enter.append("tr");
+    tr.append("td").attr("class", "nm");
+    tr.append("td").attr("class", "num b");
+    tr.append("td").attr("class", "num c");
+    return tr;
+  }).order()
+    .call(tr => {
+      tr.select(".nm").html(d => `<span class="sw" style="background:${sb(d.basis)}"></span>${d.name}<span class="st">${d.st}</span>`);
+      tr.select(".b").text(d => fmt(d.basis));
+      tr.select(".c").attr("class", d => "num c " + (d.chg > 0 ? "up" : d.chg < 0 ? "down" : "flat")).text(d => fmtChg(d.chg));
+    })
+    .on("pointerenter", (e, d) => hot(d))
+    .on("pointerleave", () => hot(null))
+    .on("click", (e, d) => { hot(d); frame(60, [d]); setTimeout(() => showTip(d), 650); });
+  applyFilter();
+  d3.selectAll("th").each(function () {
+    const kk = this.dataset.k;
+    const base = { name: "Plant", basis: "Basis", chg: "Chg" }[kk];
+    this.textContent = base + (kk === sortKey ? (sortDir < 0 ? " ↓" : " ↑") : "");
+  });
+}
+d3.selectAll("th").on("click", function () {
+  const kk = this.dataset.k;
+  if (kk === sortKey) sortDir *= -1; else { sortKey = kk; sortDir = kk === "name" ? 1 : -1; }
+  paint();
+});
+
+// ---------- mode toggle
+function setMode(m) {
+  mode = m;
+  document.getElementById("mode-basis").setAttribute("aria-pressed", m === "basis");
+  document.getElementById("mode-chg").setAttribute("aria-pressed", m === "chg");
+  paint();
+}
+document.getElementById("mode-basis").onclick = () => setMode("basis");
+document.getElementById("mode-chg").onclick = () => setMode("chg");
+
+// repaint colors when theme changes
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paint);
+new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+paint();
+sizeDots();
+frame(28, plants, 0);
+</script>
