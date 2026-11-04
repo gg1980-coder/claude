@@ -1,0 +1,534 @@
+{
+ "stationarity": {
+  "BO": {
+   "ADF_p_level": 0.663,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  },
+  "HO": {
+   "ADF_p_level": 0.314,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  },
+  "PALM": {
+   "ADF_p_level": 0.484,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  },
+  "RAPESEED": {
+   "ADF_p_level": 0.503,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  },
+  "SOYBEANS": {
+   "ADF_p_level": 0.333,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  },
+  "BOHO": {
+   "ADF_p_level": 0.071,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  },
+  "OIL_SHARE_PROXY": {
+   "ADF_p_level": 0.456,
+   "KPSS_p_level": 0.01,
+   "ADF_p_diff": 0.0
+  }
+ },
+ "corr_full": {
+  "HO": 0.381,
+  "PALM": 0.504,
+  "RAPESEED": 0.481,
+  "SOYBEANS": 0.566,
+  "SBO_US_FOB": 0.665,
+  "SBO_BR_FOB": 0.71,
+  "RAPEOIL_HAM": 0.155
+ },
+ "corr_regime": {
+  "2016-2020 (pre-RD)": {
+   "HO": 0.409,
+   "PALM": 0.514,
+   "RAPESEED": 0.534,
+   "SOYBEANS": 0.585,
+   "SBO_US_FOB": 0.646,
+   "SBO_BR_FOB": 0.752,
+   "RAPEOIL_HAM": 0.252
+  },
+  "2021-2023 (RD build-out)": {
+   "HO": 0.328,
+   "PALM": 0.59,
+   "RAPESEED": 0.511,
+   "SOYBEANS": 0.592,
+   "SBO_US_FOB": 0.765,
+   "SBO_BR_FOB": 0.788,
+   "RAPEOIL_HAM": 0.143
+  },
+  "2024-2026 (45Z / RVO era)": {
+   "HO": 0.464,
+   "PALM": 0.316,
+   "RAPESEED": 0.409,
+   "SOYBEANS": 0.522,
+   "SBO_US_FOB": 0.464,
+   "SBO_BR_FOB": 0.509,
+   "RAPEOIL_HAM": 0.114
+  }
+ },
+ "return_regression": {
+  "Full 2016-2026": {
+   "n": 567,
+   "R2": 0.534,
+   "beta": {
+    "HO": 0.134,
+    "PALM": 0.274,
+    "RAPESEED": 0.249,
+    "SOYBEANS": 0.475
+   },
+   "t": {
+    "HO": 6.41,
+    "PALM": 8.43,
+    "RAPESEED": 6.29,
+    "SOYBEANS": 9.66
+   },
+   "shapley_R2_share": {
+    "HO": 0.145,
+    "PALM": 0.277,
+    "RAPESEED": 0.217,
+    "SOYBEANS": 0.361
+   }
+  },
+  "2016-2020 (pre-RD)": {
+   "n": 261,
+   "R2": 0.577,
+   "beta": {
+    "HO": 0.09,
+    "PALM": 0.239,
+    "RAPESEED": 0.366,
+    "SOYBEANS": 0.404
+   },
+   "t": {
+    "HO": 4.0,
+    "PALM": 6.56,
+    "RAPESEED": 3.43,
+    "SOYBEANS": 6.99
+   },
+   "shapley_R2_share": {
+    "HO": 0.131,
+    "PALM": 0.274,
+    "RAPESEED": 0.239,
+    "SOYBEANS": 0.355
+   }
+  },
+  "2021-2023 (RD build-out)": {
+   "n": 157,
+   "R2": 0.577,
+   "beta": {
+    "HO": 0.139,
+    "PALM": 0.333,
+    "RAPESEED": 0.237,
+    "SOYBEANS": 0.461
+   },
+   "t": {
+    "HO": 4.2,
+    "PALM": 5.83,
+    "RAPESEED": 4.9,
+    "SOYBEANS": 5.07
+   },
+   "shapley_R2_share": {
+    "HO": 0.102,
+    "PALM": 0.347,
+    "RAPESEED": 0.221,
+    "SOYBEANS": 0.33
+   }
+  },
+  "2024-2026 (45Z / RVO era)": {
+   "n": 149,
+   "R2": 0.443,
+   "beta": {
+    "HO": 0.194,
+    "PALM": 0.181,
+    "RAPESEED": 0.194,
+    "SOYBEANS": 0.573
+   },
+   "t": {
+    "HO": 3.68,
+    "PALM": 2.5,
+    "RAPESEED": 2.51,
+    "SOYBEANS": 5.71
+   },
+   "shapley_R2_share": {
+    "HO": 0.292,
+    "PALM": 0.112,
+    "RAPESEED": 0.186,
+    "SOYBEANS": 0.41
+   }
+  }
+ },
+ "chow": {
+  "2021-01-01": [
+   1.32,
+   0.25308783492540504
+  ],
+  "2024-01-01": [
+   1.22,
+   0.30055643180939434
+  ]
+ },
+ "daily_leadlag_corr": {
+  "HO": {
+   "lag-2": 0.011,
+   "lag-1": 0.065,
+   "lag0": 0.325,
+   "lag1": 0.015,
+   "lag2": -0.006
+  },
+  "PALM": {
+   "lag-2": 0.021,
+   "lag-1": 0.247,
+   "lag0": 0.308,
+   "lag1": 0.031,
+   "lag2": 0.008
+  },
+  "RAPESEED": {
+   "lag-2": -0.015,
+   "lag-1": 0.037,
+   "lag0": 0.35,
+   "lag1": 0.069,
+   "lag2": 0.009
+  },
+  "SOYBEANS": {
+   "lag-2": 0.009,
+   "lag-1": 0.048,
+   "lag0": 0.533,
+   "lag1": 0.028,
+   "lag2": 0.009
+  }
+ },
+ "granger_weekly": {
+  "HO": {
+   "X->BO p (lags1..4)": [
+    0.634,
+    0.342,
+    0.329,
+    0.325
+   ],
+   "BO->X p (lags1..4)": [
+    0.23,
+    0.339,
+    0.268,
+    0.333
+   ]
+  },
+  "PALM": {
+   "X->BO p (lags1..4)": [
+    0.449,
+    0.336,
+    0.289,
+    0.376
+   ],
+   "BO->X p (lags1..4)": [
+    0.631,
+    0.568,
+    0.714,
+    0.581
+   ]
+  },
+  "RAPESEED": {
+   "X->BO p (lags1..4)": [
+    0.878,
+    0.075,
+    0.128,
+    0.198
+   ],
+   "BO->X p (lags1..4)": [
+    0.934,
+    0.831,
+    0.033,
+    0.024
+   ]
+  },
+  "SOYBEANS": {
+   "X->BO p (lags1..4)": [
+    0.154,
+    0.186,
+    0.303,
+    0.451
+   ],
+   "BO->X p (lags1..4)": [
+    0.933,
+    0.668,
+    0.529,
+    0.503
+   ]
+  }
+ },
+ "cointegration": {
+  "Full 2016-2026": {
+   "EG_elasticities": {
+    "HO": 0.263,
+    "PALM": 0.433,
+    "RAPESEED": 0.053,
+    "SOYBEANS": 0.609
+   },
+   "EG_R2_levels": 0.921,
+   "EG_resid_ADF_p(approx)": 0.003,
+   "resid_halflife_weeks": 14.5,
+   "johansen_rank_5pct": 1
+  },
+  "2016-2020 (pre-RD)": {
+   "EG_elasticities": {
+    "HO": 0.075,
+    "PALM": 0.436,
+    "RAPESEED": -0.106,
+    "SOYBEANS": 0.329
+   },
+   "EG_R2_levels": 0.83,
+   "EG_resid_ADF_p(approx)": 0.0,
+   "resid_halflife_weeks": 4.2,
+   "johansen_rank_5pct": 1
+  },
+  "2021-2023 (RD build-out)": {
+   "EG_elasticities": {
+    "HO": 0.227,
+    "PALM": 0.019,
+    "RAPESEED": 0.241,
+    "SOYBEANS": 0.472
+   },
+   "EG_R2_levels": 0.71,
+   "EG_resid_ADF_p(approx)": 0.062,
+   "resid_halflife_weeks": 6.7,
+   "johansen_rank_5pct": 1
+  },
+  "2024-2026 (45Z / RVO era)": {
+   "EG_elasticities": {
+    "HO": 0.683,
+    "PALM": -0.492,
+    "RAPESEED": 0.541,
+    "SOYBEANS": -0.366
+   },
+   "EG_R2_levels": 0.729,
+   "EG_resid_ADF_p(approx)": 0.098,
+   "resid_halflife_weeks": 7.1,
+   "johansen_rank_5pct": 0
+  }
+ },
+ "pairwise_EG_p": {
+  "HO": 0.296,
+  "PALM": 0.172,
+  "RAPESEED": 0.06,
+  "SOYBEANS": 0.232
+ },
+ "pairwise_EG_p_by_regime": {
+  "2016-2020 (pre-RD)": {
+   "HO": 0.782,
+   "PALM": 0.119,
+   "RAPESEED": 0.744,
+   "SOYBEANS": 0.005
+  },
+  "2021-2023 (RD build-out)": {
+   "HO": 0.262,
+   "PALM": 0.245,
+   "RAPESEED": 0.17,
+   "SOYBEANS": 0.027
+  },
+  "2024-2026 (45Z / RVO era)": {
+   "HO": 0.478,
+   "PALM": 0.929,
+   "RAPESEED": 0.843,
+   "SOYBEANS": 0.664
+  }
+ },
+ "spreads": {
+  "BOHO": {
+   "ADF_p": 0.071,
+   "halflife_weeks": 21.6
+  },
+  "OIL_SHARE_PROXY": {
+   "ADF_p": 0.463,
+   "halflife_weeks": 60.0
+  }
+ },
+ "monthly_n": 92,
+ "monthly_yoy_corr_with_BO": {
+  "HO": 0.702,
+  "PALM": 0.628,
+  "SOYBEANS": 0.88,
+  "FS_SOYOIL": 0.051,
+  "FS_TOTAL": 0.213,
+  "BIOFUEL_PROD": -0.177,
+  "RD_PROD": 0.007,
+  "BD_PROD": -0.05,
+  "SOY_SHARE": -0.323
+ },
+ "monthly_yoy_leadlag": {
+  "FS_SOYOIL": {
+   "fund_leads_-6m": 0.353,
+   "fund_leads_-3m": 0.173,
+   "fund_leads_0m": 0.051,
+   "fund_leads_3m": 0.07,
+   "fund_leads_6m": 0.009
+  },
+  "SOY_SHARE": {
+   "fund_leads_-6m": -0.191,
+   "fund_leads_-3m": -0.309,
+   "fund_leads_0m": -0.323,
+   "fund_leads_3m": -0.142,
+   "fund_leads_6m": 0.052
+  },
+  "FS_TOTAL": {
+   "fund_leads_-6m": 0.416,
+   "fund_leads_-3m": 0.332,
+   "fund_leads_0m": 0.213,
+   "fund_leads_3m": 0.089,
+   "fund_leads_6m": -0.064
+  },
+  "BIOFUEL_PROD": {
+   "fund_leads_-6m": 0.274,
+   "fund_leads_-3m": 0.002,
+   "fund_leads_0m": -0.177,
+   "fund_leads_3m": -0.279,
+   "fund_leads_6m": -0.394
+  }
+ },
+ "monthly_mom_models": {
+  "markets_only_R2": 0.538,
+  "markets+fundamentals_R2": 0.541,
+  "fund_coefs": {
+   "FS_SOYOIL": 0.013,
+   "SOY_SHARE": 0.076
+  },
+  "fund_t": {
+   "FS_SOYOIL": 0.29,
+   "SOY_SHARE": 0.64
+  },
+  "n": 103
+ },
+ "feedstock_2023_flat_share": [
+  0.3853,
+  0.3854,
+  0.3854,
+  0.3852,
+  0.3852,
+  0.3853,
+  0.3853,
+  0.4186
+ ],
+ "feedstock_2024_break": {
+  "2023-11-01": 407.0,
+  "2023-12-01": 407.0,
+  "2024-01-01": 1292.0,
+  "2024-02-01": 1368.0
+ },
+ "oos_weekly": {
+  "n": 409,
+  "R2_oos_vs_randomwalk": -0.0968,
+  "hit_rate_direction": 0.545
+ },
+ "ect_predicts_4w": {
+  "coef": -0.092,
+  "t_HAC": -1.24,
+  "R2": 0.009,
+  "n": 406,
+  "note": "rolling-3y residual (in-sample per date, no look-ahead); negative coef = mean reversion"
+ },
+ "ann_vol_by_year": {
+  "BO": {
+   "2015": 0.292,
+   "2016": 0.243,
+   "2017": 0.155,
+   "2018": 0.119,
+   "2019": 0.174,
+   "2020": 0.245,
+   "2021": 0.374,
+   "2022": 0.403,
+   "2023": 0.317,
+   "2024": 0.283,
+   "2025": 0.258,
+   "2026": 0.249
+  },
+  "HO": {
+   "2015": 0.482,
+   "2016": 0.41,
+   "2017": 0.227,
+   "2018": 0.233,
+   "2019": 0.233,
+   "2020": 0.544,
+   "2021": 0.28,
+   "2022": 0.672,
+   "2023": 0.399,
+   "2024": 0.225,
+   "2025": 0.348,
+   "2026": 0.55
+  },
+  "PALM": {
+   "2015": 0.175,
+   "2016": 0.232,
+   "2017": 0.203,
+   "2018": 0.259,
+   "2019": 0.26,
+   "2020": 0.338,
+   "2021": 0.293,
+   "2022": 0.549,
+   "2023": 0.258,
+   "2024": 0.248,
+   "2025": 0.197,
+   "2026": 0.183
+  },
+  "RAPESEED": {
+   "2015": 0.17,
+   "2016": 0.128,
+   "2017": 0.138,
+   "2018": 0.108,
+   "2019": 0.07,
+   "2020": 0.149,
+   "2021": 0.382,
+   "2022": 0.385,
+   "2023": 0.284,
+   "2024": 0.189,
+   "2025": 0.216,
+   "2026": 0.295
+  },
+  "SOYBEANS": {
+   "2015": 0.102,
+   "2016": 0.239,
+   "2017": 0.155,
+   "2018": 0.168,
+   "2019": 0.166,
+   "2020": 0.159,
+   "2021": 0.259,
+   "2022": 0.309,
+   "2023": 0.193,
+   "2024": 0.183,
+   "2025": 0.161,
+   "2026": 0.166
+  }
+ },
+ "tail_corr": {
+  "BO_down_5pct_weeks": {
+   "HO": -0.0385,
+   "PALM": -0.0576,
+   "RAPESEED": -0.0359,
+   "SOYBEANS": -0.0377
+  },
+  "BO_up_5pct_weeks": {
+   "HO": 0.0635,
+   "PALM": 0.0417,
+   "RAPESEED": 0.0389,
+   "SOYBEANS": 0.0285
+  }
+ },
+ "largest_unexplained_weeks": {
+  "2022-05-20": -9.09,
+  "2023-06-30": 8.64,
+  "2022-12-02": -8.54,
+  "2021-06-18": -8.24,
+  "2025-06-20": 8.09,
+  "2023-06-23": -7.34,
+  "2024-11-15": -7.06,
+  "2026-01-16": 7.06,
+  "2023-10-13": -7.03,
+  "2024-07-05": 6.98,
+  "2024-05-03": -6.61,
+  "2025-04-04": 6.39
+ }
+}
