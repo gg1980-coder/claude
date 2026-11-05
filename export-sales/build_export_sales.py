@@ -349,6 +349,86 @@ for c0 in (1, 11):
         wsM.conditional_formatting.add(rr, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
         wsM.conditional_formatting.add(rr, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
 
+# ---------------- RoW vs Avg & Median ----------------
+wsV = wb.create_sheet('RoW vs Avg & Median', index=3)
+med5 = sc[FIVE].median(axis=1)
+dA, dM = sc[CUR] - avg5, sc[CUR] - med5
+def status(c):
+    a, m = dA[c], dM[c]
+    if a > 0 and m > 0: return 'AHEAD of avg & median'
+    if a < 0 and m < 0: return 'BEHIND avg & median'
+    if a > 0: return 'Ahead of avg only'
+    if m > 0: return 'Ahead of median only'
+    if a < 0: return 'Behind avg only'
+    if m < 0: return 'Behind median only'
+    return 'In line'
+GROUPS = ['AHEAD of avg & median', 'Ahead of avg only', 'Ahead of median only', 'In line', 'Behind median only', 'Behind avg only', 'BEHIND avg & median']
+row_c = [c for c in order if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') and (sc.loc[c, [CUR] + FIVE].abs().sum() > 0)]
+title(wsV, f'RoW destinations (excl. China & Unknown) — total commitment at week {WK}: {CUR} vs 5-yr avg and 5-yr median ({FIVE[-1]}–{FIVE[0]}, incl. {LY})',
+      'Year values link to "Ranking by Destination"; avg, median, Δ and Status are live formulas. Grouped by status at build time, then by Δ vs avg. '
+      'Median keeps all 5 years but is not pulled by one extreme year. "Behind avg only" with a 0 median = occasional buyer with no booking yet. '
+      '"≥ 1 cargo move?" flags |Δ| ≥ the cargo size in cell Q3 (editable; 65 kt ≈ one Panamax) — smaller moves are timing noise.')
+wsV['P3'] = 'Cargo size (MT):'; wsV['P3'].font = BOLD; wsV['P3'].alignment = Alignment(horizontal='right')
+wsV['Q3'] = 65000; wsV['Q3'].font = BLUE; wsV['Q3'].number_format = MT; wsV['Q3'].fill = PatternFill('solid', fgColor='FFFF00')
+from openpyxl.workbook.defined_name import DefinedName
+wb.defined_names['Cargo_MT'] = DefinedName('Cargo_MT', attr_text="'RoW vs Avg & Median'!$Q$3")
+yrs = [CUR] + FIVE
+hdrV = ['Status', 'Destination', 'Region'] + yrs + ['5-yr avg', '5-yr median', 'Δ vs avg MT', 'Δ vs avg %', 'Δ vs median MT', 'Δ vs median %', '≥ 1 cargo move?']
+header(wsV, 4, hdrV); wsV.row_dimensions[4].height = 40
+cY = {m: 4 + i for i, m in enumerate(yrs)}; cAv = 4 + len(yrs); cMd = cAv + 1
+GFILL = {'AHEAD of avg & median': 'C6EFCE', 'Ahead of avg only': 'EBF1DE', 'Ahead of median only': 'EBF1DE', 'In line': 'F2F2F2', 'Behind avg only': 'FDE9D9', 'Behind median only': 'FDE9D9', 'BEHIND avg & median': 'FFC7CE'}
+r = 5; vfirst = 5
+for g in GROUPS:
+    cs = sorted([c for c in row_c if status(c) == g], key=lambda c: -dA[c])
+    if not cs: continue
+    put(wsV, r, 1, f'{g} — {len(cs)} destinations', font=Font(name=F, size=10, bold=True), fill=PatternFill('solid', fgColor=GFILL[g]))
+    for j in range(2, len(hdrV) + 1): put(wsV, r, j, None, fill=PatternFill('solid', fgColor=GFILL[g]))
+    r += 1
+    for c in cs:
+        rr = first + order.index(c)
+        put(wsV, r, 2, c); put(wsV, r, 3, f"='Ranking by Destination'!C{rr}", font=GREEN)
+        for m in yrs:
+            put(wsV, r, cY[m], f"='Ranking by Destination'!{L(yc[m])}{rr}", MT, font=GREEN, fill=CURFILL if m == CUR else None)
+        five = f'{L(cY[FIVE[0]])}{r}:{L(cY[FIVE[-1]])}{r}'; cur = f'{L(cY[CUR])}{r}'
+        put(wsV, r, cAv, f'=AVERAGE({five})', MT); put(wsV, r, cMd, f'=MEDIAN({five})', MT)
+        put(wsV, r, cMd + 1, f'={cur}-{L(cAv)}{r}', MT, font=BOLD); put(wsV, r, cMd + 2, dpct(cur, f'{L(cAv)}{r}'), PCT)
+        put(wsV, r, cMd + 3, f'={cur}-{L(cMd)}{r}', MT, font=BOLD); put(wsV, r, cMd + 4, dpct(cur, f'{L(cMd)}{r}'), PCT)
+        a, m_ = f'{L(cMd+1)}{r}', f'{L(cMd+3)}{r}'
+        put(wsV, r, 1, f'=IF(AND({a}>0,{m_}>0),"AHEAD of avg & median",IF(AND({a}<0,{m_}<0),"BEHIND avg & median",IF({a}>0,"Ahead of avg only",IF({m_}>0,"Ahead of median only",IF({a}<0,"Behind avg only",IF({m_}<0,"Behind median only","In line"))))))')
+        put(wsV, r, cMd + 5, f'=IF(MAX(ABS({a}),ABS({m_}))>=Cargo_MT,"yes","")')
+        r += 1
+vlast = r - 1
+# totals by status
+r += 1
+put(wsV, r, 1, 'Totals by status', font=Font(name=F, size=11, bold=True)).border = Border(); r += 1
+header(wsV, r, ['Status', '# destinations', ''] + yrs + ['5-yr avg', '5-yr median*', 'Δ vs avg MT', 'Δ vs avg %', 'Δ vs median MT', 'Δ vs median %']); r += 1
+SR = f'$A${vfirst}:$A${vlast}'
+tfirst = r
+for g in GROUPS + ['RoW TOTAL']:
+    fill = TOTFILL if g == 'RoW TOTAL' else None
+    put(wsV, r, 1, g, font=BOLD, fill=fill)
+    put(wsV, r, 2, f'=COUNTIF({SR},A{r})' if fill is None else f'=SUM(B{tfirst}:B{r-1})', '0', fill=fill); put(wsV, r, 3, None, fill=fill)
+    for m in yrs:
+        cl = L(cY[m])
+        f = f'=SUMIF({SR},$A{r},{cl}${vfirst}:{cl}${vlast})' if fill is None else f'=SUM({cl}{tfirst}:{cl}{r-1})'
+        put(wsV, r, cY[m], f, MT, fill=fill)
+    five = f'{L(cY[FIVE[0]])}{r}:{L(cY[FIVE[-1]])}{r}'; cur = f'{L(cY[CUR])}{r}'
+    put(wsV, r, cAv, f'=AVERAGE({five})', MT, fill=fill); put(wsV, r, cMd, f'=MEDIAN({five})', MT, fill=fill)
+    put(wsV, r, cMd + 1, f'={cur}-{L(cAv)}{r}', MT, font=BOLD, fill=fill); put(wsV, r, cMd + 2, dpct(cur, f'{L(cAv)}{r}'), PCT, fill=fill)
+    put(wsV, r, cMd + 3, f'={cur}-{L(cMd)}{r}', MT, font=BOLD, fill=fill); put(wsV, r, cMd + 4, dpct(cur, f'{L(cMd)}{r}'), PCT, fill=fill)
+    r += 1
+put(wsV, r, 1, '* Group median = median of the group\'s yearly totals, not the sum of country medians. RoW TOTAL ties to Summary (RoW excl. China & Unknown).',
+    font=Font(name=F, size=9, italic=True)).border = Border()
+put(wsV, r + 1, 1, f'Check: RoW TOTAL {CUR} minus Summary RoW (must be 0)', font=Font(name=F, size=9, italic=True)).border = Border()
+put(wsV, r + 1, cY[CUR], f"={L(cY[CUR])}{r-1}-Summary!B8", MT)
+wsV.column_dimensions['A'].width = 30; wsV.column_dimensions['B'].width = 28; wsV.column_dimensions['C'].width = 22
+for j in range(4, len(hdrV) + 1): wsV.column_dimensions[L(j)].width = 12
+wsV.freeze_panes = 'D5'
+for j in (cMd + 1, cMd + 3):
+    rg = f'{L(j)}{vfirst}:{L(j)}{vlast}'
+    wsV.conditional_formatting.add(rg, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
+    wsV.conditional_formatting.add(rg, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
+
 # ---------------- Weekly Commitments ----------------
 title(wsW, f'Cumulative total commitment by in-season week — {CUR} vs prior MYs (MT)',
       'Aggregated from the ESR file (hardcoded, blue). RoW excludes China and Unknown. 5-yr avg columns are formulas.')
