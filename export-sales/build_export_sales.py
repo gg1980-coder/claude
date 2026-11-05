@@ -363,7 +363,8 @@ def status(c):
     if m < 0: return 'Behind median only'
     return 'In line'
 GROUPS = ['AHEAD of avg & median', 'Ahead of avg only', 'Ahead of median only', 'In line', 'Behind median only', 'Behind avg only', 'BEHIND avg & median']
-row_c = [c for c in order if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') and (sc.loc[c, [CUR] + FIVE].abs().sum() > 0)]
+fin5 = {c for (m, c), v in final.items() if m in FIVE and v > 0}
+row_c = [c for c in order if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') and (sc.loc[c, [CUR] + FIVE].abs().sum() > 0 or c in fin5)]
 title(wsV, f'RoW destinations (excl. China & Unknown) — total commitment at week {WK}: {CUR} vs 5-yr avg and 5-yr median ({FIVE[-1]}–{FIVE[0]}, incl. {LY})',
       'Year values link to "Ranking by Destination"; avg, median, Δ and Status are live formulas. Grouped by status at build time, then by Δ vs avg. '
       'Median keeps all 5 years but is not pulled by one extreme year. "Behind avg only" with a 0 median = occasional buyer with no booking yet. '
@@ -373,16 +374,34 @@ wsV['Q3'] = 65000; wsV['Q3'].font = BLUE; wsV['Q3'].number_format = MT; wsV['Q3'
 from openpyxl.workbook.defined_name import DefinedName
 wb.defined_names['Cargo_MT'] = DefinedName('Cargo_MT', attr_text="'RoW vs Avg & Median'!$Q$3")
 yrs = [CUR] + FIVE
-hdrV = ['Status', 'Destination', 'Region'] + yrs + ['5-yr avg', '5-yr median', 'Δ vs avg MT', 'Δ vs avg %', 'Δ vs median MT', 'Δ vs median %', '≥ 1 cargo move?']
-header(wsV, 4, hdrV); wsV.row_dimensions[4].height = 40
+hdrV = ['Status', 'Destination', 'Region'] + yrs + ['5-yr avg', '5-yr median', 'Δ vs avg MT', 'Δ vs avg %', 'Δ vs median MT', 'Δ vs median %', '≥ 1 cargo move?', '']
+header(wsV, 4, hdrV)
 cY = {m: 4 + i for i, m in enumerate(yrs)}; cAv = 4 + len(yrs); cMd = cAv + 1
 GFILL = {'AHEAD of avg & median': 'C6EFCE', 'Ahead of avg only': 'EBF1DE', 'Ahead of median only': 'EBF1DE', 'In line': 'F2F2F2', 'Behind avg only': 'FDE9D9', 'Behind median only': 'FDE9D9', 'BEHIND avg & median': 'FFC7CE'}
+cF = cMd + 7   # full-MY block (one spacer column after cargo flag)
+FULLH = [f'Full-MY exports {m}' for m in FIVE] + ['Full-MY exports 5-yr avg', f'{LY}: wk {WK} commit as % of full year',
+         f'5-yr avg: wk {WK} commit as % of full year', f'{CUR} wk {WK} commit as % of {LY} full year',
+         f'{CUR} wk {WK} commit as % of 5-yr avg full year', f'Implied {CUR} full year at 5-yr avg pace']
+def pct_or(n, d, alt='"n/a"'): return f'=IF({d}=0,IF({n}=0,0,{alt}),{n}/{d})'
+def fullcols(r, src, fill=None):
+    """src(m, col) -> formula for full-MY exports of MY m in row r."""
+    for k, m in enumerate(FIVE):
+        put(wsV, r, cF + k, src(m, cF + k), MT, font=GREEN if fill is None else BOLD, fill=fill)
+    fa = f'{L(cF+5)}{r}'
+    put(wsV, r, cF + 5, f'=AVERAGE({L(cF)}{r}:{L(cF+4)}{r})', MT, fill=fill)
+    put(wsV, r, cF + 6, pct_or(f'{L(cY[LY])}{r}', f'{L(cF)}{r}'), '0%', fill=fill)
+    put(wsV, r, cF + 7, pct_or(f'{L(cAv)}{r}', fa), '0%', fill=fill)
+    put(wsV, r, cF + 8, pct_or(f'{L(cY[CUR])}{r}', f'{L(cF)}{r}', '"new"'), '0%', font=BOLD, fill=fill)
+    put(wsV, r, cF + 9, pct_or(f'{L(cY[CUR])}{r}', fa, '"new"'), '0%', font=BOLD, fill=fill)
+    put(wsV, r, cF + 10, f'=IF(N({L(cF+7)}{r})=0,"n/a",{L(cY[CUR])}{r}/{L(cF+7)}{r})', MT, fill=fill)
+header(wsV, 4, FULLH, cF); wsV.row_dimensions[4].height = 66
+wsV.cell(4, cMd + 6).fill = PatternFill(None); wsV.cell(4, cMd + 6).border = Border()
 r = 5; vfirst = 5
 for g in GROUPS:
     cs = sorted([c for c in row_c if status(c) == g], key=lambda c: -dA[c])
     if not cs: continue
     put(wsV, r, 1, f'{g} — {len(cs)} destinations', font=Font(name=F, size=10, bold=True), fill=PatternFill('solid', fgColor=GFILL[g]))
-    for j in range(2, len(hdrV) + 1): put(wsV, r, j, None, fill=PatternFill('solid', fgColor=GFILL[g]))
+    for j in list(range(2, len(hdrV))) + list(range(cF, cF + len(FULLH))): put(wsV, r, j, None, fill=PatternFill('solid', fgColor=GFILL[g]))
     r += 1
     for c in cs:
         rr = first + order.index(c)
@@ -396,12 +415,13 @@ for g in GROUPS:
         a, m_ = f'{L(cMd+1)}{r}', f'{L(cMd+3)}{r}'
         put(wsV, r, 1, f'=IF(AND({a}>0,{m_}>0),"AHEAD of avg & median",IF(AND({a}<0,{m_}<0),"BEHIND avg & median",IF({a}>0,"Ahead of avg only",IF({m_}>0,"Ahead of median only",IF({a}<0,"Behind avg only",IF({m_}<0,"Behind median only","In line"))))))')
         put(wsV, r, cMd + 5, f'=IF(MAX(ABS({a}),ABS({m_}))>=Cargo_MT,"yes","")')
+        fullcols(r, lambda m, col, r=r: '=' + sumifs('I', f'$B{r}', f'"{m}"'))
         r += 1
 vlast = r - 1
 # totals by status
 r += 1
 put(wsV, r, 1, 'Totals by status', font=Font(name=F, size=11, bold=True)).border = Border(); r += 1
-header(wsV, r, ['Status', '# destinations', ''] + yrs + ['5-yr avg', '5-yr median*', 'Δ vs avg MT', 'Δ vs avg %', 'Δ vs median MT', 'Δ vs median %']); r += 1
+header(wsV, r, ['Status', '# destinations', ''] + yrs + ['5-yr avg', '5-yr median*', 'Δ vs avg MT', 'Δ vs avg %', 'Δ vs median MT', 'Δ vs median %']); header(wsV, r, FULLH, cF); wsV.row_dimensions[r].height = 66; r += 1
 SR = f'$A${vfirst}:$A${vlast}'
 tfirst = r
 for g in GROUPS + ['RoW TOTAL']:
@@ -416,13 +436,24 @@ for g in GROUPS + ['RoW TOTAL']:
     put(wsV, r, cAv, f'=AVERAGE({five})', MT, fill=fill); put(wsV, r, cMd, f'=MEDIAN({five})', MT, fill=fill)
     put(wsV, r, cMd + 1, f'={cur}-{L(cAv)}{r}', MT, font=BOLD, fill=fill); put(wsV, r, cMd + 2, dpct(cur, f'{L(cAv)}{r}'), PCT, fill=fill)
     put(wsV, r, cMd + 3, f'={cur}-{L(cMd)}{r}', MT, font=BOLD, fill=fill); put(wsV, r, cMd + 4, dpct(cur, f'{L(cMd)}{r}'), PCT, fill=fill)
+    if fill is None:
+        fullcols(r, lambda m, col, r=r: f'=SUMIF({SR},$A{r},{L(col)}${vfirst}:{L(col)}${vlast})')
+    else:
+        fullcols(r, lambda m, col, r=r: f'=SUM({L(col)}{tfirst}:{L(col)}{r-1})', fill)
     r += 1
 put(wsV, r, 1, '* Group median = median of the group\'s yearly totals, not the sum of country medians. RoW TOTAL ties to Summary (RoW excl. China & Unknown).',
     font=Font(name=F, size=9, italic=True)).border = Border()
 put(wsV, r + 1, 1, f'Check: RoW TOTAL {CUR} minus Summary RoW (must be 0)', font=Font(name=F, size=9, italic=True)).border = Border()
 put(wsV, r + 1, cY[CUR], f"={L(cY[CUR])}{r-1}-Summary!B8", MT)
+put(wsV, r + 1, cF, f"={L(cF)}{r-1}-(SUMIFS({rng('I')},{rng('A')},\"{LY}\")-SUMIFS({rng('I')},{rng('A')},\"{LY}\",{rng('D')},\"CHINA, PEOPLES REPUBLIC OF\")-SUMIFS({rng('I')},{rng('A')},\"{LY}\",{rng('D')},\"UNKNOWN\"))", MT)
+put(wsV, r + 1, cF - 1, 'Full-year check →', font=Font(name=F, size=9, italic=True)).border = Border()
+for k, t in enumerate([
+    f'Full-MY exports = accumulated exports on the last in-season report of each MY (≈ week 53). Booked-by-wk-{WK} % above 100% means part of the early book was cancelled, rolled to the next MY, or re-declared elsewhere.',
+    f'5-yr avg pace = 5-yr avg wk-{WK} commitment ÷ 5-yr avg full-year exports (ratio of averages, robust to years with zero). "Implied full year" = {CUR} commitment ÷ that pace — mechanical, noisy for 1–3 cargo buyers.']):
+    put(wsV, r + 3 + k, 1, t, font=Font(name=F, size=9, italic=True)).border = Border()
 wsV.column_dimensions['A'].width = 30; wsV.column_dimensions['B'].width = 28; wsV.column_dimensions['C'].width = 22
-for j in range(4, len(hdrV) + 1): wsV.column_dimensions[L(j)].width = 12
+for j in range(4, cF + len(FULLH)): wsV.column_dimensions[L(j)].width = 12
+wsV.column_dimensions[L(cMd + 6)].width = 3
 wsV.freeze_panes = 'D5'
 for j in (cMd + 1, cMd + 3):
     rg = f'{L(j)}{vfirst}:{L(j)}{vlast}'
