@@ -1,0 +1,404 @@
+"""Build US soybean export sales by-destination workbook (current MY vs last year vs 5-yr avg).
+Usage: python build_export_sales.py <ESR csv> <out.xlsx>
+Source: USDA FAS Export Sales Reporting (ESR) query export, commodity SOYBEANS (801)."""
+import sys, re
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.chart import LineChart, BarChart, Reference
+from openpyxl.utils import get_column_letter as L
+from openpyxl.formatting.rule import CellIsRule
+
+src, out = sys.argv[1], sys.argv[2]
+df = pd.read_csv(src, thousands=',')
+df.columns = [c.strip() for c in df.columns]
+df['Country'] = df['CountryName'].str.strip()
+df['date'] = pd.to_datetime(df['WeekendingDate'])
+df['MYstart'] = df['ReportingMarketingYearName'].str.extract(r'Sep (\d{4})').astype(int)
+df['MY'] = df['MYstart'].astype(str) + '/' + (df['MYstart'] + 1).astype(str).str[-2:]
+# in-season rows only: week-ending date between Aug 31 of start year and Sep 7 of next year
+lo = pd.to_datetime(df['MYstart'].astype(str) + '-08-31')
+hi = pd.to_datetime((df['MYstart'] + 1).astype(str) + '-09-07')
+ins = df[(df.date >= lo) & (df.date <= hi)].copy()
+
+cur_start = int(ins.loc[ins.date.idxmax(), 'MYstart'])
+CUR = f"{cur_start}/{str(cur_start+1)[-2:]}"
+WK = int(ins[ins.MYstart == cur_start].WeekNumber.max())
+CUR_DATE = ins[ins.MYstart == cur_start].date.max()
+mys = sorted(m for m in ins.MY.unique() if int(m[:4]) <= cur_start and int(m[:4]) >= cur_start - 6)
+PRIOR = [m for m in mys if m != CUR][::-1]          # newest first
+LY, FIVE = PRIOR[0], PRIOR[:5]
+assert len(FIVE) == 5, FIVE
+
+REGION = {
+ 'CHINA, PEOPLES REPUBLIC OF':'China','UNKNOWN':'Unknown',
+ 'JAPAN':'East Asia ex-China','TAIWAN':'East Asia ex-China','KOREA, REPUBLIC OF':'East Asia ex-China','HONG KONG':'East Asia ex-China',
+ 'INDONESIA':'Southeast Asia','VIETNAM':'Southeast Asia','MALAYSIA':'Southeast Asia','THAILAND':'Southeast Asia','PHILIPPINES':'Southeast Asia',
+ 'BURMA':'Southeast Asia','CAMBODIA':'Southeast Asia','LAOS':'Southeast Asia','SINGAPORE':'Southeast Asia',
+ 'BANGLADESH':'South Asia','PAKISTAN':'South Asia','NEPAL':'South Asia','SRI LANKA':'South Asia',
+ 'EGYPT':'Middle East & N. Africa','ALGERIA':'Middle East & N. Africa','TURKEY':'Middle East & N. Africa','TUNISIA':'Middle East & N. Africa',
+ 'MOROCCO':'Middle East & N. Africa','IRAN':'Middle East & N. Africa','IRAQ':'Middle East & N. Africa','ISRAEL':'Middle East & N. Africa',
+ 'JORDAN':'Middle East & N. Africa','LEBANON':'Middle East & N. Africa','LIBYA':'Middle East & N. Africa','SAUDI ARABIA':'Middle East & N. Africa',
+ 'QATAR':'Middle East & N. Africa',
+ 'SPAIN':'Europe','NETHERLANDS':'Europe','PORTUGAL':'Europe','ITALY':'Europe','GERMANY':'Europe','UNITED KINGDOM':'Europe','GREECE':'Europe',
+ 'BELGIUM-LUXEMBOURG':'Europe','FRANCE':'Europe','IRELAND':'Europe','NORWAY':'Europe','ROMANIA':'Europe','SWITZERLAND':'Europe',
+ 'UKRAINE':'Europe','GEORGIA, REPUBLIC OF':'Europe',
+ 'MEXICO':'Americas','CANADA':'Americas','COLOMBIA':'Americas','COSTA RICA':'Americas','VENEZUELA':'Americas','PERU':'Americas',
+ 'ARGENTINA':'Americas','BRAZIL':'Americas','CHILE':'Americas','CUBA':'Americas','DOMINICAN REPUBLIC':'Americas','EL SALVADOR':'Americas',
+ 'GUATEMALA':'Americas','HONDURAS':'Americas','NICARAGUA':'Americas','PANAMA':'Americas','BARBADOS':'Americas',
+ 'LEEWARD-WINDWARD ISLANDS':'Americas','VIRGIN ISLANDS OF THE U.S.':'Americas',
+ 'GHANA':'Sub-Saharan Africa','NIGER':'Sub-Saharan Africa','NIGERIA':'Sub-Saharan Africa','SENEGAL':'Sub-Saharan Africa',
+ 'SOUTH AFRICA, REPUBLIC OF':'Sub-Saharan Africa','AUSTRALIA':'Oceania',
+}
+REGIONS = ['China','Unknown','East Asia ex-China','Southeast Asia','South Asia','Middle East & N. Africa','Europe','Americas','Sub-Saharan Africa','Oceania']
+miss = set(ins.Country) - set(REGION)
+for c in miss: REGION[c] = 'Other'
+if miss: REGIONS.append('Other'); print('Unmapped -> Other:', miss)
+
+ins = ins[ins.MY.isin(mys)]
+snap = ins[ins.WeekNumber == WK]
+final = ins[ins.MY != CUR].sort_values('date').groupby(['MY','Country']).tail(1)  # last in-season report
+final = final.set_index(['MY','Country']).AccumulatedExports
+
+# ---------------- styles ----------------
+F = 'Arial'
+HFILL = PatternFill('solid', fgColor='1F4E78'); SUBFILL = PatternFill('solid', fgColor='D9E1F2')
+CURFILL = PatternFill('solid', fgColor='FFF2CC'); TOTFILL = PatternFill('solid', fgColor='EDEDED')
+thin = Side(style='thin', color='BFBFBF'); BOX = Border(top=thin, bottom=thin, left=thin, right=thin)
+MT = '#,##0;-#,##0;"-"'; PCT = '+0.0%;-0.0%;0.0%'; SH = '0.0%'
+BLUE = Font(name=F, size=10, color='0000FF'); GREEN = Font(name=F, size=10, color='008000')
+NORM = Font(name=F, size=10); BOLD = Font(name=F, size=10, bold=True)
+
+def title(ws, t, note, width=None):
+    ws['A1'] = t; ws['A1'].font = Font(name=F, size=12, bold=True)
+    ws['A2'] = note; ws['A2'].font = Font(name=F, size=9, italic=True, color='595959')
+def header(ws, row, labels, col=1):
+    for i, h in enumerate(labels):
+        c = ws.cell(row, col + i, h); c.font = Font(name=F, size=10, bold=True, color='FFFFFF')
+        c.fill = HFILL; c.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True); c.border = BOX
+    ws.row_dimensions[row].height = 42
+def put(ws, r, c, v, fmt=None, font=NORM, fill=None):
+    x = ws.cell(r, c, v); x.font = font; x.border = BOX
+    if fmt: x.number_format = fmt
+    if fill: x.fill = fill
+    return x
+def dpct(cur, base): return f'=IF({base}=0,IF({cur}=0,0,"new"),{cur}/{base}-1)'
+
+wb = Workbook()
+wsS = wb.active; wsS.title = 'Summary'
+wsR = wb.create_sheet('Ranking by Destination')
+wsM = wb.create_sheet('Top Movers')
+wsG = wb.create_sheet('Regions')
+wsW = wb.create_sheet('Weekly Commitments')
+wsD = wb.create_sheet('Data')
+
+# ---------------- Data (long, hardcoded source) ----------------
+title(wsD, f'Source data — USDA FAS Export Sales, SOYBEANS, in-season week {WK} snapshot per marketing year + final MY exports (MT)',
+      'Hardcoded from the ESR query export (blue). Rows are the in-season report only (pre-season "week 9" rows of the prior reporting year excluded). '
+      'Final MY exports = Accumulated Exports on the last in-season report of that MY (blank for current MY).')
+header(wsD, 4, ['Marketing year','Week #','Week ending','Destination','Region','Total commitment','Accumulated exports','Outstanding sales','Final MY exports'])
+r = 5
+for _, x in snap.sort_values(['MY','Country']).iterrows():
+    fe = final.get((x.MY, x.Country), None) if x.MY != CUR else None
+    vals = [x.MY, int(x.WeekNumber), x.date.to_pydatetime(), x.Country, None,
+            float(x.TotalCommitment), float(x.AccumulatedExports), float(x.OutstandingSales), fe]
+    for j, v in enumerate(vals, 1):
+        c = put(wsD, r, j, v, font=BLUE)
+    wsD.cell(r, 5).value = f"=IFERROR(INDEX('Ranking by Destination'!$C:$C,MATCH(D{r},'Ranking by Destination'!$B:$B,0)),\"Other\")"
+    wsD.cell(r, 5).font = GREEN
+    wsD.cell(r, 3).number_format = 'dd-mmm-yy'
+    for j in (6, 7, 8, 9): wsD.cell(r, j).number_format = MT
+    r += 1
+# destinations that appear only in final-year data but not in snapshot: add final rows too
+extra = [(m, c) for (m, c) in final.index if not ((snap.MY == m) & (snap.Country == c)).any()]
+for m, c in extra:
+    vals = [m, None, None, c, None, 0, 0, 0, float(final[(m, c)])]
+    for j, v in enumerate(vals, 1): put(wsD, r, j, v, font=BLUE)
+    wsD.cell(r, 5).value = f"=IFERROR(INDEX('Ranking by Destination'!$C:$C,MATCH(D{r},'Ranking by Destination'!$B:$B,0)),\"Other\")"
+    wsD.cell(r, 5).font = GREEN
+    for j in (6, 7, 8, 9): wsD.cell(r, j).number_format = MT
+    r += 1
+DLAST = r - 1
+put(wsD, r + 1, 1, f'Note: {len(extra)} rows added with zero week-{WK} values for destinations that shipped later in a MY but had no commitment at week {WK} (needed for full-MY exports).',
+    font=Font(name=F, size=9, italic=True)).border = Border()
+for col, w in zip('ABCDEFGHI', [14, 8, 12, 30, 22, 16, 16, 16, 16]): wsD.column_dimensions[col].width = w
+wsD.freeze_panes = 'A5'; wsD.auto_filter.ref = f'A4:I{DLAST}'
+def rng(col): return f"Data!${col}$5:${col}${DLAST}"
+def sumifs(valcol, country_ref, my_ref):
+    return f"SUMIFS({rng(valcol)},{rng('D')},{country_ref},{rng('A')},{my_ref})"
+
+# ---------------- Ranking by Destination ----------------
+countries = sorted(set(ins.Country))
+sc = snap.pivot_table(index='Country', columns='MY', values='TotalCommitment', aggfunc='sum').reindex(countries).fillna(0)
+avg5 = sc[FIVE].mean(axis=1); dev = sc[CUR] - avg5
+order = dev.sort_values(ascending=False).index.tolist()
+order = [c for c in order if (sc.loc[c].abs().sum() > 0) or c in final.index.get_level_values(1)]
+
+cols = ['Rank (Δ vs 5-yr)','Destination','Region', CUR] + PRIOR + [
+    '5-yr avg', '5-yr min', '5-yr max', f'Δ vs {LY} MT', f'Δ vs {LY} %', 'Δ vs 5-yr avg MT', 'Δ vs 5-yr avg %',
+    f'Rank (Δ vs {LY})', 'vs 5-yr range', f'Exports shipped {CUR}', 'Exports shipped 5-yr avg', 'Δ shipped vs 5-yr MT',
+    f'Unshipped {CUR}', f'Share of {CUR} total', f'Full-MY exports {LY}', f'Pace: {CUR} commit as % of {LY} full-MY']
+title(wsR, f'US Soybean Export Sales by Destination — total commitment at week {WK} ({CUR_DATE:%d %b %Y}), {CUR} vs {LY} vs 5-yr avg ({FIVE[-1]}–{FIVE[0]})',
+      f'Total commitment = accumulated exports + outstanding sales for the MY, as of in-season week {WK} of each MY (same point in the season). '
+      'Sorted by Δ vs 5-yr average (largest gain first). Ranks are live formulas. Region grouping is an analyst assumption (blue cells, editable). '
+      'UNKNOWN = sales to undeclared destinations — historically mostly China.')
+header(wsR, 4, cols)
+wsR.row_dimensions[4].height = 54
+yc = {m: 4 + i for i, m in enumerate([CUR] + PRIOR)}   # column index of each MY
+cA = 4 + len(PRIOR) + 1  # 5-yr avg col
+names = {k: i + 1 for i, k in enumerate(cols)}
+first, last = 5, 4 + len(order)
+for i, c in enumerate(order):
+    r = first + i
+    fill = TOTFILL if c in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') else None
+    put(wsR, r, 2, c, font=BOLD if fill else NORM, fill=fill)
+    put(wsR, r, 3, REGION[c], font=BLUE, fill=fill)
+    for m, j in yc.items():
+        put(wsR, r, j, '=' + sumifs('F', f'$B{r}', f'{L(j)}$4'), MT, fill=CURFILL if m == CUR else fill)
+    five = f'{L(yc[FIVE[0]])}{r}:{L(yc[FIVE[-1]])}{r}'
+    cur, ly = f'{L(yc[CUR])}{r}', f'{L(yc[LY])}{r}'
+    a = f'{L(cA)}{r}'
+    put(wsR, r, cA, f'=AVERAGE({five})', MT, fill=fill)
+    put(wsR, r, cA + 1, f'=MIN({five})', MT, fill=fill)
+    put(wsR, r, cA + 2, f'=MAX({five})', MT, fill=fill)
+    put(wsR, r, cA + 3, f'={cur}-{ly}', MT, fill=fill)
+    put(wsR, r, cA + 4, dpct(cur, ly), PCT, fill=fill)
+    put(wsR, r, cA + 5, f'={cur}-{a}', MT, font=BOLD, fill=fill)
+    put(wsR, r, cA + 6, dpct(cur, a), PCT, fill=fill)
+    dl = L(cA + 3); d5 = L(cA + 5)
+    put(wsR, r, 1, f'=RANK({d5}{r},${d5}${first}:${d5}${last},0)', '0', fill=fill)
+    put(wsR, r, cA + 7, f'=RANK({dl}{r},${dl}${first}:${dl}${last},0)', '0', fill=fill)
+    put(wsR, r, cA + 8, f'=IF({cur}>{L(cA+2)}{r},"ABOVE 5-yr max",IF({cur}<{L(cA+1)}{r},"below 5-yr min","within range"))', fill=fill)
+    j = cA + 9
+    put(wsR, r, j, '=' + sumifs('G', f'$B{r}', f'{L(yc[CUR])}$4'), MT, fill=fill)
+    put(wsR, r, j + 1, '=(' + '+'.join(sumifs('G', f'$B{r}', f'{L(yc[m])}$4') for m in FIVE) + ')/5', MT, fill=fill)
+    put(wsR, r, j + 2, f'={L(j)}{r}-{L(j+1)}{r}', MT, fill=fill)
+    put(wsR, r, j + 3, '=' + sumifs('H', f'$B{r}', f'{L(yc[CUR])}$4'), MT, fill=fill)
+    put(wsR, r, j + 4, f'=IF({L(yc[CUR])}${last+1}=0,0,{cur}/{L(yc[CUR])}${last+1})', SH, fill=fill)
+    put(wsR, r, j + 5, '=' + sumifs('I', f'$B{r}', f'{L(yc[LY])}$4'), MT, fill=fill)
+    put(wsR, r, j + 6, f'=IF({L(j+5)}{r}=0,IF({cur}=0,0,"new"),{cur}/{L(j+5)}{r})', '0%', fill=fill)
+T = last + 1
+put(wsR, T, 2, 'TOTAL (all destinations)', font=BOLD, fill=TOTFILL)
+put(wsR, T, 3, '', fill=TOTFILL)
+for j in list(yc.values()) + [cA, cA + 3, cA + 5, cA + 9, cA + 10, cA + 11, cA + 12, cA + 14]:
+    put(wsR, T, j, f'=SUM({L(j)}{first}:{L(j)}{last})', MT, font=BOLD, fill=TOTFILL)
+five = f'{L(yc[FIVE[0]])}{T}:{L(yc[FIVE[-1]])}{T}'
+put(wsR, T, cA + 1, f'=MIN({five})', MT, font=BOLD, fill=TOTFILL); put(wsR, T, cA + 2, f'=MAX({five})', MT, font=BOLD, fill=TOTFILL)
+put(wsR, T, cA + 4, dpct(f'{L(yc[CUR])}{T}', f'{L(yc[LY])}{T}'), PCT, font=BOLD, fill=TOTFILL)
+put(wsR, T, cA + 6, dpct(f'{L(yc[CUR])}{T}', f'{L(cA)}{T}'), PCT, font=BOLD, fill=TOTFILL)
+put(wsR, T, cA + 13, f'=SUM({L(cA+13)}{first}:{L(cA+13)}{last})', SH, font=BOLD, fill=TOTFILL)
+put(wsR, T, cA + 15, dpct(f'{L(yc[CUR])}{T}', f'{L(cA+14)}{T}').replace('-1)', ')'), '0%', font=BOLD, fill=TOTFILL)
+# check row: total must equal ESR "Total" column
+tot_chk = {m: float(snap[snap.MY == m].TotalTotalCommitment.iloc[0]) for m in mys}
+put(wsR, T + 1, 2, 'ESR reported total (check)', font=Font(name=F, size=9, italic=True))
+put(wsR, T + 2, 2, 'Difference (must be 0)', font=Font(name=F, size=9, italic=True))
+for m, j in yc.items():
+    put(wsR, T + 1, j, tot_chk[m], MT, font=BLUE)
+    put(wsR, T + 2, j, f'={L(j)}{T}-{L(j)}{T+1}', MT)
+for jj, k in enumerate(['A'], 0): pass
+for col in range(1, len(cols) + 1): wsR.column_dimensions[L(col)].width = 13
+wsR.column_dimensions['A'].width = 8; wsR.column_dimensions['B'].width = 30; wsR.column_dimensions['C'].width = 22
+wsR.column_dimensions[L(cA + 8)].width = 16
+wsR.freeze_panes = 'D5'
+gr = PatternFill('solid', fgColor='C6EFCE'); rd = PatternFill('solid', fgColor='FFC7CE')
+for j in (cA + 3, cA + 5):
+    rr = f'{L(j)}{first}:{L(j)}{last}'
+    wsR.conditional_formatting.add(rr, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
+    wsR.conditional_formatting.add(rr, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
+RC = {k: L(v) for k, v in names.items()}
+
+# ---------------- Summary ----------------
+title(wsS, f'US Soybean Export Sales — {CUR} vs {LY} vs 5-yr avg, at in-season week {WK} (w/e {CUR_DATE:%d %b %Y})',
+      'All figures link to "Ranking by Destination" (SUMIF by region). RoW = all destinations excluding China AND Unknown. '
+      'Unknown is shown separately because it is a booking placeholder that is usually re-declared to China later in the season.')
+def block(r0, label, srcol_cur, srcols_prior, src_avg_fn, fmt_note):
+    put(wsS, r0, 1, label, font=Font(name=F, size=11, bold=True)).border = Border()
+    header(wsS, r0 + 1, ['Group', CUR, LY, '5-yr avg', f'Δ vs {LY} MT', f'Δ vs {LY} %', 'Δ vs 5-yr MT', 'Δ vs 5-yr %', f'Share {CUR}', 'Share 5-yr avg', f'4-yr avg excl. {LY}', 'Δ vs 4-yr MT', 'Δ vs 4-yr %'])
+    groups = [('China', 'China'), ('Unknown', 'Unknown'), ('RoW excl. China & Unknown', None), ('Total', 'ALL')]
+    rows = {}
+    for i, (g, key) in enumerate(groups):
+        r = r0 + 2 + i; rows[g] = r
+        fill = TOTFILL if g == 'Total' else None
+        put(wsS, r, 1, g, font=BOLD if fill else NORM, fill=fill)
+        for j, colL in ((2, srcol_cur), (3, srcols_prior), (4, src_avg_fn)):
+            if key == 'ALL': f = f"=SUM('Ranking by Destination'!{colL}{first}:{colL}{last})"
+            elif key: f = f"=SUMIF('Ranking by Destination'!$C${first}:$C${last},\"{key}\",'Ranking by Destination'!{colL}{first}:{colL}{last})"
+            else: f = f'={L(j)}{r0+5}-{L(j)}{r0+2}-{L(j)}{r0+3}'
+            put(wsS, r, j, f, MT, font=GREEN if key else NORM, fill=fill)
+        put(wsS, r, 5, f'=B{r}-C{r}', MT, fill=fill); put(wsS, r, 6, dpct(f'B{r}', f'C{r}'), PCT, fill=fill)
+        put(wsS, r, 7, f'=B{r}-D{r}', MT, font=BOLD, fill=fill); put(wsS, r, 8, dpct(f'B{r}', f'D{r}'), PCT, fill=fill)
+        put(wsS, r, 9, f'=IF(B${r0+5}=0,0,B{r}/B${r0+5})', SH, fill=fill); put(wsS, r, 10, f'=IF(D${r0+5}=0,0,D{r}/D${r0+5})', SH, fill=fill)
+        put(wsS, r, 11, f'=(D{r}*5-C{r})/4', MT, fill=fill)
+        put(wsS, r, 12, f'=B{r}-K{r}', MT, font=BOLD, fill=fill); put(wsS, r, 13, dpct(f'B{r}', f'K{r}'), PCT, fill=fill)
+    return rows
+b1 = block(4, f'1) Total commitment (shipped + unshipped) at week {WK}', RC[CUR], RC[LY], RC['5-yr avg'], '')
+b2 = block(11, f'2) Accumulated exports (already shipped) at week {WK}', RC[f'Exports shipped {CUR}'],
+           None, RC['Exports shipped 5-yr avg'], '')
+# exports LY column: need LY exports by destination; compute from Data directly
+for g, r in b2.items():
+    key = {'China': 'CHINA, PEOPLES REPUBLIC OF', 'Unknown': 'UNKNOWN'}.get(g)
+    if g == 'Total': f = f"=SUMIFS({rng('G')},{rng('A')},\"{LY}\",{rng('B')},{WK})"
+    elif key: f = f"=SUMIFS({rng('G')},{rng('A')},\"{LY}\",{rng('D')},\"{key}\")"
+    else: f = f'=C{b2["Total"]}-C{b2["China"]}-C{b2["Unknown"]}'
+    wsS.cell(r, 3).value = f
+# regional block
+r0 = 18
+put(wsS, r0, 1, f'3) Total commitment by region at week {WK} (ranked by Δ vs 5-yr avg on the Regions tab)', font=Font(name=F, size=11, bold=True)).border = Border()
+put(wsS, r0 + 1, 1, '→ see "Regions" and "Top Movers" tabs', font=Font(name=F, size=10, italic=True)).border = Border()
+# pace block
+r0 = 21
+put(wsS, r0, 1, f'4) Seasonal pace — week-{WK} commitment as % of the final MY exports (how much of the year is usually booked by now)', font=Font(name=F, size=11, bold=True)).border = Border()
+header(wsS, r0 + 1, ['Marketing year', f'Commitment wk {WK}', 'Final MY exports', 'Booked by wk %'])
+pr = r0 + 2
+for i, m in enumerate(FIVE[::-1]):
+    r = pr + i
+    put(wsS, r, 1, m)
+    put(wsS, r, 2, f"=SUMIFS({rng('F')},{rng('A')},A{r})", MT, font=GREEN)
+    put(wsS, r, 3, f"=SUMIFS({rng('I')},{rng('A')},A{r})", MT, font=GREEN)
+    put(wsS, r, 4, f'=IF(C{r}=0,0,B{r}/C{r})', SH)
+re_ = pr + 5
+put(wsS, re_, 1, '5-yr average pace', font=BOLD, fill=TOTFILL); put(wsS, re_, 2, '', fill=TOTFILL); put(wsS, re_, 3, '', fill=TOTFILL)
+put(wsS, re_, 4, f'=AVERAGE(D{pr}:D{pr+4})', SH, font=BOLD, fill=TOTFILL)
+put(wsS, re_ + 1, 1, f'{CUR} commitment', font=NORM); put(wsS, re_ + 1, 2, f'=B{b1["Total"]}', MT)
+put(wsS, re_ + 2, 1, f'Implied {CUR} exports at avg pace', font=BOLD); put(wsS, re_ + 2, 2, f'=IF(D{re_}=0,0,B{re_+1}/D{re_})', MT, font=BOLD)
+put(wsS, re_ + 3, 1, 'Range (fastest / slowest pace yr)'); put(wsS, re_ + 3, 2, f'=B{re_+1}/MAX(D{pr}:D{pr+4})', MT); put(wsS, re_ + 3, 3, f'=B{re_+1}/MIN(D{pr}:D{pr+4})', MT)
+put(wsS, re_ + 4, 1, 'Caveat: a mechanical extrapolation, not a forecast. Booking pace depends on the price spread vs Brazil and on Chinese buying timing; '
+     f'{LY} pace was distorted by China\'s absence from US sales.', font=Font(name=F, size=9, italic=True)).border = Border()
+notes = re_ + 6
+for k, t in enumerate([
+    'Reading notes:',
+    f'• "This year" = MY {CUR} (Sep–Aug). Every MY is compared at the same in-season week number ({WK}); report dates differ by up to ±4 days across years.',
+    f'• 5-yr avg = simple average of {FIVE[-1]} … {FIVE[0]}. It includes {LY}, when China bought almost nothing from the US early in the season, which pulls the China average down.',
+    f'• Columns K–M: 4-yr avg excluding {LY} (the anomalous China-absent year) — the fairer "normal year" benchmark for China and RoW.',
+    '• Total commitment captures purchase intent (bookings); accumulated exports capture physical flow. Early in the MY, commitment is the better demand signal.',
+    '• Outstanding sales can be cancelled or rolled; UNKNOWN is typically re-allocated to named destinations (mostly China) when shipped.',
+    f'• Source: USDA FAS Export Sales Reporting (ESR) query, SOYBEANS (801), data through w/e {CUR_DATE:%d %b %Y}.']):
+    put(wsS, notes + k, 1, t, font=Font(name=F, size=9, bold=(k == 0), italic=(k > 0))).border = Border()
+wsS.column_dimensions['A'].width = 34
+for col in 'BCDEFGHIJKLM': wsS.column_dimensions[col].width = 14
+
+# ---------------- Regions ----------------
+title(wsG, f'Total commitment by region at week {WK} — {CUR} vs {LY} vs 5-yr avg (MT)',
+      'SUMIF on "Ranking by Destination" region column. Sorted by Δ vs 5-yr avg at build time; numbers are live.')
+header(wsG, 4, ['Region', '# destinations', CUR, LY, '5-yr avg', f'Δ vs {LY} MT', f'Δ vs {LY} %', 'Δ vs 5-yr MT', 'Δ vs 5-yr %', f'Share {CUR}', 'Share 5-yr avg'])
+reg_dev = {}
+for g in REGIONS:
+    cs = [c for c in order if REGION[c] == g]
+    reg_dev[g] = sum(dev.get(c, 0) for c in cs)
+regs = sorted([g for g in REGIONS if any(REGION[c] == g for c in order)], key=lambda g: -reg_dev[g])
+RR = f"'Ranking by Destination'!$C${first}:$C${last}"
+for i, g in enumerate(regs):
+    r = 5 + i
+    put(wsG, r, 1, g, font=BOLD)
+    put(wsG, r, 2, f'=COUNTIF({RR},A{r})', '0')
+    for j, k in ((3, CUR), (4, LY), (5, '5-yr avg')):
+        put(wsG, r, j, f"=SUMIF({RR},$A{r},'Ranking by Destination'!{RC[k]}${first}:{RC[k]}${last})", MT, font=GREEN)
+    put(wsG, r, 6, f'=C{r}-D{r}', MT); put(wsG, r, 7, dpct(f'C{r}', f'D{r}'), PCT)
+    put(wsG, r, 8, f'=C{r}-E{r}', MT, font=BOLD); put(wsG, r, 9, dpct(f'C{r}', f'E{r}'), PCT)
+    GT = 5 + len(regs)
+    put(wsG, r, 10, f'=IF(C${GT}=0,0,C{r}/C${GT})', SH); put(wsG, r, 11, f'=IF(E${GT}=0,0,E{r}/E${GT})', SH)
+GT = 5 + len(regs)
+put(wsG, GT, 1, 'TOTAL', font=BOLD, fill=TOTFILL)
+for j in range(2, 7): put(wsG, GT, j, f'=SUM({L(j)}5:{L(j)}{GT-1})', MT if j > 2 else '0', font=BOLD, fill=TOTFILL)
+put(wsG, GT, 7, dpct(f'C{GT}', f'D{GT}'), PCT, font=BOLD, fill=TOTFILL)
+put(wsG, GT, 8, f'=SUM(H5:H{GT-1})', MT, font=BOLD, fill=TOTFILL); put(wsG, GT, 9, dpct(f'C{GT}', f'E{GT}'), PCT, font=BOLD, fill=TOTFILL)
+put(wsG, GT, 10, f'=SUM(J5:J{GT-1})', SH, font=BOLD, fill=TOTFILL); put(wsG, GT, 11, f'=SUM(K5:K{GT-1})', SH, font=BOLD, fill=TOTFILL)
+wsG.column_dimensions['A'].width = 26
+for col in 'BCDEFGHIJK': wsG.column_dimensions[col].width = 14
+for j in (6, 8):
+    rr = f'{L(j)}5:{L(j)}{GT-1}'
+    wsG.conditional_formatting.add(rr, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
+    wsG.conditional_formatting.add(rr, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
+ch = BarChart(); ch.type = 'bar'; ch.title = f'Δ commitment vs 5-yr avg by region (MT), wk {WK}'
+ch.add_data(Reference(wsG, min_col=8, min_row=4, max_row=GT - 1), titles_from_data=True)
+ch.set_categories(Reference(wsG, min_col=1, min_row=5, max_row=GT - 1)); ch.legend = None
+ch.y_axis.numFmt = '#,##0'; ch.width = 18; ch.height = 8; ch.x_axis.scaling.orientation = 'maxMin'
+ch.x_axis.delete = False; ch.y_axis.delete = False; ch.x_axis.tickLblPos = 'low'
+wsG.add_chart(ch, f'A{GT+3}')
+
+# ---------------- Top Movers ----------------
+N = 15
+ex = [c for c in order if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN')]
+dly = (sc[CUR] - sc[LY])
+title(wsM, f'Top {N} gainers and losers by destination (excl. China & Unknown) — total commitment at week {WK}, MT',
+      'Lists sorted at build time; numbers are INDEX/MATCH links to "Ranking by Destination" and update live. China & Unknown are on the Summary tab. '
+      'Caution: many buyers take 1–3 cargoes in a season, so single-country swings of ~60–70k t can be one vessel booked earlier or later.')
+def mover_table(r0, c0, label, names_, dcol, pcol):
+    put(wsM, r0, c0, label, font=Font(name=F, size=11, bold=True)).border = Border()
+    header(wsM, r0 + 1, ['#', 'Destination', 'Region', CUR, LY, '5-yr avg', 'Δ MT', 'Δ %', 'vs 5-yr range'], c0)
+    for i, c in enumerate(names_):
+        r = r0 + 2 + i
+        put(wsM, r, c0, i + 1, '0'); put(wsM, r, c0 + 1, c)
+        nm = f'{L(c0+1)}{r}'
+        for k, (hdr, fmt) in enumerate([('Region', None), (CUR, MT), (LY, MT), ('5-yr avg', MT), (dcol, MT), (pcol, PCT), ('vs 5-yr range', None)]):
+            colL = RC[hdr]
+            put(wsM, r, c0 + 2 + k, f"=INDEX('Ranking by Destination'!${colL}:${colL},MATCH({nm},'Ranking by Destination'!$B:$B,0))", fmt, font=GREEN)
+g5 = ex[:N]; l5 = [c for c in ex[::-1] if dev[c] < 0][:N]
+gl = [c for c in dly.drop(['CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN']).sort_values(ascending=False).index if dly[c] > 0][:N]
+ll = [c for c in dly.drop(['CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN']).sort_values().index if dly[c] < 0][:N]
+mover_table(4, 1, f'A) Taking MORE vs 5-yr avg', g5, 'Δ vs 5-yr avg MT', 'Δ vs 5-yr avg %')
+mover_table(4, 11, f'B) Taking LESS vs 5-yr avg', l5, 'Δ vs 5-yr avg MT', 'Δ vs 5-yr avg %')
+mover_table(8 + N, 1, f'C) Taking MORE vs {LY}', gl, f'Δ vs {LY} MT', f'Δ vs {LY} %')
+mover_table(8 + N, 11, f'D) Taking LESS vs {LY}', ll, f'Δ vs {LY} MT', f'Δ vs {LY} %')
+for c0 in (1, 11):
+    for k, w in enumerate([5, 28, 20, 12, 12, 12, 12, 10, 15]): wsM.column_dimensions[L(c0 + k)].width = w
+wsM.column_dimensions['J'].width = 3
+for c0 in (1, 11):
+    for r0 in (6, 10 + N):
+        rr = f'{L(c0+6)}{r0}:{L(c0+6)}{r0+N-1}'
+        wsM.conditional_formatting.add(rr, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
+        wsM.conditional_formatting.add(rr, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
+
+# ---------------- Weekly Commitments ----------------
+title(wsW, f'Cumulative total commitment by in-season week — {CUR} vs prior MYs (MT)',
+      'Aggregated from the ESR file (hardcoded, blue). RoW excludes China and Unknown. 5-yr avg columns are formulas.')
+wk = ins.copy(); wk['grp'] = wk.Country.map(lambda c: 'China' if c.startswith('CHINA') else ('Unknown' if c == 'UNKNOWN' else 'RoW'))
+pv = wk.pivot_table(index='WeekNumber', columns=['grp', 'MY'], values='TotalCommitment', aggfunc='sum')
+pv = pv.loc[1:52].fillna(0)  # destination absent that week = 0 commitment
+hdr = ['Week']
+blocks = []
+for g in ['Total', 'China', 'RoW']:
+    for m in [CUR, LY]: hdr.append(f'{g} {m}')
+    hdr.append(f'{g} 5-yr avg')
+header(wsW, 4, hdr)
+for w in pv.index:
+    r = 4 + w
+    put(wsW, r, 1, int(w), '0')
+    col = 2
+    for g in ['Total', 'China', 'RoW']:
+        for m in [CUR, LY]:
+            if g == 'Total':
+                v = sum(pv.get((gg, m), pd.Series(dtype=float)).get(w, float('nan')) for gg in ['China', 'Unknown', 'RoW'] if (gg, m) in pv.columns)
+            else:
+                v = pv[(g, m)].get(w) if (g, m) in pv.columns else None
+            v = None if v is None or pd.isna(v) else float(v)
+            put(wsW, r, col, v, MT, font=BLUE); col += 1
+        if g == 'Total':
+            vals = [pv[[(gg, m) for gg in ['China', 'Unknown', 'RoW'] if (gg, m) in pv.columns]].loc[w].sum() for m in FIVE]
+        else:
+            vals = [pv[(g, m)].get(w, 0) if (g, m) in pv.columns else 0 for m in FIVE]
+        # store per-year values on hidden helper area to keep avg as formula
+        hc = 20 + ['Total', 'China', 'RoW'].index(g) * 5
+        for k, v in enumerate(vals):
+            put(wsW, r, hc + k, float(0 if pd.isna(v) else v), MT, font=BLUE)
+        put(wsW, r, col, f'=AVERAGE({L(hc)}{r}:{L(hc+4)}{r})', MT); col += 1
+for gi, g in enumerate(['Total', 'China', 'RoW']):
+    for k, m in enumerate(FIVE):
+        c = wsW.cell(4, 20 + gi * 5 + k, f'{g} {m}'); c.font = Font(name=F, size=9, bold=True)
+wsW.cell(3, 20, 'Helper: per-year values feeding the 5-yr avg columns').font = Font(name=F, size=9, italic=True)
+# blank current-MY cells beyond current week
+for r in range(5 + WK, 57):
+    for col in (2, 5, 8): wsW.cell(r, col).value = None
+for col in range(1, 35): wsW.column_dimensions[L(col)].width = 13
+wsW.freeze_panes = 'B5'
+for i, (g, c1) in enumerate([('Total', 2), ('China', 5), ('RoW', 8)]):
+    lc = LineChart(); lc.title = f'{g} cumulative commitment (MT)'; lc.y_axis.numFmt = '#,##0'
+    lc.add_data(Reference(wsW, min_col=c1, max_col=c1 + 2, min_row=4, max_row=56), titles_from_data=True)
+    lc.set_categories(Reference(wsW, min_col=1, min_row=5, max_row=56)); lc.width = 16; lc.height = 7.5
+    lc.x_axis.title = 'MY week'; lc.x_axis.delete = False; lc.y_axis.delete = False
+    wsW.add_chart(lc, f'K{5 + i * 16}')
+
+for ws in wb:
+    ws.sheet_view.showGridLines = False
+wb.save(out)
+print('CUR', CUR, 'WK', WK, 'LY', LY, 'FIVE', FIVE, 'rows', len(order))
