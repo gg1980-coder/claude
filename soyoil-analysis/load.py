@@ -21,6 +21,9 @@ PRICE_COLS = {
 MONTHLY_COLS = {"TALLOW": 24, "POULTRY_FAT": 26}   # AVFOT006 / AVFOP018: monthly, likely production volume (000 lb) - confirm units
 
 
+SHIFT_PX_CLOSE_1D = True
+
+
 def load_daily() -> pd.DataFrame:
     raw = pd.read_excel(XLSX, sheet_name="inputs 1", header=None)
     out = {}
@@ -31,6 +34,12 @@ def load_daily() -> pd.DataFrame:
         s = s[~s.index.isna()]
         out[name] = s[~s.index.duplicated()]
     df = pd.DataFrame(out).sort_index()
+    if SHIFT_PX_CLOSE_1D:
+        # 'inputs 1' pulls field PX_CLOSE_1D = PREVIOUS day's close; re-date each value to the
+        # prior row's date so prices sit on the day they were set (verified against PX_LAST
+        # in RD_margins.xlsx: BO, HO, RIN match exactly after the shift)
+        dates = df.index
+        df = df.iloc[1:].set_axis(dates[:-1])
     df.index.name = "date"
     # Bloomberg fill='P' carries previous value on non-trading days -> treat repeats on
     # sparse physical series as missing for return calculations
@@ -97,3 +106,35 @@ def to_weekly(df: pd.DataFrame) -> pd.DataFrame:
 
 def to_monthly(df: pd.DataFrame) -> pd.DataFrame:
     return df.resample("MS").mean()   # monthly average, aligned to month start like EIA data
+
+
+RD_XLSX = Path(__file__).parent / "data" / "RD_margins.xlsx"
+# (date col, value col) in sheet 'RD Margins' (0-based); PX_LAST, calendar days with fill
+RD_COLS = {"HO": (16, 17), "RIN_D4": (19, 20), "LCFS_DEC": (22, 23), "LCFS_WAVG": (24, 25),
+           "P_SOY": (27, 28), "P_CANOLA": (32, 33), "P_CORNOIL": (36, 37), "P_TALLOW": (40, 41),
+           "P_UCO": (44, 45), "P_YG": (46, 47),
+           "M_SOY": (27, 29), "M_CANOLA": (32, 34), "M_CORNOIL": (36, 38), "M_TALLOW": (40, 42),
+           "M_UCO": (44, 48), "M_BLEND": (27, 50)}
+
+
+def load_rd() -> pd.DataFrame:
+    """RD margin calculator series. Gross margins are the sheet's own cached results ($/gal)."""
+    x = pd.read_excel(RD_XLSX, sheet_name="RD Margins", header=None)
+    out = {}
+    for k, (dc, vc) in RD_COLS.items():
+        d = pd.to_datetime(x.iloc[4:, dc], errors="coerce")
+        # some RIN cells (Dec-21..Jul-22) are date-formatted in Excel, e.g. 1.605 shows as
+        # 1900-01-01 14:31 -> convert those back to the Excel serial number
+        raw = x.iloc[4:, vc].map(lambda z: (pd.Timestamp(z) - pd.Timestamp("1899-12-31")).total_seconds() / 86400
+                                 if isinstance(z, (pd.Timestamp, __import__("datetime").datetime)) else z)
+        v = pd.to_numeric(raw, errors="coerce")
+        s = pd.Series(v.values, index=d.values)
+        s = s[s.index.notna()].dropna()
+        out[k] = s[~s.index.duplicated()]
+    df = pd.DataFrame(out).sort_index()
+    df = df[df.index.dayofweek < 5]                       # drop weekend fill rows
+    # LCFS as used by the sheet: weekly-average index before Dec-2022, Dec futures after
+    df["LCFS"] = df["LCFS_WAVG"].where(df.index < "2022-12-01", df["LCFS_DEC"])
+    df["P_UCO_OR_YG"] = df["P_UCO"].fillna(df["P_YG"])   # sheet falls back to yellow grease
+    df.index.name = "date"
+    return df

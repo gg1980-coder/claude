@@ -1,0 +1,830 @@
+{
+ "formula_audit": {
+  "SOY": {
+   "max_abs_diff_$/gal": 0.4029,
+   "n": 1568
+  },
+  "CANOLA": {
+   "max_abs_diff_$/gal": 0.4465,
+   "n": 1568
+  },
+  "CORNOIL": {
+   "max_abs_diff_$/gal": 0.108,
+   "n": 1568
+  },
+  "TALLOW": {
+   "max_abs_diff_$/gal": 0.7028,
+   "n": 1567
+  },
+  "UCO": {
+   "max_abs_diff_$/gal": 0.5547,
+   "n": 1567
+  }
+ },
+ "assumptions": {
+  "lbs_per_gal": {
+   "SOY": 7.5,
+   "CANOLA": 7.5,
+   "CORNOIL": 8.2,
+   "TALLOW": 8.0,
+   "UCO": 8.5
+  },
+  "credits_$/gal": {
+   "SOY": {
+    "BTC": 1.0,
+    "2025": 0.2,
+    "2026": 0.5
+   },
+   "TALLOW": {
+    "BTC": 1.0,
+    "2025": 0.6,
+    "2026": 0.6
+   },
+   "UCO": {
+    "BTC": 1.0,
+    "2025": 0.6,
+    "2026": 0.6
+   },
+   "CORNOIL": {
+    "BTC": 1.0,
+    "2025": 0.7,
+    "2026": 0.7
+   },
+   "CANOLA": {
+    "BTC": 1.0,
+    "2025": 0.0,
+    "2026": 0.3
+   }
+  },
+  "RIN_equivalence": "1.7 before 2026, 1.6 from 2026",
+  "LCFS_factor_2026": {
+   "SOY": 0.002463349999999998,
+   "CANOLA": 0.003011769499999999,
+   "CORNOIL": 0.005829063999999999,
+   "TALLOW": 0.005322132499999999,
+   "UCO": 0.006832554999999999
+  }
+ },
+ "margin_decomposition_today": {
+  "date": "2026-11-05",
+  "SOY": {
+   "diesel": 4.202,
+   "feedstock": -4.709,
+   "RIN": 3.136,
+   "BTC_45Z": 0.5,
+   "LCFS": 0.223,
+   "margin": 3.352
+  },
+  "CANOLA": {
+   "diesel": 4.202,
+   "feedstock": -5.614,
+   "RIN": 3.136,
+   "BTC_45Z": 0.3,
+   "LCFS": 0.273,
+   "margin": 2.297
+  },
+  "CORNOIL": {
+   "diesel": 4.202,
+   "feedstock": -5.781,
+   "RIN": 3.136,
+   "BTC_45Z": 0.7,
+   "LCFS": 0.528,
+   "margin": 2.785
+  },
+  "TALLOW": {
+   "diesel": 4.202,
+   "feedstock": -6.16,
+   "RIN": 3.136,
+   "BTC_45Z": 0.6,
+   "LCFS": 0.482,
+   "margin": 2.26
+  },
+  "UCO": {
+   "diesel": 4.202,
+   "feedstock": -6.078,
+   "RIN": 3.136,
+   "BTC_45Z": 0.6,
+   "LCFS": 0.618,
+   "margin": 2.479
+  }
+ },
+ "soy_yield_sensitivity_$/gal": {
+  "7.5": 3.352,
+  "8.0": 3.038,
+  "8.3": 2.85,
+  "8.6": 2.661
+ },
+ "series_stats": {
+  "LCFS": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 90.5,
+   "mean": 100.243,
+   "min": 42.5,
+   "max": 200.86,
+   "pctile_now_%": 67,
+   "weekly_unchanged_%": 2.2,
+   "vol": 42.56,
+   "vol_unit": "% ann.",
+   "ADF_p_level": 0.354,
+   "corr_BO_same_week": -0.023,
+   "corr_X_lastweek_to_BO": 0.024,
+   "corr_BO_lastweek_to_X": 0.037
+  },
+  "P_CANOLA": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 74.85,
+   "mean": 66.226,
+   "min": 44.48,
+   "max": 107.17,
+   "pctile_now_%": 72,
+   "weekly_unchanged_%": 6.1,
+   "vol": 29.05,
+   "vol_unit": "% ann.",
+   "ADF_p_level": 0.35,
+   "corr_BO_same_week": 0.776,
+   "corr_X_lastweek_to_BO": 0.002,
+   "corr_BO_lastweek_to_X": 0.064
+  },
+  "P_CORNOIL": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 70.5,
+   "mean": 58.402,
+   "min": 30.88,
+   "max": 85.5,
+   "pctile_now_%": 80,
+   "weekly_unchanged_%": 29.6,
+   "vol": 24.54,
+   "vol_unit": "% ann.",
+   "ADF_p_level": 0.124,
+   "corr_BO_same_week": 0.213,
+   "corr_X_lastweek_to_BO": 0.017,
+   "corr_BO_lastweek_to_X": 0.322
+  },
+  "P_TALLOW": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 77.0,
+   "mean": 60.928,
+   "min": 33.5,
+   "max": 91.5,
+   "pctile_now_%": 87,
+   "weekly_unchanged_%": 62.4,
+   "vol": 33.26,
+   "vol_unit": "% ann.",
+   "ADF_p_level": 0.046,
+   "corr_BO_same_week": 0.154,
+   "corr_X_lastweek_to_BO": 0.023,
+   "corr_BO_lastweek_to_X": 0.129
+  },
+  "P_UCO": {
+   "start": "2023-08-25",
+   "weeks": 168,
+   "last": 71.5,
+   "mean": 55.409,
+   "min": 36.0,
+   "max": 87.0,
+   "pctile_now_%": 84,
+   "weekly_unchanged_%": 26.2,
+   "vol": 26.61,
+   "vol_unit": "% ann.",
+   "ADF_p_level": 0.766,
+   "corr_BO_same_week": 0.052,
+   "corr_X_lastweek_to_BO": 0.069,
+   "corr_BO_lastweek_to_X": 0.279
+  },
+  "P_YG": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 49.0,
+   "mean": 44.338,
+   "min": 23.0,
+   "max": 62.0,
+   "pctile_now_%": 77,
+   "weekly_unchanged_%": 80.3,
+   "vol": 23.37,
+   "vol_unit": "% ann.",
+   "ADF_p_level": 0.021,
+   "corr_BO_same_week": 0.011,
+   "corr_X_lastweek_to_BO": 0.018,
+   "corr_BO_lastweek_to_X": 0.148
+  },
+  "M_SOY": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 3.352,
+   "mean": 1.839,
+   "min": 0.453,
+   "max": 3.955,
+   "pctile_now_%": 97,
+   "weekly_unchanged_%": 0.0,
+   "vol": 1.74,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.373,
+   "corr_BO_same_week": -0.332,
+   "corr_X_lastweek_to_BO": 0.081,
+   "corr_BO_lastweek_to_X": 0.077
+  },
+  "M_CANOLA": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 2.297,
+   "mean": 1.149,
+   "min": -0.247,
+   "max": 3.388,
+   "pctile_now_%": 93,
+   "weekly_unchanged_%": 0.0,
+   "vol": 1.85,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.117,
+   "corr_BO_same_week": -0.175,
+   "corr_X_lastweek_to_BO": 0.089,
+   "corr_BO_lastweek_to_X": 0.059
+  },
+  "M_CORNOIL": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 2.785,
+   "mean": 1.783,
+   "min": 0.061,
+   "max": 3.493,
+   "pctile_now_%": 89,
+   "weekly_unchanged_%": 0.0,
+   "vol": 2.07,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.343,
+   "corr_BO_same_week": 0.267,
+   "corr_X_lastweek_to_BO": 0.097,
+   "corr_BO_lastweek_to_X": -0.109
+  },
+  "M_TALLOW": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 2.26,
+   "mean": 1.616,
+   "min": -0.043,
+   "max": 3.839,
+   "pctile_now_%": 77,
+   "weekly_unchanged_%": 0.0,
+   "vol": 2.4,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.047,
+   "corr_BO_same_week": 0.244,
+   "corr_X_lastweek_to_BO": 0.063,
+   "corr_BO_lastweek_to_X": -0.008
+  },
+  "M_UCO": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 2.479,
+   "mean": 2.215,
+   "min": -0.314,
+   "max": 5.335,
+   "pctile_now_%": 52,
+   "weekly_unchanged_%": 0.0,
+   "vol": 2.09,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.391,
+   "corr_BO_same_week": 0.37,
+   "corr_X_lastweek_to_BO": 0.093,
+   "corr_BO_lastweek_to_X": -0.041
+  },
+  "M_BLEND": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 2.635,
+   "mean": 1.72,
+   "min": -0.004,
+   "max": 3.446,
+   "pctile_now_%": 91,
+   "weekly_unchanged_%": 0.0,
+   "vol": 1.71,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.228,
+   "corr_BO_same_week": 0.119,
+   "corr_X_lastweek_to_BO": 0.1,
+   "corr_BO_lastweek_to_X": -0.01
+  },
+  "SOY_ADV": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": 0.897,
+   "mean": 0.148,
+   "min": -1.222,
+   "max": 1.216,
+   "pctile_now_%": 97,
+   "weekly_unchanged_%": 0.0,
+   "vol": 1.27,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.004,
+   "corr_BO_same_week": -0.764,
+   "corr_X_lastweek_to_BO": -0.028,
+   "corr_BO_lastweek_to_X": 0.149
+  },
+  "BO_TALLOW": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": -11.72,
+   "mean": -3.8,
+   "min": -24.55,
+   "max": 13.46,
+   "pctile_now_%": 9,
+   "weekly_unchanged_%": 0.0,
+   "vol": 27.23,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.0,
+   "corr_BO_same_week": 0.579,
+   "corr_X_lastweek_to_BO": -0.008,
+   "corr_BO_lastweek_to_X": -0.069
+  },
+  "BO_UCO": {
+   "start": "2020-11-06",
+   "weeks": 314,
+   "last": -6.22,
+   "mean": 5.059,
+   "min": -15.31,
+   "max": 33.17,
+   "pctile_now_%": 17,
+   "weekly_unchanged_%": 0.0,
+   "vol": 22.78,
+   "vol_unit": "$/gal or c/lb ann. sd",
+   "ADF_p_level": 0.149,
+   "corr_BO_same_week": 0.799,
+   "corr_X_lastweek_to_BO": 0.014,
+   "corr_BO_lastweek_to_X": -0.112
+  }
+ },
+ "canola_basis_check": {
+  "share_of_canola_moves_with_unchanged_basis": 0.507
+ },
+ "explanatory": {
+  "2021-2026": {
+   "base": {
+    "n": 306,
+    "R2": 0.49,
+    "adjR2": 0.483,
+    "t": {
+     "HO": 3.49,
+     "PALM": 5.6,
+     "RAPESEED": 4.22,
+     "SOYBEANS": 6.34
+    }
+   },
+   "base+RIN": {
+    "n": 306,
+    "R2": 0.554,
+    "adjR2": 0.547,
+    "t": {
+     "HO": 3.67,
+     "PALM": 4.92,
+     "RAPESEED": 3.77,
+     "SOYBEANS": 5.62,
+     "RIN_D4": 5.24
+    }
+   },
+   "base+RIN+LCFS": {
+    "n": 306,
+    "R2": 0.555,
+    "adjR2": 0.546,
+    "t": {
+     "HO": 3.64,
+     "PALM": 4.92,
+     "RAPESEED": 3.8,
+     "SOYBEANS": 5.72,
+     "RIN_D4": 5.28,
+     "LCFS": 0.55
+    }
+   },
+   "base+RIN+LCFS+fats(tallow,UCO/YG,corn oil)": {
+    "n": 306,
+    "R2": 0.568,
+    "adjR2": 0.555,
+    "t": {
+     "HO": 3.37,
+     "PALM": 4.87,
+     "RAPESEED": 3.86,
+     "SOYBEANS": 5.9,
+     "RIN_D4": 5.16,
+     "LCFS": 0.7,
+     "P_TALLOW": 1.13,
+     "P_UCO_OR_YG": -0.58,
+     "P_CORNOIL": 2.27
+    }
+   },
+   "... + canola (MECHANICAL, do not use)": {
+    "n": 306,
+    "R2": 0.725,
+    "adjR2": 0.715,
+    "t": {
+     "HO": 2.16,
+     "PALM": 2.66,
+     "RAPESEED": 2.96,
+     "SOYBEANS": 4.27,
+     "RIN_D4": 3.58,
+     "LCFS": -0.22,
+     "P_TALLOW": 0.55,
+     "P_UCO_OR_YG": -1.3,
+     "P_CORNOIL": 1.77,
+     "P_CANOLA": 8.13
+    }
+   }
+  },
+  "2024-2026": {
+   "base": {
+    "n": 149,
+    "R2": 0.437,
+    "adjR2": 0.421,
+    "t": {
+     "HO": 3.23,
+     "PALM": 2.92,
+     "RAPESEED": 3.68,
+     "SOYBEANS": 5.25
+    }
+   },
+   "base+RIN": {
+    "n": 149,
+    "R2": 0.566,
+    "adjR2": 0.551,
+    "t": {
+     "HO": 4.99,
+     "PALM": 3.23,
+     "RAPESEED": 3.1,
+     "SOYBEANS": 3.76,
+     "RIN_D4": 5.33
+    }
+   },
+   "base+RIN+LCFS": {
+    "n": 149,
+    "R2": 0.566,
+    "adjR2": 0.548,
+    "t": {
+     "HO": 4.91,
+     "PALM": 3.2,
+     "RAPESEED": 3.07,
+     "SOYBEANS": 3.42,
+     "RIN_D4": 5.37,
+     "LCFS": -0.39
+    }
+   },
+   "base+RIN+LCFS+fats(tallow,UCO/YG,corn oil)": {
+    "n": 149,
+    "R2": 0.574,
+    "adjR2": 0.546,
+    "t": {
+     "HO": 4.8,
+     "PALM": 2.92,
+     "RAPESEED": 3.0,
+     "SOYBEANS": 3.51,
+     "RIN_D4": 5.24,
+     "LCFS": -0.35,
+     "P_TALLOW": 0.16,
+     "P_UCO_OR_YG": 1.53,
+     "P_CORNOIL": 0.4
+    }
+   },
+   "... + canola (MECHANICAL, do not use)": {
+    "n": 149,
+    "R2": 0.691,
+    "adjR2": 0.669,
+    "t": {
+     "HO": 4.42,
+     "PALM": 1.79,
+     "RAPESEED": 2.63,
+     "SOYBEANS": 3.25,
+     "RIN_D4": 4.05,
+     "LCFS": -1.14,
+     "P_TALLOW": 0.15,
+     "P_UCO_OR_YG": 0.27,
+     "P_CORNOIL": -0.35,
+     "P_CANOLA": 4.94
+    }
+   }
+  },
+  "monthly 2021-2026": {
+   "base": {
+    "n": 70,
+    "R2": 0.503,
+    "adjR2": 0.472,
+    "t": {
+     "HO": 3.69,
+     "PALM": 2.66,
+     "RAPESEED": 1.22,
+     "SOYBEANS": 3.95
+    }
+   },
+   "base+RIN": {
+    "n": 70,
+    "R2": 0.723,
+    "adjR2": 0.701,
+    "t": {
+     "HO": 5.53,
+     "PALM": 3.35,
+     "RAPESEED": 0.53,
+     "SOYBEANS": 2.92,
+     "RIN_D4": 6.33
+    }
+   },
+   "base+RIN+LCFS": {
+    "n": 70,
+    "R2": 0.727,
+    "adjR2": 0.701,
+    "t": {
+     "HO": 5.32,
+     "PALM": 3.59,
+     "RAPESEED": 0.66,
+     "SOYBEANS": 2.58,
+     "RIN_D4": 6.43,
+     "LCFS": -1.25
+    }
+   },
+   "base+RIN+LCFS+fats(tallow,UCO/YG,corn oil)": {
+    "n": 70,
+    "R2": 0.784,
+    "adjR2": 0.752,
+    "t": {
+     "HO": 3.62,
+     "PALM": 2.74,
+     "RAPESEED": 0.7,
+     "SOYBEANS": 2.93,
+     "RIN_D4": 4.09,
+     "LCFS": -0.72,
+     "P_TALLOW": 0.79,
+     "P_UCO_OR_YG": -1.03,
+     "P_CORNOIL": 2.74
+    }
+   }
+  }
+ },
+ "feedstock_choice": {
+  "SOY_ADV_lead_0m": {
+   "corr_with_SOY_SHARE": -0.249,
+   "corr_ex2023": -0.259,
+   "corr_with_dSOY_SHARE_vs_dADV": 0.118
+  },
+  "SOY_ADV_lead_1m": {
+   "corr_with_SOY_SHARE": -0.256,
+   "corr_ex2023": -0.269,
+   "corr_with_dSOY_SHARE_vs_dADV": 0.173
+  },
+  "SOY_ADV_lead_2m": {
+   "corr_with_SOY_SHARE": -0.32,
+   "corr_ex2023": -0.345,
+   "corr_with_dSOY_SHARE_vs_dADV": 0.05
+  },
+  "SOY_ADV_lead_3m": {
+   "corr_with_SOY_SHARE": -0.414,
+   "corr_ex2023": -0.444,
+   "corr_with_dSOY_SHARE_vs_dADV": -0.091
+  },
+  "M_SOY_vs_FS_TOTAL_corr": -0.268,
+  "n_months": 68
+ },
+ "margin_dynamics": {
+  "M_SOY": {
+   "ADF_p": 0.373,
+   "halflife_weeks": 16.3
+  },
+  "M_BLEND": {
+   "ADF_p": 0.228,
+   "halflife_weeks": 15.6
+  },
+  "SOY_ADV": {
+   "ADF_p": 0.004,
+   "halflife_weeks": 7.7
+  },
+  "who_adjusts_in_sample": {
+   "BO_next_4w_on_M_SOY": {
+    "coef_per_$1": -0.0052,
+    "t_HAC": -0.57,
+    "R2_in_sample": 0.002
+   },
+   "RIN_D4_next_4w_on_M_SOY": {
+    "coef_per_$1": -0.0292,
+    "t_HAC": -2.16,
+    "R2_in_sample": 0.026
+   },
+   "HO_next_4w_on_M_SOY": {
+    "coef_per_$1": -0.0156,
+    "t_HAC": -1.06,
+    "R2_in_sample": 0.01
+   },
+   "BO_next_13w_on_M_SOY": {
+    "coef_per_$1": -0.0316,
+    "t_HAC": -1.08,
+    "R2_in_sample": 0.019
+   },
+   "RIN_D4_next_13w_on_M_SOY": {
+    "coef_per_$1": -0.0878,
+    "t_HAC": -2.2,
+    "R2_in_sample": 0.059
+   },
+   "HO_next_13w_on_M_SOY": {
+    "coef_per_$1": -0.0368,
+    "t_HAC": -0.77,
+    "R2_in_sample": 0.016
+   }
+  }
+ },
+ "predictive_prespecified": {
+  "eval_window": "2023-06-01 to latest",
+  "results": {
+   "1w": {
+    "hist_mean (benchmark)": {
+     "OOS_R2_%": -0.81,
+     "CW_t": -1.18,
+     "hit_%": 49.2,
+     "sign_sharpe": -0.39,
+     "n": 179
+    },
+    "M_SOY level": {
+     "OOS_R2_%": -3.12,
+     "CW_t": -0.86,
+     "hit_%": 46.4,
+     "sign_sharpe": -0.66,
+     "n": 179
+    },
+    "z_M_SOY": {
+     "OOS_R2_%": -4.11,
+     "CW_t": -0.8,
+     "hit_%": 50.8,
+     "sign_sharpe": 0.06,
+     "n": 179
+    },
+    "z_M_BLEND": {
+     "OOS_R2_%": -1.68,
+     "CW_t": -0.97,
+     "hit_%": 49.7,
+     "sign_sharpe": -0.6,
+     "n": 179
+    },
+    "z_SOY_ADV": {
+     "OOS_R2_%": -5.16,
+     "CW_t": -1.42,
+     "hit_%": 47.5,
+     "sign_sharpe": -0.27,
+     "n": 179
+    },
+    "z_BO_TALLOW": {
+     "OOS_R2_%": -3.47,
+     "CW_t": -1.02,
+     "hit_%": 46.9,
+     "sign_sharpe": -0.13,
+     "n": 179
+    },
+    "z_BO_UCO": {
+     "OOS_R2_%": -3.13,
+     "CW_t": -2.06,
+     "hit_%": 50.8,
+     "sign_sharpe": -0.39,
+     "n": 179
+    },
+    "z_OILSHARE + z_BDMARGIN (prior candidate)": {
+     "OOS_R2_%": -2.06,
+     "CW_t": 0.34,
+     "hit_%": 54.7,
+     "sign_sharpe": 0.6,
+     "n": 179
+    },
+    "z_OILSHARE + z_M_SOY": {
+     "OOS_R2_%": -4.23,
+     "CW_t": -0.63,
+     "hit_%": 54.2,
+     "sign_sharpe": 0.31,
+     "n": 179
+    }
+   },
+   "4w": {
+    "hist_mean (benchmark)": {
+     "OOS_R2_%": -3.5,
+     "CW_t": -1.69,
+     "hit_%": 46.0,
+     "sign_sharpe": -0.71,
+     "n": 176
+    },
+    "M_SOY level": {
+     "OOS_R2_%": -7.58,
+     "CW_t": -0.92,
+     "hit_%": 46.0,
+     "sign_sharpe": -1.08,
+     "n": 176
+    },
+    "z_M_SOY": {
+     "OOS_R2_%": -9.09,
+     "CW_t": -0.44,
+     "hit_%": 52.8,
+     "sign_sharpe": -0.03,
+     "n": 176
+    },
+    "z_M_BLEND": {
+     "OOS_R2_%": -9.29,
+     "CW_t": -1.94,
+     "hit_%": 44.9,
+     "sign_sharpe": -0.58,
+     "n": 176
+    },
+    "z_SOY_ADV": {
+     "OOS_R2_%": -24.15,
+     "CW_t": -1.19,
+     "hit_%": 51.7,
+     "sign_sharpe": 0.06,
+     "n": 176
+    },
+    "z_BO_TALLOW": {
+     "OOS_R2_%": -21.39,
+     "CW_t": -1.33,
+     "hit_%": 52.3,
+     "sign_sharpe": -0.32,
+     "n": 176
+    },
+    "z_BO_UCO": {
+     "OOS_R2_%": -20.83,
+     "CW_t": -1.39,
+     "hit_%": 54.5,
+     "sign_sharpe": -0.56,
+     "n": 176
+    },
+    "z_OILSHARE + z_BDMARGIN (prior candidate)": {
+     "OOS_R2_%": -6.16,
+     "CW_t": 0.58,
+     "hit_%": 52.8,
+     "sign_sharpe": 0.34,
+     "n": 176
+    },
+    "z_OILSHARE + z_M_SOY": {
+     "OOS_R2_%": -10.22,
+     "CW_t": 0.27,
+     "hit_%": 54.5,
+     "sign_sharpe": 0.26,
+     "n": 176
+    }
+   },
+   "13w": {
+    "hist_mean (benchmark)": {
+     "OOS_R2_%": -9.32,
+     "CW_t": -2.12,
+     "hit_%": 35.9,
+     "sign_sharpe": -1.31,
+     "n": 167
+    },
+    "M_SOY level": {
+     "OOS_R2_%": -25.2,
+     "CW_t": -1.19,
+     "hit_%": 40.1,
+     "sign_sharpe": -0.41,
+     "n": 167
+    },
+    "z_M_SOY": {
+     "OOS_R2_%": -13.6,
+     "CW_t": 0.12,
+     "hit_%": 49.7,
+     "sign_sharpe": -0.64,
+     "n": 167
+    },
+    "z_M_BLEND": {
+     "OOS_R2_%": -32.29,
+     "CW_t": -2.57,
+     "hit_%": 32.3,
+     "sign_sharpe": -0.83,
+     "n": 167
+    },
+    "z_SOY_ADV": {
+     "OOS_R2_%": -35.94,
+     "CW_t": 0.03,
+     "hit_%": 46.1,
+     "sign_sharpe": -0.11,
+     "n": 167
+    },
+    "z_BO_TALLOW": {
+     "OOS_R2_%": -45.67,
+     "CW_t": -0.85,
+     "hit_%": 44.9,
+     "sign_sharpe": -0.68,
+     "n": 167
+    },
+    "z_BO_UCO": {
+     "OOS_R2_%": -30.25,
+     "CW_t": -0.3,
+     "hit_%": 49.1,
+     "sign_sharpe": -0.19,
+     "n": 167
+    },
+    "z_OILSHARE + z_BDMARGIN (prior candidate)": {
+     "OOS_R2_%": -7.41,
+     "CW_t": 1.76,
+     "hit_%": 52.7,
+     "sign_sharpe": 0.12,
+     "n": 167
+    },
+    "z_OILSHARE + z_M_SOY": {
+     "OOS_R2_%": -26.97,
+     "CW_t": 0.39,
+     "hit_%": 52.7,
+     "sign_sharpe": -0.22,
+     "n": 167
+    }
+   }
+  }
+ }
+}

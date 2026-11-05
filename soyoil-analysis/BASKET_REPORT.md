@@ -4,6 +4,14 @@ Reproduce with `python3 basket.py`. The full tables are in `input_stats.xlsx`, w
 
 **To add RINs or any other series:** put a CSV with two columns, `date,value`, in `data/extra/` (for example `data/extra/RIN_D4.csv`) and rerun. The series is picked up automatically, both in the statistics and in the basket search.
 
+
+> **Correction, 5 Nov 2026.** The `inputs 1` sheet pulls the `PX_CLOSE_1D` field, which is the *previous* day's close, so all prices were dated one trading day late. `load.py` now re-dates them; this was verified against the `PX_LAST` data in `RD_margins.xlsx`. After rerunning on the corrected dates:
+> - The full-sample weekly R² is 0.50, not 0.53. The 2024–26 R² is unchanged at 0.44.
+> - Every weekday sampling gives R² in the 0.45–0.54 range.
+> - The out-of-sample predictive results still fail: R² −10.0% against a random walk. The basket search still finds no basket that beats "no change" in 2023–26 at any horizon (best: −4.0% at 13 weeks).
+> - **The specific "largest unexplained weeks" list is not robust to which weekday is sampled. Treat the policy-week attributions as hypotheses to test on daily data, not as findings.**
+> - The tables below are the original Thursday-dated run. The rerun numbers are in `results.json` and `basket_results.json`.
+
 ---
 
 ## 1. Individual input statistics (weekly, Dec 2015 – Nov 2026)
