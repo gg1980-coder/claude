@@ -565,6 +565,108 @@ for i, (lab, f, fmt) in enumerate(pk):
     put(wsM, p0 + 1 + i, 1, lab, font=BOLD); put(wsM, p0 + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
 text(wsM, p0 + 8, 1, 'Caveat: the ratio bridges two different datasets (arrivals in the EU vs US sales/shipments, with timing and transshipment differences); '
                      'it varies by season (see col D above), so treat the bridged number as ± a few hundred kt.')
+# ---- E) Achievability of the market number ----
+def euuk(wcol, my): return f'(SUMIFS(INDEX(DC_W,0,{wcol}),DC_MY,{my},DC_G,"EU")+SUMIFS(INDEX(DC_W,0,{wcol}),DC_MY,{my},DC_D,"UNITED KINGDOM"))/1000'
+e0 = p0 + 10
+section(wsM, e0, 'E) Can the market number be achieved? (EU-27 + UK, export-sales basis, kt)')
+put(wsM, e0 + 1, 1, 'Checkpoint week (to judge progress)', font=BOLD); put(wsM, e0 + 1, 2, 17, '0', font=BLUE, fill=YEL)
+text(wsM, e0 + 1, 3, 'Week 17 ≈ end of December. Booking window end = "Nov-Feb Window" end week (default 26 ≈ end of February).')
+CKW = f'$B${e0+1}'
+h0 = e0 + 3
+header(wsM, h0, ['Base season', 'Booked by week N', 'Full-year exports', 'Booked after week N', 'Booked in window (N+1 → window end)',
+                 'Booked after window end', 'Share of year booked by week N'], h=48)
+for k in range(5):
+    r = h0 + 1 + k; my = f'$A{r}'
+    put(wsM, r, 1, f'=INDEX(Base_MY,{k+1})', font=GREEN)
+    put(wsM, r, 2, '=' + euuk('Pace_Week', my), MT)
+    put(wsM, r, 3, f'=C{c0+2+k}', MT, font=GREEN)
+    put(wsM, r, 4, f'=C{r}-B{r}', MT)
+    put(wsM, r, 5, '=' + euuk('Win_E', my) + f'-B{r}', MT)
+    put(wsM, r, 6, f'=C{r}-B{r}-E{r}', MT)
+    put(wsM, r, 7, f'=IF(C{r}=0,"",B{r}/C{r})', '0%')
+hs = h0 + 6
+for i, (lab, fn, rg) in enumerate([('Average (5 base yrs)', 'AVERAGE', (h0 + 1, h0 + 5)), ('Normal year (excl. newest base yr)', 'AVERAGE', (h0 + 2, h0 + 5)),
+                                   ('Lowest', 'MIN', (h0 + 1, h0 + 5)), ('Highest', 'MAX', (h0 + 1, h0 + 5))]):
+    r = hs + i
+    put(wsM, r, 1, lab, font=BOLD, fill=TOTFILL)
+    for c in range(2, 8):
+        put(wsM, r, c, f'={fn}({L(c)}{rg[0]}:{L(c)}{rg[1]})', '0%' if c == 7 else MT, font=BOLD, fill=TOTFILL)
+AVR, NRM, LOW, HIG = hs, hs + 1, hs + 2, hs + 3
+n0 = hs + 5
+header(wsM, n0, ['What the market number requires', 'Central', 'Low ratio', 'High ratio'], h=30)
+rmin, rmax = f'MIN($D${c0+2}:$D${c0+6})', f'MAX($D${c0+2}:$D${c0+6})'
+need = [
+    ('Target, export-sales basis', f'=$N${MCR}*D{rq}', f'=$N${MCR}*{rmin}', f'=$N${MCR}*{rmax}', MT),
+    ('Booked so far', f'=$B${p0+1}', f'=$B${p0+1}', f'=$B${p0+1}', MT),
+    ('Still to book', 'D', 'D', 'D', MT),
+    ('Market\'s Mar–Aug volume, export-sales basis (≈ bookings after window end)', f'=$P${MCR}*D{rq}', f'=$P${MCR}*{rmin}', f'=$P${MCR}*{rmax}', MT),
+    ('Needed in the booking window (week N+1 → window end)', 'W', 'W', 'W', MT),
+    ('Needed per week in the window', 'PW', 'PW', 'PW', MT),
+]
+for i, (lab, a, b_, c_, fmt) in enumerate(need):
+    r = n0 + 1 + i
+    put(wsM, r, 1, lab, font=BOLD)
+    for col, f in ((2, a), (3, b_), (4, c_)):
+        if f == 'D': f = f'={L(col)}{r-2}-{L(col)}{r-1}'
+        elif f == 'W': f = f'={L(col)}{r-2}-{L(col)}{r-1}'
+        elif f == 'PW': f = f'=IF(Win_E<=Pace_Week,"",{L(col)}{r-1}/(Win_E-Pace_Week))'
+        put(wsM, r, col, f, fmt, font=BOLD if col == 2 else NORM)
+TB, BK, ST, MA, NW_, PW = (n0 + 1 + i for i in range(6))
+v0 = PW + 2
+header(wsM, v0, ['Test', 'Value', 'Comment'], h=24)
+tests = [
+    ('Still to book ÷ normal year\'s bookings after week N', f'=B{ST}/D{NRM}', '0%', 'Below 100% = needs less buying than a normal season'),
+    ('Base seasons that booked at least this much after week N', f'=COUNTIF(D{h0+1}:D{h0+5},">="&B{ST})&" of 5"', None, ''),
+    ('Needed in window ÷ normal window bookings', f'=B{NW_}/E{NRM}', '0%', ''),
+    ('Needed in window ÷ lowest window on record (base yrs)', f'=B{NW_}/E{LOW}', '0%', 'Above 100% = must beat the weakest recent season'),
+    ('Implied full year at average pace, market basis', f'=B{BK}/G{AVR}/D{rq}', MT, 'Booked so far ÷ usual share, converted back'),
+    ('Implied full year at normal-year pace, market basis', f'=B{BK}/G{NRM}/D{rq}', MT, ''),
+    ('Verdict', f'=IF(B{ST}<=0,"Already booked",IF(B{v0+1}<=0.85,"ACHIEVABLE — needs less than a normal season\'s remaining buying",'
+                f'IF(B{v0+1}<=1.05,"ACHIEVABLE with a normal season","STRETCH — needs above-normal buying")))', None, ''),
+]
+for i, (lab, f, fmt, cm) in enumerate(tests):
+    r = v0 + 1 + i
+    put(wsM, r, 1, lab, font=BOLD)
+    put(wsM, r, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
+    text(wsM, r, 3, cm)
+VD = v0 + len(tests)
+from openpyxl.formatting.rule import FormulaRule
+wsM.conditional_formatting.add(f'B{VD}', FormulaRule(formula=[f'LEFT($B${VD},10)="ACHIEVABLE"'], fill=GR))
+wsM.conditional_formatting.add(f'B{VD}', FormulaRule(formula=[f'LEFT($B${VD},7)="STRETCH"'], fill=RD))
+
+# required path through the window (seasonal shape) vs actual
+k0 = VD + 2
+section(wsM, k0, 'F) Weekly tracker: cumulative bookings needed for the market number vs actual (EU-27 + UK, kt)')
+text(wsM, k0 + 1, 1, 'Required path = booked at week N + needed-in-window × the usual share of the window booked by that week (base-year average shape). '
+                     'Checkpoint row highlighted.')
+header(wsM, k0 + 2, ['Week', 'Required path', f'Actual {CUR}', 'Gap', '5-yr avg cumulative', 'Usual share of window booked'] +
+       [f'Shape base yr {k+1}' for k in range(5)], h=40)
+kr1 = k0 + 3
+for w in range(1, NW + 1):
+    r = kr1 + w - 1
+    put(wsM, r, 1, w, '0')
+    for k in range(5):
+        my = f'INDEX(Base_MY,{k+1})'
+        num = f'({euuk(f"$A{r}", my)}-{euuk("Pace_Week", my)})'
+        den = f'({euuk("Win_E", my)}-{euuk("Pace_Week", my)})'
+        put(wsM, r, 7 + k, f'=IF(OR($A{r}<=Pace_Week,{den}=0),"",MIN(1,{num}/{den}))', '0%', font=SMALL, border=False)
+    put(wsM, r, 6, f'=IF($A{r}<=Pace_Week,"",IFERROR(AVERAGE(G{r}:K{r}),""))', '0%')
+    put(wsM, r, 2, f'=IF($A{r}<Pace_Week,"",IF($A{r}=Pace_Week,$B${BK},IF($A{r}<=Win_E,$B${BK}+$B${NW_}*F{r},$B${BK}+$B${NW_}+$B${MA}*($A{r}-Win_E)/(52-Win_E))))', MT)
+    if w <= WK: put(wsM, r, 3, '=' + euuk(f'$A{r}', 'CUR_MY'), MT, fill=CURFILL)
+    put(wsM, r, 4, f'=IF(OR(B{r}="",C{r}=""),"",C{r}-B{r})', '+#,##0;-#,##0;0', font=BOLD)
+    put(wsM, r, 5, '=(' + '+'.join(euuk(f'$A{r}', f'INDEX(Base_MY,{k+1})') for k in range(5)) + ')/5', MT)
+kr2 = kr1 + NW - 1
+wsM.conditional_formatting.add(f'A{kr1}:F{kr2}', FormulaRule(formula=[f'$A{kr1}={CKW}'], fill=CURFILL, font=Font(name=F, bold=True)))
+posneg(wsM, f'D{kr1}:D{kr2}')
+put(wsM, e0 + 2, 1, 'Required by checkpoint week (kt)', font=BOLD)
+put(wsM, e0 + 2, 2, f'=INDEX(B{kr1}:B{kr2},{CKW})', MT, font=Font(name=F, size=11, bold=True, color='1F4E78'))
+text(wsM, e0 + 2, 3, f'="Actual at checkpoint: "&IF({CKW}>{WK},"not yet available (data to week {WK})",TEXT(INDEX(C{kr1}:C{kr2},{CKW}),"#,##0")&" kt")')
+tc = LineChart(); tc.title = 'EU-27 + UK: cumulative bookings needed for the market number vs actual (kt)'; tc.y_axis.numFmt = '#,##0'
+tc.add_data(Reference(wsM, min_col=2, max_col=3, min_row=k0 + 2, max_row=kr2), titles_from_data=True)
+tc.add_data(Reference(wsM, min_col=5, max_col=5, min_row=k0 + 2, max_row=kr2), titles_from_data=True)
+tc.set_categories(Reference(wsM, min_col=1, min_row=kr1, max_row=kr2)); tc.width = 20; tc.height = 9
+tc.x_axis.title = 'MY week'; tc.x_axis.delete = False; tc.y_axis.delete = False
+wsM.add_chart(tc, f'M{e0}')
 wsM.column_dimensions['A'].width = 50
 for j in range(2, 18): wsM.column_dimensions[L(j)].width = 10
 wsM.column_dimensions['B'].width = 14; wsM.column_dimensions['C'].width = 14
