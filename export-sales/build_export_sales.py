@@ -826,6 +826,138 @@ for k, t in enumerate([
 wsU.column_dimensions['A'].width = 40
 for j in range(2, 11): wsU.column_dimensions[L(j)].width = 15
 
+# ================= Europe Focus =================
+wsE = wb.create_sheet('Europe Focus', index=2)
+EU27 = {'SPAIN', 'NETHERLANDS', 'PORTUGAL', 'ITALY', 'GERMANY', 'GREECE', 'BELGIUM-LUXEMBOURG', 'FRANCE', 'IRELAND', 'ROMANIA'}
+eur = [c for c in order if REGION[c] == 'Europe' and (dem5.get(c, 0) > 0 or curc.get(c, 0) > 0 or sc.loc[c, [CUR] + FIVE].sum() > 0)]
+eur.sort(key=lambda c: (c not in EU27, -dem5.get(c, 0)))
+title(wsE, f'Europe focus — US soybean export sales to Europe, {CUR} week N vs history, demand and seasonal pace',
+      'Europe = destinations tagged "Europe" on the Ranking tab (EU-27 members flagged). Year values link to Ranking; demand/pace to "Demand & Pace"; '
+      'weekly series computed from "Weekly by Destination". Pace week N and base years are the inputs on "Demand & Pace".')
+EH = ['Destination', 'EU-27?', f'{CUR} wk N', LY, '5-yr avg', '5-yr median', 'Δ vs 5-yr avg', 'Δ vs median',
+      f'Shipped {CUR}', f'Unshipped {CUR}', f'Full-MY {LY}', 'Full-MY 5-yr avg', 'Demand used', 'Avg pace wk N', 'Expected wk N',
+      'Δ vs expected', 'Status', 'Implied full year (mln bu)']
+put(wsE, 4, 1, 'A) Destinations', font=Font(name=F, size=11, bold=True)).border = Border()
+header(wsE, 5, EH); wsE.row_dimensions[5].height = 44
+RK = "'Ranking by Destination'"
+def rk(colL, r): return f"=IFERROR(INDEX({RK}!${colL}:${colL},MATCH($A{r},{RK}!$B:$B,0)),0)"
+def dp(colL, r): return f"=IFERROR(INDEX('Demand & Pace'!${colL}:${colL},MATCH($A{r},'Demand & Pace'!$B:$B,0)),0)"
+E1 = 6
+for i, c in enumerate(eur):
+    r = E1 + i
+    put(wsE, r, 1, c); put(wsE, r, 2, 'EU' if c in EU27 else 'non-EU', font=BLUE)
+    put(wsE, r, 3, f"=IF(Pace_Week={WK},{rk(RC[CUR], r)[1:]},SUMIFS({col},{KC},$A{r},{KM},\"{CUR}\"))", MT, font=GREEN, fill=CURFILL)
+    put(wsE, r, 4, f"=IF(Pace_Week={WK},{rk(RC[LY], r)[1:]},SUMIFS({col},{KC},$A{r},{KM},\"{LY}\"))", MT, font=GREEN)
+    yrs5 = '+'.join(f'SUMIFS({col},{KC},$A{r},{KM},INDEX(Base_MY,{k+1}))' for k in range(5))
+    put(wsE, r, 5, f'=({yrs5})/5', MT)
+    put(wsE, r, 6, '=MEDIAN(' + ','.join(f'SUMIFS({col},{KC},$A{r},{KM},INDEX(Base_MY,{k+1}))' for k in range(5)) + ')', MT)
+    put(wsE, r, 7, f'=C{r}-E{r}', MT, font=BOLD); put(wsE, r, 8, f'=C{r}-F{r}', MT, font=BOLD)
+    put(wsE, r, 9, f"=SUMIFS({rng('G')},{rng('D')},$A{r},{rng('A')},\"{CUR}\")", MT, font=GREEN)
+    put(wsE, r, 10, f"=SUMIFS({rng('H')},{rng('D')},$A{r},{rng('A')},\"{CUR}\")", MT, font=GREEN)
+    put(wsE, r, 11, f"=SUMIFS({KF},{KC},$A{r},{KM},\"{LY}\")", MT)
+    put(wsE, r, 12, dp('D', r), MT, font=GREEN); put(wsE, r, 13, dp('G', r), MT, font=GREEN)
+    put(wsE, r, 14, dp('H', r), '0%', font=GREEN); put(wsE, r, 15, f'=M{r}*N{r}', MT)
+    put(wsE, r, 16, f'=C{r}-O{r}', MT, font=BOLD)
+    put(wsE, r, 17, f'=IF(ABS(P{r})<Cargo_MT,"On pace",IF(P{r}>0,"ABOVE pace","BELOW pace"))')
+    put(wsE, r, 18, f'=IF(N(N{r})=0,"",C{r}/N{r}/Conv/1000000)', '#,##0.0')
+E2 = E1 + len(eur) - 1
+wb.defined_names['Europe_List'] = DefinedName('Europe_List', attr_text=f"'Europe Focus'!$A${E1}:$A${E2}")
+sub = [('EU-27', 'EU'), ('Non-EU Europe', 'non-EU'), ('EUROPE TOTAL', None)]
+for k, (lab, key) in enumerate(sub):
+    r = E2 + 1 + k
+    put(wsE, r, 1, lab, font=BOLD, fill=TOTFILL); put(wsE, r, 2, '', fill=TOTFILL)
+    for j in range(3, 17):
+        if j == 14: continue
+        cl = L(j)
+        f = f'=SUMIF($B${E1}:$B${E2},"{key}",{cl}{E1}:{cl}{E2})' if key else f'=SUM({cl}{E1}:{cl}{E2})'
+        put(wsE, r, j, f, MT, font=BOLD, fill=TOTFILL)
+    put(wsE, r, 14, f'=IF(M{r}=0,0,O{r}/M{r})', '0%', font=BOLD, fill=TOTFILL)
+    put(wsE, r, 17, f'=IF(ABS(P{r})<Cargo_MT,"On pace",IF(P{r}>0,"ABOVE pace","BELOW pace"))', font=BOLD, fill=TOTFILL)
+    put(wsE, r, 18, None, fill=TOTFILL)
+ET = E2 + 3
+put(wsE, ET + 1, 1, 'Europe totals: 5-yr median is the sum of country medians (approximate); the Europe-level median is in section C.', font=Font(name=F, size=8, italic=True)).border = Border()
+for j in (7, 8, 16):
+    rg_ = f'{L(j)}{E1}:{L(j)}{ET}'
+    wsE.conditional_formatting.add(rg_, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
+    wsE.conditional_formatting.add(rg_, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
+
+# B) history
+hb = ET + 3
+put(wsE, hb, 1, 'B) Europe full-year history', font=Font(name=F, size=11, bold=True)).border = Border()
+header(wsE, hb + 1, ['Base MY', 'Europe full-MY exports', 'US total full-MY exports', 'Europe share', 'Europe commit wk N', 'Share of year booked by wk N'])
+EUM = f'ISNUMBER(MATCH({KC},Europe_List,0))'
+for k in range(5):
+    r = hb + 2 + k
+    put(wsE, r, 1, f'=INDEX(Base_MY,{k+1})', font=GREEN)
+    put(wsE, r, 2, f'=SUMPRODUCT({EUM}*({KM}=$A{r})*{KF})', MT)
+    put(wsE, r, 3, f'=SUMIFS({KF},{KM},$A{r})', MT)
+    put(wsE, r, 4, f'=IF(C{r}=0,0,B{r}/C{r})', '0.0%')
+    put(wsE, r, 5, f'=SUMPRODUCT({EUM}*({KM}=$A{r})*{col})', MT)
+    put(wsE, r, 6, f'=IF(B{r}=0,"",E{r}/B{r})', '0%')
+ra = hb + 7
+put(wsE, ra, 1, 'Average', font=BOLD, fill=TOTFILL)
+for j, fm in ((2, MT), (3, MT), (4, '0.0%'), (5, MT), (6, '0%')):
+    put(wsE, ra, j, f'=AVERAGE({L(j)}{hb+2}:{L(j)}{hb+6})', fm, font=BOLD, fill=TOTFILL)
+put(wsE, ra + 1, 1, 'Median', font=BOLD)
+for j, fm in ((2, MT), (5, MT)): put(wsE, ra + 1, j, f'=MEDIAN({L(j)}{hb+2}:{L(j)}{hb+6})', fm, font=BOLD)
+put(wsE, ra + 2, 1, f'{CUR}: demand used (Σ countries)', font=BOLD); put(wsE, ra + 2, 2, f'=M{ET}', MT)
+put(wsE, ra + 2, 3, '=B{0}/Conv/1000000'.format(ra + 2), '#,##0.0" mln bu"')
+put(wsE, ra + 3, 1, f'{CUR}: implied full year at Europe avg pace', font=BOLD)
+put(wsE, ra + 3, 2, f'=IF(F{ra}=0,"",C{ET}/F{ra})', MT); put(wsE, ra + 3, 3, f'=IF(B{ra+3}="","",B{ra+3}/Conv/1000000)', '#,##0.0" mln bu"')
+put(wsE, ra + 3, 4, f'=IF(B{ra+3}="","",B{ra+3}/B{ra}-1)', PCT); put(wsE, ra + 3, 5, '← vs 5-yr avg full year', font=Font(name=F, size=8, italic=True))
+
+# C) weekly series
+wb0 = ra + 6
+put(wsE, wb0, 1, 'C) Europe weekly: cumulative commitment and weekly net sales (MT)', font=Font(name=F, size=11, bold=True)).border = Border()
+WH = ['Week', f'Cum {CUR}', f'Cum {LY}', 'Cum 5-yr avg', 'Cum 5-yr min', 'Cum 5-yr max', 'Expected path (demand × pace)',
+      f'Net sales {CUR}', 'Net sales 5-yr avg', 'Avg pace'] + [f'Cum base yr {k+1}' for k in range(5)] + [f'Pace yr {k+1}' for k in range(5)]
+header(wsE, wb0 + 1, WH); wsE.row_dimensions[wb0 + 1].height = 44
+W1 = wb0 + 2
+for w in range(1, NW + 1):
+    r = W1 + w - 1
+    cw = f'INDEX({KW},0,$A{r})'
+    put(wsE, r, 1, w, '0')
+    for k in range(5):
+        put(wsE, r, 11 + k, f'=SUMPRODUCT({EUM}*({KM}=INDEX(Base_MY,{k+1}))*{cw})', MT, font=Font(name=F, size=9, color='595959'))
+        put(wsE, r, 16 + k, f'=IF($B${hb+2+k}=0,"",{L(11+k)}{r}/$B${hb+2+k})', '0%', font=Font(name=F, size=9, color='595959'))
+    if w <= WK: put(wsE, r, 2, f'=SUMPRODUCT({EUM}*({KM}="{CUR}")*{cw})', MT, fill=CURFILL)
+    put(wsE, r, 3, f'=SUMPRODUCT({EUM}*({KM}="{LY}")*{cw})', MT)
+    put(wsE, r, 4, f'=AVERAGE(K{r}:O{r})', MT); put(wsE, r, 5, f'=MIN(K{r}:O{r})', MT); put(wsE, r, 6, f'=MAX(K{r}:O{r})', MT)
+    put(wsE, r, 10, f'=IFERROR(AVERAGE(P{r}:T{r}),0)', '0%')
+    put(wsE, r, 7, f'=$B${ra+2}*J{r}', MT)
+    if w <= WK: put(wsE, r, 8, f'=B{r}' if w == 1 else f'=B{r}-B{r-1}', MT, font=BOLD, fill=CURFILL)
+    put(wsE, r, 9, f'=D{r}' if w == 1 else f'=D{r}-D{r-1}', MT)
+W2 = W1 + NW - 1
+put(wsE, W2 + 1, 1, 'Week 1 "net sales" = opening book (includes sales made before the MY started). Weekly net sales = change in cumulative commitment (net of cancellations and re-declarations).',
+    font=Font(name=F, size=8, italic=True)).border = Border()
+
+# D) watch notes
+nb = W2 + 3
+put(wsE, nb, 1, 'D) What to monitor (analyst notes, not data)', font=Font(name=F, size=11, bold=True)).border = Border()
+for k, t in enumerate([
+    'Season timing: Europe books roughly 45–55% of its US year between weeks 10 and 26 (Nov–Feb), before Brazil\'s harvest. Weekly net sales vs the 5-yr avg column in this window are the key signal.',
+    'Crush hubs (Netherlands, Germany) carry no unshipped US sales at week 9: everything booked has already shipped. A forward book building there is the first sign of demand returning.',
+    'Spain/Portugal/Italy (feed demand) hold most of Europe\'s outstanding sales; Spain is Europe\'s largest US buyer by 5-yr average.',
+    'Policy: EU deforestation regulation (EUDR). Our understanding as of mid-2026: obligations for large operators apply from 30 Dec 2026, with the US benchmarked as low-risk and Brazil as standard-risk. '
+    'If that holds, it may tilt EU buyers toward US beans for Jan–Aug 2027 shipment, normally Brazil\'s window. Verify the current EUDR status before relying on this.',
+    'Opposite force: if China fills its 25 Mt US commitment, more Brazilian beans are freed for other buyers, which can cheapen Brazil into Europe in H1 2027.']):
+    put(wsE, nb + 1 + k, 1, t, font=Font(name=F, size=9, italic=True)).border = Border()
+
+wsE.column_dimensions['A'].width = 28; wsE.column_dimensions['B'].width = 9
+for j in range(3, 21): wsE.column_dimensions[L(j)].width = 13
+wsE.freeze_panes = 'B6'
+lc = LineChart(); lc.title = 'Europe cumulative commitment (MT)'; lc.y_axis.numFmt = '#,##0'
+lc.add_data(Reference(wsE, min_col=2, max_col=4, min_row=wb0 + 1, max_row=W2), titles_from_data=True)
+lc.add_data(Reference(wsE, min_col=7, max_col=7, min_row=wb0 + 1, max_row=W2), titles_from_data=True)
+lc.set_categories(Reference(wsE, min_col=1, min_row=W1, max_row=W2)); lc.width = 18; lc.height = 9
+lc.x_axis.title = 'MY week'; lc.x_axis.delete = False; lc.y_axis.delete = False
+wsE.add_chart(lc, 'V4')
+bc = BarChart(); bc.title = 'Europe weekly net sales (MT)'; bc.y_axis.numFmt = '#,##0'
+bc.add_data(Reference(wsE, min_col=8, max_col=9, min_row=wb0 + 1, max_row=W2), titles_from_data=True)
+bc.set_categories(Reference(wsE, min_col=1, min_row=W1, max_row=W2)); bc.width = 18; bc.height = 9
+bc.x_axis.delete = False; bc.y_axis.delete = False
+wsE.add_chart(bc, 'V24')
+
 for ws in wb:
     ws.sheet_view.showGridLines = False
 wb.save(out)
