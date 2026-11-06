@@ -565,7 +565,7 @@ for i, (lab, v, fmt, is_in, note) in enumerate(inp):
 put(wsP, 13, 1, 'Base marketing years for demand & pace', font=BOLD)
 for k, m in enumerate(FIVE): put(wsP, 13, 2 + k, m, font=BLUE, fill=YEL)
 wsP.cell(13, 7, 'Edit to change the base (e.g. drop 2025/26 for China-sensitive reads).').font = Font(name=F, size=9, italic=True, color='595959')
-for nm, ref in [('Pace_Week', '$B$9'), ('RoW_Target', '$B$8'), ('China_Target', '$B$7'), ('Base_MY', '$B$13:$F$13'), ('RoW_Scale', '$B$12')]:
+for nm, ref in [('Conv', '$B$5'), ('Pace_Week', '$B$9'), ('RoW_Target', '$B$8'), ('China_Target', '$B$7'), ('Base_MY', '$B$13:$F$13'), ('RoW_Scale', '$B$12')]:
     wb.defined_names[nm] = DefinedName(nm, attr_text=f"'Demand & Pace'!{ref}")
 
 # ---- per-country table ----
@@ -574,7 +574,10 @@ ph = ['Status (±1 cargo = on pace)', 'Destination', 'Region', 'Demand: own 5-yr
       'Demand override (optional)', 'Demand used', 'Avg pace at wk N (% of year committed)', 'Pace min (base yrs)', 'Pace max (base yrs)',
       'Expected commitment at wk N', f'Actual {CUR} at wk N', 'Δ vs expected MT', 'Δ vs expected %', '% of demand committed',
       'Remaining to sell (MT)', 'Weekly sales needed rest of MY', 'Typical weekly sales rest of MY', 'Needed ÷ typical',
-      'Expected at wk N using own 5-yr demand', 'Δ vs own-history expected MT']
+      'Expected at wk N using own 5-yr demand', 'Δ vs own-history expected MT',
+      'Implied full year at avg pace (MT)', 'Implied vs demand used (MT)',
+      'Demand used (mln bu)', f'Actual wk N (mln bu)', 'Δ vs expected (mln bu)', 'Remaining to sell (mln bu)',
+      'Implied full year (mln bu)', 'Implied vs demand (mln bu)']
 header(wsP, HR, ph); wsP.row_dimensions[HR].height = 70
 HC = len(ph) + 2   # helper per-year pace columns start (one spacer)
 for k in range(5):
@@ -598,6 +601,13 @@ def dpy(c): return curc[c] - dem5[c] * row_target / row_sum * pace_py(c, WK)
 pace_list.sort(key=lambda c: -dpy(c))
 
 def wcol(): return f'INDEX({KW},0,Pace_Week)'
+BU = '#,##0.0;-#,##0.0;"-"'
+def bucols(r, fill=None, font=NORM):
+    put(wsP, r, 22, f'=IF(OR(L{r}="",N(H{r})=0),"",L{r}/H{r})', MT, fill=fill, font=font)
+    put(wsP, r, 23, f'=IF(V{r}="","",V{r}-G{r})', MT, fill=fill, font=font)
+    for j, src in ((24, 'G'), (25, 'L'), (26, 'M'), (27, 'P'), (28, 'V'), (29, 'W')):
+        put(wsP, r, j, f'=IF(N({src}{r})=0,IF({src}{r}="","",0),{src}{r}/Conv/1000000)', BU, fill=fill,
+            font=BOLD if j in (26, 29) else font)
 def prow(r, c, is_china):
     B = f'$B{r}'
     put(wsP, r, 2, c, font=BOLD if is_china else NORM, fill=TOTFILL if is_china else None)
@@ -624,6 +634,7 @@ def prow(r, c, is_china):
     put(wsP, r, 18, f'=G{r}*MAX(0,1-H{r})/(52-Pace_Week)', MT)
     put(wsP, r, 19, f'=IF(R{r}=0,"",Q{r}/R{r})', '0.00"x"')
     put(wsP, r, 20, f'=D{r}*H{r}', MT); put(wsP, r, 21, f'=IF(L{r}="","",L{r}-T{r})', MT)
+    bucols(r)
 
 r = HR + 1
 prow(r, 'CHINA, PEOPLES REPUBLIC OF', True); CH = r
@@ -648,11 +659,15 @@ for j in (4, 5, 7, 11, 12, 13, 16, 17, 18, 20, 21):
 put(wsP, GT2, 14, f'=IF(K{GT2}=0,"",L{GT2}/K{GT2}-1)', PCT, font=BOLD, fill=TOTFILL)
 put(wsP, GT2, 15, f'=IF(G{GT2}=0,"",L{GT2}/G{GT2})', '0%', font=BOLD, fill=TOTFILL)
 put(wsP, GT2, 19, f'=IF(R{GT2}=0,"",Q{GT2}/R{GT2})', '0.00"x"', font=BOLD, fill=TOTFILL)
+put(wsP, GT2, 8, f'=IF(G{GT2}=0,0,K{GT2}/G{GT2})', '0%', font=BOLD, fill=TOTFILL)
+for rr_ in (TR, GT2): bucols(rr_, TOTFILL, BOLD)
+put(wsP, GT2 + 1, 2, 'Totals: implied full year = actual ÷ demand-weighted pace (not the sum of noisy country projections). Unknown excluded — see USDA Check tab.',
+    font=Font(name=F, size=8, italic=True)).border = Border()
 # inputs depending on table
 wsP['B10'] = f'=D{TR}'; wsP['B11'] = '=IF(B10=0,0,RoW_Target/B10-1)'; wsP['B12'] = '=IF(B10=0,0,RoW_Target/B10)'
 for a in ('B10', 'B11', 'B12'): wsP[a].font = NORM
 # memo: Unknown
-m0 = GT2 + 2
+m0 = GT2 + 3
 put(wsP, m0, 1, 'Memo — Unknown destinations', font=Font(name=F, size=11, bold=True)).border = Border()
 put(wsP, m0 + 1, 1, f'Unknown commitment at wk N ({CUR})'); put(wsP, m0 + 1, 12, f'=IF(Pace_Week>{WK},"",SUMIFS({wcol()},{KC},"UNKNOWN",{KM},"{CUR}"))', MT)
 put(wsP, m0 + 2, 1, 'China + Unknown at wk N vs China expected'); put(wsP, m0 + 2, 11, f'=K{CH}', MT); put(wsP, m0 + 2, 12, f'=L{CH}+L{m0+1}', MT)
@@ -706,6 +721,110 @@ lc.add_data(Reference(wsC, min_col=8, max_col=10, min_row=8, max_row=8 + NW), ti
 lc.set_categories(Reference(wsC, min_col=1, min_row=9, max_row=8 + NW)); lc.width = 20; lc.height = 10
 lc.x_axis.title = 'MY week'; lc.x_axis.delete = False; lc.y_axis.delete = False
 wsC.add_chart(lc, 'L4')
+
+# ================= USDA Check (bushels) =================
+wsU = wb.create_sheet('USDA Check', index=1)
+title(wsU, f'USDA export forecast check — what the week-N booking pace implies vs USDA (MT and mln bu)',
+      'Inputs live on "Demand & Pace" (USDA mln bu, China assumption, pace week, base years). Implied full year = actual commitment ÷ average historical share booked by week N. '
+      'China line includes Unknown (historically mostly re-declared to China).')
+CHN = '"CHINA, PEOPLES REPUBLIC OF"'
+col = f'INDEX({KW},0,Pace_Week)'
+put(wsU, 4, 1, 'A) Historical share of the full year committed by week N (ESR basis)', font=Font(name=F, size=11, bold=True)).border = Border()
+header(wsU, 5, ['Base MY', 'Total commit wk N', 'Total full-MY exports', 'Total pace', 'China+Unknown commit wk N', 'China full-MY exports',
+                'China+Unknown pace', 'RoW commit wk N', 'RoW full-MY exports', 'RoW pace'])
+for k in range(5):
+    r = 6 + k; y = f'$A{r}'
+    put(wsU, r, 1, f'=INDEX(Base_MY,{k+1})', font=GREEN)
+    put(wsU, r, 2, f'=SUMIFS({col},{KM},{y})', MT)
+    put(wsU, r, 3, f'=SUMIFS({KF},{KM},{y})', MT)
+    put(wsU, r, 4, f'=IF(C{r}=0,"",B{r}/C{r})', '0.0%')
+    put(wsU, r, 5, f'=SUMIFS({col},{KM},{y},{KC},{CHN})+SUMIFS({col},{KM},{y},{KC},"UNKNOWN")', MT)
+    put(wsU, r, 6, f'=SUMIFS({KF},{KM},{y},{KC},{CHN})', MT)
+    put(wsU, r, 7, f'=IF(F{r}=0,"",E{r}/F{r})', '0.0%')
+    put(wsU, r, 8, f'=B{r}-E{r}', MT)
+    put(wsU, r, 9, f'=C{r}-F{r}-SUMIFS({KF},{KM},{y},{KC},"UNKNOWN")', MT)
+    put(wsU, r, 10, f'=IF(I{r}=0,"",H{r}/I{r})', '0.0%')
+put(wsU, 11, 1, 'Average, all 5 base years', font=BOLD, fill=TOTFILL)
+put(wsU, 12, 1, 'Average excl. first base year', font=BOLD, fill=TOTFILL)
+for j in (4, 7, 10):
+    put(wsU, 11, j, f'=AVERAGE({L(j)}6:{L(j)}10)', '0.0%', font=BOLD, fill=TOTFILL)
+    put(wsU, 12, j, f'=AVERAGE({L(j)}7:{L(j)}10)', '0.0%', font=BOLD, fill=TOTFILL)
+for j in (2, 3, 5, 6, 8, 9):
+    put(wsU, 11, j, None, fill=TOTFILL); put(wsU, 12, j, None, fill=TOTFILL)
+put(wsU, 13, 1, '"Excl. first base year" drops the newest base year (by default 2025/26, when China was absent): a cross-check, not a replacement.',
+    font=Font(name=F, size=8, italic=True)).border = Border()
+
+put(wsU, 15, 1, f'B) Implied {CUR} full-year exports vs USDA', font=Font(name=F, size=11, bold=True)).border = Border()
+header(wsU, 16, ['Group', 'USDA / assumption (MT)', 'USDA / assumption (mln bu)', f'Actual commit wk N {CUR} (MT)',
+                 'Implied @ 5-yr pace (MT)', 'Implied @ 5-yr pace (mln bu)', 'Δ vs USDA (mln bu)',
+                 'Implied @ pace excl. first base yr (MT)', '(mln bu)', 'Δ vs USDA (mln bu)'])
+BUF = '#,##0;-#,##0;"-"'
+lines = [('China + Unknown', '=China_Target', f'=SUMIFS({col},{KM},"{CUR}",{KC},{CHN})+SUMIFS({col},{KM},"{CUR}",{KC},"UNKNOWN")', 'G'),
+         ('Rest of World', '=RoW_Target', f'=SUMIFS({col},{KM},"{CUR}")-D17', 'J')]
+for i, (g, usda, act, pc) in enumerate(lines):
+    r = 17 + i
+    put(wsU, r, 1, g, font=BOLD)
+    put(wsU, r, 2, usda, MT, font=GREEN); put(wsU, r, 3, f'=B{r}/Conv/1000000', BUF)
+    put(wsU, r, 4, act, MT)
+    put(wsU, r, 5, f'=IF(N({pc}11)=0,"",D{r}/{pc}11)', MT); put(wsU, r, 6, f'=E{r}/Conv/1000000', BUF)
+    put(wsU, r, 7, f'=F{r}-C{r}', '+#,##0;-#,##0;0', font=BOLD)
+    put(wsU, r, 8, f'=IF(N({pc}12)=0,"",D{r}/{pc}12)', MT); put(wsU, r, 9, f'=H{r}/Conv/1000000', BUF)
+    put(wsU, r, 10, f'=I{r}-C{r}', '+#,##0;-#,##0;0', font=BOLD)
+r = 19
+put(wsU, r, 1, 'Sum of the two groups', font=BOLD, fill=TOTFILL)
+for j in (2, 3, 4, 5, 6, 7, 8, 9, 10):
+    put(wsU, r, j, f'=SUM({L(j)}17:{L(j)}18)', '+#,##0;-#,##0;0' if j in (7, 10) else (BUF if j in (3, 6, 9) else MT), font=BOLD, fill=TOTFILL)
+r = 20
+put(wsU, r, 1, 'Total, projected directly (total pace)', font=BOLD)
+put(wsU, r, 2, "='Demand & Pace'!B6", MT, font=GREEN); put(wsU, r, 3, "='Demand & Pace'!B4", BUF, font=GREEN)
+put(wsU, r, 4, f'=SUMIFS({col},{KM},"{CUR}")', MT)
+put(wsU, r, 5, '=IF(N(D11)=0,"",D20/D11)', MT); put(wsU, r, 6, '=E20/Conv/1000000', BUF); put(wsU, r, 7, '=F20-C20', '+#,##0;-#,##0;0', font=BOLD)
+put(wsU, r, 8, '=IF(N(D12)=0,"",D20/D12)', MT); put(wsU, r, 9, '=H20/Conv/1000000', BUF); put(wsU, r, 10, '=I20-C20', '+#,##0;-#,##0;0', font=BOLD)
+put(wsU, 22, 1, 'Scenario: China held at the assumption, RoW at pace', font=BOLD, fill=CURFILL)
+put(wsU, 22, 3, '=C17+F18', BUF, fill=CURFILL); put(wsU, 22, 7, '=C22-C20', '+#,##0;-#,##0;0', font=BOLD, fill=CURFILL)
+put(wsU, 22, 9, '=C17+I18', BUF, fill=CURFILL); put(wsU, 22, 10, '=I22-C20', '+#,##0;-#,##0;0', font=BOLD, fill=CURFILL)
+put(wsU, 22, 4, '← mln bu at 5-yr pace / Δ', font=Font(name=F, size=8, italic=True))
+put(wsU, 22, 8, '← excl.-first-yr pace / Δ', font=Font(name=F, size=8, italic=True))
+put(wsU, 24, 1, 'ESR → Census basis uplift (%)', font=BOLD)
+put(wsU, 24, 2, 0, '0.0%', font=BLUE, fill=YEL)
+put(wsU, 24, 3, 'Implied figures above are ESR basis; USDA\'s are Census basis, which usually runs higher. Enter your own uplift (e.g. from past MYs: Census final ÷ ESR final − 1). Rows 25–26 apply it.',
+    font=Font(name=F, size=8, italic=True)).border = Border()
+put(wsU, 25, 1, 'Scenario row 22 at Census basis (mln bu)', font=BOLD)
+put(wsU, 25, 3, '=C17+F18*(1+B24)', BUF); put(wsU, 25, 7, '=C25-C20', '+#,##0;-#,##0;0', font=BOLD)
+put(wsU, 25, 9, '=C17+I18*(1+B24)', BUF); put(wsU, 25, 10, '=I25-C20', '+#,##0;-#,##0;0', font=BOLD)
+put(wsU, 26, 1, 'Total direct at Census basis (mln bu)', font=BOLD)
+put(wsU, 26, 3, '=F20*(1+B24)', BUF); put(wsU, 26, 7, '=C26-C20', '+#,##0;-#,##0;0', font=BOLD)
+put(wsU, 26, 9, '=I20*(1+B24)', BUF); put(wsU, 26, 10, '=I26-C20', '+#,##0;-#,##0;0', font=BOLD)
+
+# backtest (hardcoded, computed here)
+put(wsU, 28, 1, f'C) Backtest — how well did week-{WK} pace predict the final? (leave-one-out: each year projected with the other years\' average pace, max 5)',
+    font=Font(name=F, size=11, bold=True)).border = Border()
+header(wsU, 29, ['MY', 'Total: implied (Mt)', 'Total: final (Mt)', 'Total: error', 'China+Unk: implied (Mt)', 'China: final (Mt)', 'China+Unk: error',
+                 'RoW: implied (Mt)', 'RoW: final (Mt)', 'RoW: error'])
+grpw = ins.assign(G=ins.Country.map(lambda c: 'China' if c.startswith('CHINA') else ('Unk' if c == 'UNKNOWN' else 'RoW')))
+w9g = grpw[grpw.WeekNumber == WK].groupby(['MY', 'G']).TotalCommitment.sum().unstack().fillna(0)
+fing = grpw.sort_values('date').groupby(['MY', 'Country']).tail(1)
+fing = fing[fing.MY != CUR].groupby(['MY', 'G']).AccumulatedExports.sum().unstack().fillna(0)
+bt = {'T': (w9g.sum(axis=1), fing.sum(axis=1)), 'C': (w9g['China'] + w9g['Unk'], fing['China']), 'R': (w9g['RoW'], fing['RoW'])}
+bys = [m for m in sorted(fing.index) if m in w9g.index]
+for i, m in enumerate(bys):
+    r = 30 + i
+    put(wsU, r, 1, m)
+    for k, key in enumerate('TCR'):
+        cm, fn = bt[key]
+        oth = [o for o in bys if o != m and abs(int(o[:4]) - int(m[:4])) <= 5][:5]
+        pc_ = sum(cm[o] / fn[o] for o in oth) / len(oth)
+        imp = cm[m] / pc_
+        put(wsU, r, 2 + 3 * k, imp / 1e6, '0.0', font=BLUE); put(wsU, r, 3 + 3 * k, fn[m] / 1e6, '0.0', font=BLUE)
+        put(wsU, r, 4 + 3 * k, f'={L(2+3*k)}{r}/{L(3+3*k)}{r}-1', PCT)
+rb = 30 + len(bys)
+for k, t in enumerate([
+    'Reading: in "normal" years the week-N pace landed within roughly ±5–10% of the final total. It failed badly when China\'s behaviour broke the pattern '
+    '(2020/21 surge buying, 2025/26 absence). 2026/27 is again policy-driven (China purchase commitment), so treat the China line as an assumption, not a projection.',
+    'A ±8% error on ~50 Mt is ±4 Mt ≈ ±150 mln bu: the pace signal is only actionable when it is clearly larger than that band.']):
+    put(wsU, rb + 1 + k, 1, t, font=Font(name=F, size=9, italic=True)).border = Border()
+wsU.column_dimensions['A'].width = 40
+for j in range(2, 11): wsU.column_dimensions[L(j)].width = 15
 
 for ws in wb:
     ws.sheet_view.showGridLines = False
