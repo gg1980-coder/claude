@@ -416,16 +416,16 @@ for i, t in enumerate([
     '• Cheaper Brazilian beans into Europe if China keeps buying in the US rather than in Brazil.']):
     note(wsE, r3 + 1 + i, t, sz=10)
 r4 = r3 + 8
-put(wsE, r4, 1, '4) The market\'s number vs our analysis (EU-27)', f=font(12, True, NAVY), border=False)
-note(wsE, r4 + 1, 'The market uses EU import data, which runs ~15–25% above US export-sales data for the same season, so we convert it before comparing.')
+put(wsE, r4, 1, '4) The market\'s number vs our analysis (EU-27 + UK, the market\'s "EU" definition)', f=font(12, True, NAVY), border=False)
+note(wsE, r4 + 1, 'The market uses EU import data, which runs ~10–20% above US export-sales data for the same countries and season, so we convert it before comparing.')
 header(wsE, r4 + 2, ['', 'Market', 'Our analysis', 'Difference'], h=24)
 cmp_ = [('Demand this season, market basis (kt)', '=mk_cur', None, None, KT),
-        ('Demand this season, export-sales basis (kt)', '=mk_cur*mk_ratio', '=SUMIFS(d_dem,d_eu,"EU")', 'D', KT),
+        ('Demand this season, export-sales basis (kt)', '=mk_cur*mk_ratio', '=(SUMIFS(d_dem,d_eu,"EU")+SUMIFS(d_dem,d_dest,"United Kingdom"))', 'D', KT),
         ('   in mln bu', '=B{rp}*1000/Conv/1000000', '=C{rp}*1000/Conv/1000000', 'D', '#,##0.0'),
-        ('vs own 5-yr average', '=mk_cur/mk_avg-1', '=SUMIFS(d_dem,d_eu,"EU")/SUMIFS(d_fy,d_eu,"EU")-1', 'D', PC),
-        ('Should have booked by now (kt)', '=mk_cur*mk_ratio*SUMPRODUCT((d_eu="EU")*d_dem*d_pace)/SUMIFS(d_dem,d_eu,"EU")',
-         '=SUMPRODUCT((d_eu="EU")*d_dem*d_pace)', 'D', KT),
-        ('Booked so far (kt)', '=SUMIFS(d_now,d_eu,"EU")', '=SUMIFS(d_now,d_eu,"EU")', None, KT),
+        ('vs own 5-yr average', '=mk_cur/mk_avg-1', '=(SUMIFS(d_dem,d_eu,"EU")+SUMIFS(d_dem,d_dest,"United Kingdom"))/(SUMIFS(d_fy,d_eu,"EU")+SUMIFS(d_fy,d_dest,"United Kingdom"))-1', 'D', PC),
+        ('Should have booked by now (kt)', '=mk_cur*mk_ratio*SUMPRODUCT(((d_eu="EU")+(d_dest="United Kingdom"))*d_dem*d_pace)/(SUMIFS(d_dem,d_eu,"EU")+SUMIFS(d_dem,d_dest,"United Kingdom"))',
+         '=SUMPRODUCT(((d_eu="EU")+(d_dest="United Kingdom"))*d_dem*d_pace)', 'D', KT),
+        ('Booked so far (kt)', '=(SUMIFS(d_now,d_eu,"EU")+SUMIFS(d_now,d_dest,"United Kingdom"))', '=(SUMIFS(d_now,d_eu,"EU")+SUMIFS(d_now,d_dest,"United Kingdom"))', None, KT),
         ('Gap vs pace (kt)', 'GAP', 'GAP', None, SKT),
         ('Status', 'ST', 'ST', None, None)]
 for i, (lab, fm, fo, dif, fmt) in enumerate(cmp_):
@@ -448,8 +448,8 @@ for i, (lab, a_, b_) in enumerate([('Sep–Feb (before Brazil\'s harvest)', 'mk_
     put(wsE, r, 1, lab, f=font(10, True)); put(wsE, r, 2, '=' + a_, KT); put(wsE, r, 3, '=' + b_, KT)
     put(wsE, r, 4, f'=B{r}/C{r}-1', PC, f=font(10, True))
 wsE.conditional_formatting.add(f'D{rr4+1}:D{rr4+2}', CellIsRule(operator='lessThan', formula=['-0.2'], fill=RED))
-note(wsE, rr4 + 3, 'Reading: the market is ~230 kt (≈9 mln bu) below our model for the EU. It keeps Sep–Feb at a normal level and removes almost all US volume from Mar–Aug,', sz=10)
-note(wsE, rr4 + 4, 'i.e. it assumes Brazil takes the EU market after February. EU bookings so far are on pace for both numbers; the difference only shows from March.', sz=10)
+note(wsE, rr4 + 3, 'Reading: the market is ~275 kt (≈10 mln bu) below our model for EU-27 + UK. It keeps Sep–Feb at a normal level and removes almost all US volume from Mar–Aug,', sz=10)
+note(wsE, rr4 + 4, 'i.e. it assumes Brazil takes the EU market after February. EU + UK bookings are on pace for our number and slightly ahead of the market\'s; the real difference only shows from March.', sz=10)
 note(wsE, rr4 + 5, 'Upside risk to the market number: EU deforestation rules (EUDR) from 30 Dec 2026 could keep US beans competitive in Mar–Aug (to be confirmed).', sz=10)
 
 # ================= Read Me =================

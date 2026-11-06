@@ -473,7 +473,7 @@ wsCC.add_chart(lcc, 'W4')
 
 # ================= Market View =================
 MKT_MONTHS = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
-MKT = {  # kt; user-provided market table (EU imports of US soybeans by month, assumed EU-27); last row = market estimate for current MY
+MKT = {  # kt; user-provided market table: imports of US soybeans by month into EU-27 + UK (market's 'EU' = old EU-28); last row = market estimate
     '2016/17': [122, 796, 591, 470, 689, 322, 384, 457, 7, 191, 493, 219],
     '2017/18': [219, 606, 604, 370, 561, 482, 275, 277, 511, 831, 658, 1085],
     '2018/19': [723, 1406, 1499, 1337, 1159, 610, 295, 415, 152, 218, 283, 296],
@@ -488,7 +488,7 @@ MKT = {  # kt; user-provided market table (EU imports of US soybeans by month, a
 }
 wsM = wb.create_sheet('Market View', index=1)
 title(wsM, f'Market view — EU imports of US soybeans by month (kt) and how the market\'s {CUR} number compares with our model',
-      'Source: market table provided by the user (assumed EU-27 imports of US soybeans, monthly, kt; the last row is the market\'s estimate for the current season). '
+      'Source: market table provided by the user — monthly imports of US soybeans (kt) into the market\'s "EU" = EU-27 + UK (old EU-28); the last row is the market\'s estimate for the current season. '
       'This is a different basis from USDA export sales (arrivals vs US sales/shipments), so it is bridged with a conversion ratio in section C.')
 section(wsM, 4, 'A) Monthly table (blue = input; edit the current-season row to update)')
 header(wsM, 5, ['Season'] + MKT_MONTHS + ['Total', 'Sep–Feb', 'Mar–Aug', 'Mar–Aug share'], h=30)
@@ -533,33 +533,34 @@ text(wsM, b0 + 7, 1, 'Reading: the market keeps Sep–Feb close to a normal year
                      'once Brazil\'s crop arrives. EUDR (if applied from 30 Dec 2026, US low-risk) is the main risk to that assumption.')
 
 c0 = b0 + 9
-section(wsM, c0, 'C) Bridge to our model (USDA export-sales basis, EU-27)')
-header(wsM, c0 + 1, ['Base season', 'Market table (kt)', 'Export sales, EU-27 full-MY (kt)', 'Ratio (export sales ÷ market)'], h=40)
+UKR = D1 + EUR.index('UNITED KINGDOM')
+section(wsM, c0, 'C) Bridge to our model (USDA export-sales basis, EU-27 + UK = same countries as the market table)')
+header(wsM, c0 + 1, ['Base season', 'Market table (kt)', 'Export sales, EU-27 + UK full-MY (kt)', 'Ratio (export sales ÷ market)'], h=40)
 for k in range(5):
     r = c0 + 2 + k
     put(wsM, r, 1, f'=INDEX(Base_MY,{k+1})', font=GREEN)
     put(wsM, r, 2, '=' + mk('N', f'$A{r}'), MT)
-    put(wsM, r, 3, f"=SUMIFS(INDEX({FYR}!${L(cP0)}:${L(cP0+len(PRIOR)-1)},0,MATCH($A{r},{FYR}!${L(cP0)}$8:${L(cP0+len(PRIOR)-1)}$8,0)),{FYR}!$B:$B,\"EU\")/1000", MT)
+    put(wsM, r, 3, f"=SUMIFS(INDEX({FYR}!${L(cP0)}:${L(cP0+len(PRIOR)-1)},0,MATCH($A{r},{FYR}!${L(cP0)}$8:${L(cP0+len(PRIOR)-1)}$8,0)),{FYR}!$B:$B,\"EU\")/1000+SUMIFS(INDEX({FYR}!${L(cP0)}:${L(cP0+len(PRIOR)-1)},0,MATCH($A{r},{FYR}!${L(cP0)}$8:${L(cP0+len(PRIOR)-1)}$8,0)),{FYR}!$A:$A,\"UNITED KINGDOM\")/1000", MT)
     put(wsM, r, 4, f'=IF(B{r}=0,"",C{r}/B{r})', '0.00')
 rq = c0 + 7
 put(wsM, rq, 1, 'Average ratio', font=BOLD, fill=TOTFILL); put(wsM, rq, 4, f'=AVERAGE(D{c0+2}:D{c0+6})', '0.00', font=BOLD, fill=TOTFILL)
 put(wsM, rq, 2, None, fill=TOTFILL); put(wsM, rq, 3, None, fill=TOTFILL)
 br = [('Market estimate on export-sales basis (kt)', f'=N{MCR}*D{rq}', MT),
-      ('Our model: EU-27 demand used (kt)', f"=Destinations!S{SUBROW['EU-27']}/1000", MT),
+      ('Our model: EU-27 + UK demand used (kt)', f"=(Destinations!S{SUBROW['EU-27']}+Destinations!S{UKR})/1000", MT),
       ('Difference: market − our model (kt)', f'=B{rq+1}-B{rq+2}', '+#,##0;-#,##0;0'),
       ('Difference (mln bu)', f'=B{rq+3}*1000/Conv/1000000', '+#,##0.0;-#,##0.0;0.0'),
       ('Market vs its own 5-yr avg', f'=N{MCR}/N{ra_}-1', PCT),
-      ('Our model vs export-sales 5-yr avg (EU-27)', f"=Destinations!S{SUBROW['EU-27']}/Destinations!L{SUBROW['EU-27']}-1", PCT)]
+      ('Our model vs export-sales 5-yr avg (EU-27 + UK)', f"=(Destinations!S{SUBROW['EU-27']}+Destinations!S{UKR})/(Destinations!L{SUBROW['EU-27']}+Destinations!L{UKR})-1", PCT)]
 for i, (lab, f, fmt) in enumerate(br):
     put(wsM, rq + 1 + i, 1, lab, font=BOLD); put(wsM, rq + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
 p0 = rq + 8
-section(wsM, p0, 'D) Are EU-27 bookings on pace for the market\'s number?')
-pk = [('EU-27 booked so far, export-sales basis (kt)', f"=Destinations!C{SUBROW['EU-27']}/1000", MT),
-      ('Share usually booked by now (EU-27, demand-weighted)', f"=Destinations!T{SUBROW['EU-27']}", '0%'),
+section(wsM, p0, 'D) Are EU-27 + UK bookings on pace for the market\'s number?')
+pk = [('EU-27 + UK booked so far, export-sales basis (kt)', f"=(Destinations!C{SUBROW['EU-27']}+Destinations!C{UKR})/1000", MT),
+      ('Share usually booked by now (EU-27 + UK, demand-weighted)', f"=(Destinations!W{SUBROW['EU-27']}+Destinations!W{UKR})/(Destinations!S{SUBROW['EU-27']}+Destinations!S{UKR})", '0%'),
       ('Should have booked for the market number (kt)', f'=B{rq+1}*B{p0+2}', MT),
       ('Gap (kt)', f'=B{p0+1}-B{p0+3}', '+#,##0;-#,##0;0'),
       ('Status', f'=IF(ABS(B{p0+4})*1000<Cargo_MT,"On pace",IF(B{p0+4}>0,"AHEAD of the market number","BEHIND the market number"))', None),
-      ('Same, for our model\'s demand: gap (kt)', f"=Destinations!X{SUBROW['EU-27']}/1000", '+#,##0;-#,##0;0')]
+      ('Same, for our model\'s demand: gap (kt)', f"=(Destinations!X{SUBROW['EU-27']}+Destinations!X{UKR})/1000", '+#,##0;-#,##0;0')]
 for i, (lab, f, fmt) in enumerate(pk):
     put(wsM, p0 + 1 + i, 1, lab, font=BOLD); put(wsM, p0 + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
 text(wsM, p0 + 8, 1, 'Caveat: the ratio bridges two different datasets (arrivals in the EU vs US sales/shipments, with timing and transshipment differences); '
