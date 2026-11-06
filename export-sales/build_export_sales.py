@@ -1000,5 +1000,8 @@ wsE.add_chart(bc, 'V24')
 
 for ws in wb:
     ws.sheet_view.showGridLines = False
+    for ch_ in ws._charts:
+        if isinstance(ch_, LineChart):
+            for s_ in ch_.series: s_.smooth = False
 wb.save(out)
 print('CUR', CUR, 'WK', WK, 'LY', LY, 'FIVE', FIVE, 'rows', len(order))
