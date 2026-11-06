@@ -471,6 +471,110 @@ lcc.set_categories(Reference(wsCC, min_col=1, min_row=10, max_row=9 + NW)); lcc.
 lcc.x_axis.title = 'MY week'; lcc.x_axis.delete = False; lcc.y_axis.delete = False
 wsCC.add_chart(lcc, 'W4')
 
+# ================= Market View =================
+MKT_MONTHS = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
+MKT = {  # kt; user-provided market table (EU imports of US soybeans by month, assumed EU-27); last row = market estimate for current MY
+    '2016/17': [122, 796, 591, 470, 689, 322, 384, 457, 7, 191, 493, 219],
+    '2017/18': [219, 606, 604, 370, 561, 482, 275, 277, 511, 831, 658, 1085],
+    '2018/19': [723, 1406, 1499, 1337, 1159, 610, 295, 415, 152, 218, 283, 296],
+    '2019/20': [819, 960, 493, 608, 878, 356, 244, 114, 128, 7, 297, 851],
+    '2020/21': [528, 856, 688, 740, 1091, 717, 31, 26, 18, 21, 108, 169],
+    '2021/22': [393, 812, 847, 1008, 809, 292, 81, 160, 250, 310, 354, 557],
+    '2022/23': [258, 662, 875, 642, 897, 583, 352, 455, 151, 186, 727, 608],
+    '2023/24': [485, 672, 1171, 1177, 680, 557, 299, 33, 62, 333, 302, 293],
+    '2024/25': [604, 1046, 1368, 866, 775, 352, 288, 390, 6, 243, 364, 336],
+    '2025/26': [530, 1033, 1027, 470, 697, 284, 73, 12, 156, 219, 195, 340],
+    CUR:       [480, 780, 1180, 820, 660, 510, 210, 40, 30, 50, 20, 115],
+}
+wsM = wb.create_sheet('Market View', index=1)
+title(wsM, f'Market view — EU imports of US soybeans by month (kt) and how the market\'s {CUR} number compares with our model',
+      'Source: market table provided by the user (assumed EU-27 imports of US soybeans, monthly, kt; the last row is the market\'s estimate for the current season). '
+      'This is a different basis from USDA export sales (arrivals vs US sales/shipments), so it is bridged with a conversion ratio in section C.')
+section(wsM, 4, 'A) Monthly table (blue = input; edit the current-season row to update)')
+header(wsM, 5, ['Season'] + MKT_MONTHS + ['Total', 'Sep–Feb', 'Mar–Aug', 'Mar–Aug share'], h=30)
+MS = list(MKT.keys())
+for i, sea in enumerate(MS):
+    r = 6 + i
+    put(wsM, r, 1, sea, font=BOLD, fill=CURFILL if sea == CUR else None)
+    for j, v in enumerate(MKT[sea]): put(wsM, r, 2 + j, v, MT, font=BLUE, fill=YEL if sea == CUR else None)
+    put(wsM, r, 14, f'=SUM(B{r}:M{r})', MT, font=BOLD); put(wsM, r, 15, f'=SUM(B{r}:G{r})', MT); put(wsM, r, 16, f'=SUM(H{r}:M{r})', MT)
+    put(wsM, r, 17, f'=IF(N{r}=0,0,P{r}/N{r})', '0%')
+ML = 6 + len(MS) - 1; MCR = ML
+MR = f'$A$6:$A${ML}'
+def mk(col, sea_ref): return f'INDEX(${col}$6:${col}${ML},MATCH({sea_ref},{MR},0))'
+ra_ = ML + 1
+put(wsM, ra_, 1, '5-yr avg (base yrs)', font=BOLD, fill=TOTFILL)
+for j in range(2, 17):
+    cl = L(j)
+    put(wsM, ra_, j, '=(' + '+'.join(mk(cl, f'INDEX(Base_MY,{k+1})') for k in range(5)) + ')/5', MT, font=BOLD, fill=TOTFILL)
+put(wsM, ra_, 17, f'=P{ra_}/N{ra_}', '0%', font=BOLD, fill=TOTFILL)
+rs_ = ra_ + 1
+put(wsM, rs_, 1, f'{CUR} vs 5-yr avg', font=BOLD)
+for j in range(2, 17): put(wsM, rs_, j, f'=IF({L(j)}{ra_}=0,"",{L(j)}{MCR}/{L(j)}{ra_}-1)', PCT, font=BOLD)
+posneg(wsM, f'B{rs_}:P{rs_}')
+rsh = rs_ + 1
+put(wsM, rsh, 1, f'Monthly share {CUR}', font=NORM)
+put(wsM, rsh + 1, 1, 'Monthly share 5-yr avg', font=NORM)
+for j in range(2, 14):
+    put(wsM, rsh, j, f'=IF($N${MCR}=0,0,{L(j)}{MCR}/$N${MCR})', '0%')
+    put(wsM, rsh + 1, j, f'=IF($N${ra_}=0,0,{L(j)}{ra_}/$N${ra_})', '0%')
+
+b0 = rsh + 3
+section(wsM, b0, f'B) What the market\'s {CUR} number assumes')
+kb = [('Market estimate for the season (kt)', f'=N{MCR}', MT),
+      ('vs last season', f'=N{MCR}/{mk("N", "LY_MY")}-1', PCT),
+      ('vs 5-yr avg', f'=N{MCR}/N{ra_}-1', PCT),
+      ('Sep–Feb vs 5-yr avg', f'=O{MCR}/O{ra_}-1', PCT),
+      ('Mar–Aug vs 5-yr avg', f'=P{MCR}/P{ra_}-1', PCT),
+      ('Mar–Aug share of the year: market vs 5-yr avg', f'=TEXT(Q{MCR},"0%")&" vs "&TEXT(Q{ra_},"0%")', None)]
+for i, (lab, f, fmt) in enumerate(kb):
+    put(wsM, b0 + 1 + i, 1, lab, font=BOLD); put(wsM, b0 + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
+text(wsM, b0 + 7, 1, 'Reading: the market keeps Sep–Feb close to a normal year and cuts almost all of Mar–Aug, i.e. it assumes the US is priced out of the EU '
+                     'once Brazil\'s crop arrives. EUDR (if applied from 30 Dec 2026, US low-risk) is the main risk to that assumption.')
+
+c0 = b0 + 9
+section(wsM, c0, 'C) Bridge to our model (USDA export-sales basis, EU-27)')
+header(wsM, c0 + 1, ['Base season', 'Market table (kt)', 'Export sales, EU-27 full-MY (kt)', 'Ratio (export sales ÷ market)'], h=40)
+for k in range(5):
+    r = c0 + 2 + k
+    put(wsM, r, 1, f'=INDEX(Base_MY,{k+1})', font=GREEN)
+    put(wsM, r, 2, '=' + mk('N', f'$A{r}'), MT)
+    put(wsM, r, 3, f"=SUMIFS(INDEX({FYR}!${L(cP0)}:${L(cP0+len(PRIOR)-1)},0,MATCH($A{r},{FYR}!${L(cP0)}$8:${L(cP0+len(PRIOR)-1)}$8,0)),{FYR}!$B:$B,\"EU\")/1000", MT)
+    put(wsM, r, 4, f'=IF(B{r}=0,"",C{r}/B{r})', '0.00')
+rq = c0 + 7
+put(wsM, rq, 1, 'Average ratio', font=BOLD, fill=TOTFILL); put(wsM, rq, 4, f'=AVERAGE(D{c0+2}:D{c0+6})', '0.00', font=BOLD, fill=TOTFILL)
+put(wsM, rq, 2, None, fill=TOTFILL); put(wsM, rq, 3, None, fill=TOTFILL)
+br = [('Market estimate on export-sales basis (kt)', f'=N{MCR}*D{rq}', MT),
+      ('Our model: EU-27 demand used (kt)', f"=Destinations!S{SUBROW['EU-27']}/1000", MT),
+      ('Difference: market − our model (kt)', f'=B{rq+1}-B{rq+2}', '+#,##0;-#,##0;0'),
+      ('Difference (mln bu)', f'=B{rq+3}*1000/Conv/1000000', '+#,##0.0;-#,##0.0;0.0'),
+      ('Market vs its own 5-yr avg', f'=N{MCR}/N{ra_}-1', PCT),
+      ('Our model vs export-sales 5-yr avg (EU-27)', f"=Destinations!S{SUBROW['EU-27']}/Destinations!L{SUBROW['EU-27']}-1", PCT)]
+for i, (lab, f, fmt) in enumerate(br):
+    put(wsM, rq + 1 + i, 1, lab, font=BOLD); put(wsM, rq + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
+p0 = rq + 8
+section(wsM, p0, 'D) Are EU-27 bookings on pace for the market\'s number?')
+pk = [('EU-27 booked so far, export-sales basis (kt)', f"=Destinations!C{SUBROW['EU-27']}/1000", MT),
+      ('Share usually booked by now (EU-27, demand-weighted)', f"=Destinations!T{SUBROW['EU-27']}", '0%'),
+      ('Should have booked for the market number (kt)', f'=B{rq+1}*B{p0+2}', MT),
+      ('Gap (kt)', f'=B{p0+1}-B{p0+3}', '+#,##0;-#,##0;0'),
+      ('Status', f'=IF(ABS(B{p0+4})*1000<Cargo_MT,"On pace",IF(B{p0+4}>0,"AHEAD of the market number","BEHIND the market number"))', None),
+      ('Same, for our model\'s demand: gap (kt)', f"=Destinations!X{SUBROW['EU-27']}/1000", '+#,##0;-#,##0;0')]
+for i, (lab, f, fmt) in enumerate(pk):
+    put(wsM, p0 + 1 + i, 1, lab, font=BOLD); put(wsM, p0 + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
+text(wsM, p0 + 8, 1, 'Caveat: the ratio bridges two different datasets (arrivals in the EU vs US sales/shipments, with timing and transshipment differences); '
+                     'it varies by season (see col D above), so treat the bridged number as ± a few hundred kt.')
+wsM.column_dimensions['A'].width = 50
+for j in range(2, 18): wsM.column_dimensions[L(j)].width = 10
+wsM.column_dimensions['B'].width = 14; wsM.column_dimensions['C'].width = 14
+mc = BarChart(); mc.type = 'col'; mc.title = f'Monthly share of the year: market {CUR} vs 5-yr avg'; mc.y_axis.numFmt = '0%'
+from openpyxl.chart import Series
+mc.series.append(Series(Reference(wsM, min_col=2, max_col=13, min_row=rsh), title=f'Market {CUR}'))
+mc.series.append(Series(Reference(wsM, min_col=2, max_col=13, min_row=rsh + 1), title='5-yr avg'))
+mc.set_categories(Reference(wsM, min_col=2, max_col=13, min_row=5)); mc.width = 18; mc.height = 8
+mc.x_axis.delete = False; mc.y_axis.delete = False
+wsM.add_chart(mc, f'F{b0}')
+
 # ================= Dashboard body =================
 r0 = 18
 section(wsH, r0, f'A) Europe at week N — {CUR} vs history and vs demand')

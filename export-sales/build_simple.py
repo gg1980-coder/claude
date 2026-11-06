@@ -68,6 +68,12 @@ we = E['Weekly Europe']
 EW = [(we.cell(r, 1).value, we.cell(r, 3).value, we.cell(r, 4).value, we.cell(r, 5).value, we.cell(r, 9).value, we.cell(r, 10).value, we.cell(r, 11).value)
       for r in range(5, 57)]
 DATE = E['Dashboard']['A1'].value.split('w/e ')[1].split(',')[0]
+mv = E['Market View']
+_mrow = {mv.cell(r, 1).value: r for r in range(1, mv.max_row + 1) if mv.cell(r, 1).value}
+MK = dict(cur=mv.cell(_mrow[CUR], 14).value, avg=mv.cell(_mrow['5-yr avg (base yrs)'], 14).value,
+          sf=mv.cell(_mrow[CUR], 15).value, sfa=mv.cell(_mrow['5-yr avg (base yrs)'], 15).value,
+          ma=mv.cell(_mrow[CUR], 16).value, maa=mv.cell(_mrow['5-yr avg (base yrs)'], 16).value,
+          ratio=mv.cell(_mrow['Average ratio'], 4).value, ly=mv.cell(_mrow[LYc], 14).value)
 
 # ---------------- styles ----------------
 F = 'Arial'
@@ -194,6 +200,16 @@ for i, (w, c, l, a, ex, ns, nsa) in enumerate(EW):
     for j, v in enumerate([c, l, a, ex, ns, nsa], 2):
         put(wsD, r, j, None if v is None else v / 1000, KT, f=font(10, False, '0000FF'))
 EWL = EWR + 1 + len(EW)
+MV0 = EWL + 3
+put(wsD, MV0, 1, 'Market view — EU imports of US soybeans (market table provided by the user, kt; assumed EU-27)', f=font(11, True, NAVY), border=False)
+mvl = [('Market estimate this season', MK['cur']), ('Market: last season', MK['ly']), ('Market: 5-yr avg', MK['avg']),
+       ('Market: Sep–Feb this season', MK['sf']), ('Market: Sep–Feb 5-yr avg', MK['sfa']),
+       ('Market: Mar–Aug this season', MK['ma']), ('Market: Mar–Aug 5-yr avg', MK['maa']),
+       ('Conversion: export-sales basis ÷ market basis (5-yr avg ratio)', MK['ratio'])]
+for i, (lab, v) in enumerate(mvl):
+    put(wsD, MV0 + 1 + i, 1, lab, f=font(10, True)); put(wsD, MV0 + 1 + i, 2, v, '0.00' if i == 7 else KT, f=font(10, False, '0000FF'))
+for nm_, k_ in [('mk_cur', 1), ('mk_ly', 2), ('mk_avg', 3), ('mk_sf', 4), ('mk_sfa', 5), ('mk_ma', 6), ('mk_maa', 7), ('mk_ratio', 8)]:
+    wb.defined_names[nm_] = DefinedName(nm_, attr_text=f"Data!$B${MV0 + k_}")
 
 # helper for SUMIFS on data
 def S(col, *crit): return 'SUMIFS(' + col + ''.join(f',{a},{b}' for a, b in crit) + ')'
@@ -399,6 +415,42 @@ for i, t in enumerate([
     '• EU deforestation rules (EUDR): may favour US beans over Brazilian from January 2027 (timing to be confirmed).',
     '• Cheaper Brazilian beans into Europe if China keeps buying in the US rather than in Brazil.']):
     note(wsE, r3 + 1 + i, t, sz=10)
+r4 = r3 + 8
+put(wsE, r4, 1, '4) The market\'s number vs our analysis (EU-27)', f=font(12, True, NAVY), border=False)
+note(wsE, r4 + 1, 'The market uses EU import data, which runs ~15–25% above US export-sales data for the same season, so we convert it before comparing.')
+header(wsE, r4 + 2, ['', 'Market', 'Our analysis', 'Difference'], h=24)
+cmp_ = [('Demand this season, market basis (kt)', '=mk_cur', None, None, KT),
+        ('Demand this season, export-sales basis (kt)', '=mk_cur*mk_ratio', '=SUMIFS(d_dem,d_eu,"EU")', 'D', KT),
+        ('   in mln bu', '=B{rp}*1000/Conv/1000000', '=C{rp}*1000/Conv/1000000', 'D', '#,##0.0'),
+        ('vs own 5-yr average', '=mk_cur/mk_avg-1', '=SUMIFS(d_dem,d_eu,"EU")/SUMIFS(d_fy,d_eu,"EU")-1', 'D', PC),
+        ('Should have booked by now (kt)', '=mk_cur*mk_ratio*SUMPRODUCT((d_eu="EU")*d_dem*d_pace)/SUMIFS(d_dem,d_eu,"EU")',
+         '=SUMPRODUCT((d_eu="EU")*d_dem*d_pace)', 'D', KT),
+        ('Booked so far (kt)', '=SUMIFS(d_now,d_eu,"EU")', '=SUMIFS(d_now,d_eu,"EU")', None, KT),
+        ('Gap vs pace (kt)', 'GAP', 'GAP', None, SKT),
+        ('Status', 'ST', 'ST', None, None)]
+for i, (lab, fm, fo, dif, fmt) in enumerate(cmp_):
+    r = r4 + 3 + i
+    put(wsE, r, 1, lab, f=font(10, True))
+    if fm == 'GAP':
+        put(wsE, r, 2, f'=B{r-1}-B{r-2}', fmt, f=font(10, True)); put(wsE, r, 3, f'=C{r-1}-C{r-2}', fmt, f=font(10, True))
+    elif fm == 'ST':
+        for c_ in (2, 3):
+            put(wsE, r, c_, f'=IF(ABS({L(c_)}{r-1})<Cargo,"On pace",IF({L(c_)}{r-1}>0,"Ahead","Behind"))', f=font(10, True), al=Alignment(horizontal='center'))
+        status_colors(wsE, f'B{r}:C{r}', f'B{r}')
+    else:
+        put(wsE, r, 2, fm.format(r=r, rp=r-1), fmt)
+        put(wsE, r, 3, fo.format(r=r, rp=r-1) if fo else None, fmt)
+    if dif: put(wsE, r, 4, f'=B{r}-C{r}', '+#,##0;-#,##0;0' if fmt != PC else '+0%;-0%;0%', f=font(10, True))
+rr4 = r4 + 12
+header(wsE, rr4, ['Where the market puts the volume', 'Market this season', 'Market 5-yr avg', 'Change'], h=24)
+for i, (lab, a_, b_) in enumerate([('Sep–Feb (before Brazil\'s harvest)', 'mk_sf', 'mk_sfa'), ('Mar–Aug (Brazil season)', 'mk_ma', 'mk_maa')]):
+    r = rr4 + 1 + i
+    put(wsE, r, 1, lab, f=font(10, True)); put(wsE, r, 2, '=' + a_, KT); put(wsE, r, 3, '=' + b_, KT)
+    put(wsE, r, 4, f'=B{r}/C{r}-1', PC, f=font(10, True))
+wsE.conditional_formatting.add(f'D{rr4+1}:D{rr4+2}', CellIsRule(operator='lessThan', formula=['-0.2'], fill=RED))
+note(wsE, rr4 + 3, 'Reading: the market is ~230 kt (≈9 mln bu) below our model for the EU. It keeps Sep–Feb at a normal level and removes almost all US volume from Mar–Aug,', sz=10)
+note(wsE, rr4 + 4, 'i.e. it assumes Brazil takes the EU market after February. EU bookings so far are on pace for both numbers; the difference only shows from March.', sz=10)
+note(wsE, rr4 + 5, 'Upside risk to the market number: EU deforestation rules (EUDR) from 30 Dec 2026 could keep US beans competitive in Mar–Aug (to be confirmed).', sz=10)
 
 # ================= Read Me =================
 title(wsR, 'US soybean export sales by destination — how to read this file',
