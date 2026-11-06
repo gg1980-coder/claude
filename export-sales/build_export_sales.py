@@ -509,6 +509,204 @@ for i, (g, c1) in enumerate([('Total', 2), ('China', 5), ('RoW', 8)]):
     lc.x_axis.title = 'MY week'; lc.x_axis.delete = False; lc.y_axis.delete = False
     wsW.add_chart(lc, f'K{5 + i * 16}')
 
+# ================= Demand & seasonal pace =================
+from openpyxl.workbook.defined_name import DefinedName
+from openpyxl.worksheet.datavalidation import DataValidation
+YEL = PatternFill('solid', fgColor='FFFF00')
+wsP = wb.create_sheet('Demand & Pace', index=1)
+wsC = wb.create_sheet('Pace Chart', index=2)
+wsK = wb.create_sheet('Weekly by Destination', index=len(wb.sheetnames) - 1)
+
+# ---- weekly cumulative commitment by destination x MY (source) ----
+NW = 52
+wkd = ins[ins.MY.isin(FIVE + [CUR])]
+wp = wkd.pivot_table(index=['MY', 'Country'], columns='WeekNumber', values='TotalCommitment', aggfunc='sum')
+wp = wp.reindex(columns=range(1, NW + 1)).fillna(0)
+title(wsK, f'Cumulative total commitment by destination and in-season week (MT) — {FIVE[-1]} … {CUR}',
+      f'Hardcoded from the ESR file (blue). Full-MY exports = accumulated exports on the last in-season report. {CUR} filled through week {WK} only.')
+header(wsK, 4, ['Marketing year', 'Destination', 'Full-MY exports'] + [f'W{w}' for w in range(1, NW + 1)])
+r = 5
+for (m, c), row in wp.sort_index().iterrows():
+    put(wsK, r, 1, m, font=BLUE); put(wsK, r, 2, c, font=BLUE)
+    fe = None if m == CUR else float(final.get((m, c), 0) or 0)
+    put(wsK, r, 3, fe, MT, font=BLUE)
+    for w in range(1, NW + 1):
+        if m == CUR and w > WK: continue
+        wsK.cell(r, 3 + w, float(row[w])).number_format = MT
+        wsK.cell(r, 3 + w).font = BLUE
+    r += 1
+KL = r - 1
+wsK.column_dimensions['A'].width = 12; wsK.column_dimensions['B'].width = 28; wsK.column_dimensions['C'].width = 14
+for w in range(1, NW + 1): wsK.column_dimensions[L(3 + w)].width = 11
+wsK.freeze_panes = 'D5'
+KM, KC, KF = f"'Weekly by Destination'!$A$5:$A${KL}", f"'Weekly by Destination'!$B$5:$B${KL}", f"'Weekly by Destination'!$C$5:$C${KL}"
+KW = f"'Weekly by Destination'!$D$5:${L(3+NW)}${KL}"
+
+# ---- inputs ----
+title(wsP, f'Annual demand by destination and {CUR} seasonal pace — are buyers ahead of or behind the pace needed to reach demand?',
+      'Yellow = inputs. Demand = 5-yr avg full-MY exports per destination, scaled so RoW sums to USDA total minus the China assumption (override any country in col F). '
+      'Pace = average across base years of (commitment at week N ÷ that year\'s full-MY exports); years with zero exports are skipped. Expected = demand × pace.')
+inp = [
+    ('USDA total US soybean exports (mln bu)', 1695, '#,##0', True, 'User input (USDA forecast).'),
+    ('Conversion (MT per bushel)', 0.0272155, '0.0000000', False, '1 bu soybeans = 60 lb = 27.2155 kg.'),
+    ('USDA total exports (MT)', '=B4*1000000*B5', MT, None, ''),
+    ('China assumption (MT)', 25000000, MT, True, 'User assumption.'),
+    ('RoW demand = USDA − China (MT)', '=B6-B7', MT, None, 'Includes RoW\'s share of sales now booked as Unknown.'),
+    ('Pace week N (in-season week)', WK, '0', True, f'Latest data = week {WK}. Actuals exist only up to week {WK}.'),
+    ('RoW 5-yr avg full-MY exports, sum of destinations (MT)', None, MT, None, 'ESR basis.'),
+    ('USDA-implied RoW vs 5-yr avg', None, PCT, None, ''),
+    ('RoW scaling factor applied to each destination', None, '0.000', None, ''),
+]
+for i, (lab, v, fmt, is_in, note) in enumerate(inp):
+    r = 4 + i
+    put(wsP, r, 1, lab, font=BOLD)
+    c = put(wsP, r, 2, v, fmt, font=BLUE if is_in else NORM, fill=YEL if is_in else None)
+    wsP.cell(r, 3, note).font = Font(name=F, size=9, italic=True, color='595959')
+put(wsP, 13, 1, 'Base marketing years for demand & pace', font=BOLD)
+for k, m in enumerate(FIVE): put(wsP, 13, 2 + k, m, font=BLUE, fill=YEL)
+wsP.cell(13, 7, 'Edit to change the base (e.g. drop 2025/26 for China-sensitive reads).').font = Font(name=F, size=9, italic=True, color='595959')
+for nm, ref in [('Pace_Week', '$B$9'), ('RoW_Target', '$B$8'), ('China_Target', '$B$7'), ('Base_MY', '$B$13:$F$13'), ('RoW_Scale', '$B$12')]:
+    wb.defined_names[nm] = DefinedName(nm, attr_text=f"'Demand & Pace'!{ref}")
+
+# ---- per-country table ----
+HR = 15
+ph = ['Status (±1 cargo = on pace)', 'Destination', 'Region', 'Demand: own 5-yr avg full-MY exports', 'Demand: scaled to USDA',
+      'Demand override (optional)', 'Demand used', 'Avg pace at wk N (% of year committed)', 'Pace min (base yrs)', 'Pace max (base yrs)',
+      'Expected commitment at wk N', f'Actual {CUR} at wk N', 'Δ vs expected MT', 'Δ vs expected %', '% of demand committed',
+      'Remaining to sell (MT)', 'Weekly sales needed rest of MY', 'Typical weekly sales rest of MY', 'Needed ÷ typical',
+      'Expected at wk N using own 5-yr demand', 'Δ vs own-history expected MT']
+header(wsP, HR, ph); wsP.row_dimensions[HR].height = 70
+HC = len(ph) + 2   # helper per-year pace columns start (one spacer)
+for k in range(5):
+    c = wsP.cell(HR, HC + k, f'Pace yr {k+1} (=Base_MY col {k+1})'); c.font = Font(name=F, size=8, bold=True, color='595959'); c.alignment = Alignment(wrap_text=True)
+
+# python mirror for ordering (USDA-scaled demand, avg-of-ratios pace)
+def pace_py(c, w):
+    vals = []
+    for m in FIVE:
+        fe = final.get((m, c), 0) or 0
+        if fe > 0:
+            cm = wp.loc[(m, c), w] if (m, c) in wp.index else 0
+            vals.append(cm / fe)
+    return sum(vals) / len(vals) if vals else 0
+dem5 = {c: sum((final.get((m, c), 0) or 0) for m in FIVE) / 5 for c in set(ins.Country)}
+row_sum = sum(v for c, v in dem5.items() if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN'))
+row_target = 1695e6 * 0.0272155 - 25e6
+curc = {c: (wp.loc[(CUR, c), WK] if (CUR, c) in wp.index else 0) for c in set(ins.Country)}
+pace_list = [c for c in set(ins.Country) if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') and (dem5[c] > 0 or curc[c] > 0)]
+def dpy(c): return curc[c] - dem5[c] * row_target / row_sum * pace_py(c, WK)
+pace_list.sort(key=lambda c: -dpy(c))
+
+def wcol(): return f'INDEX({KW},0,Pace_Week)'
+def prow(r, c, is_china):
+    B = f'$B{r}'
+    put(wsP, r, 2, c, font=BOLD if is_china else NORM, fill=TOTFILL if is_china else None)
+    put(wsP, r, 3, REGION[c], font=GREEN)
+    put(wsP, r, 4, f'=SUMPRODUCT(({KC}={B})*ISNUMBER(MATCH({KM},Base_MY,0))*{KF})/COUNTA(Base_MY)', MT)
+    put(wsP, r, 5, '=China_Target' if is_china else f'=D{r}*RoW_Scale', MT)
+    put(wsP, r, 6, None, MT, font=BLUE, fill=YEL)
+    put(wsP, r, 7, f'=IF(F{r}<>"",F{r},E{r})', MT, font=BOLD)
+    for k in range(5):
+        y = f"INDEX(Base_MY,{k+1})"
+        put(wsP, r, HC + k, f'=IFERROR(SUMIFS({wcol()},{KC},{B},{KM},{y})/SUMIFS({KF},{KC},{B},{KM},{y}),"")', '0%',
+            font=Font(name=F, size=8, color='595959'))
+    hp = f'{L(HC)}{r}:{L(HC+4)}{r}'
+    put(wsP, r, 8, f'=IFERROR(AVERAGE({hp}),0)', '0%')
+    put(wsP, r, 9, f'=IF(COUNT({hp})=0,"",MIN({hp}))', '0%'); put(wsP, r, 10, f'=IF(COUNT({hp})=0,"",MAX({hp}))', '0%')
+    put(wsP, r, 11, f'=G{r}*H{r}', MT)
+    put(wsP, r, 12, f'=IF(Pace_Week>{WK},"",SUMIFS({wcol()},{KC},{B},{KM},"{CUR}"))', MT, fill=CURFILL)
+    put(wsP, r, 13, f'=IF(L{r}="","",L{r}-K{r})', MT, font=BOLD)
+    put(wsP, r, 14, f'=IF(L{r}="","",IF(K{r}=0,IF(L{r}=0,0,"new"),L{r}/K{r}-1))', PCT)
+    put(wsP, r, 1, f'=IF(M{r}="","",IF(ABS(M{r})<Cargo_MT,"On pace",IF(M{r}>0,"ABOVE pace","BELOW pace")))')
+    put(wsP, r, 15, f'=IF(G{r}=0,"",L{r}/G{r})', '0%')
+    put(wsP, r, 16, f'=G{r}-L{r}', MT)
+    put(wsP, r, 17, f'=MAX(0,P{r})/(52-Pace_Week)', MT)
+    put(wsP, r, 18, f'=G{r}*MAX(0,1-H{r})/(52-Pace_Week)', MT)
+    put(wsP, r, 19, f'=IF(R{r}=0,"",Q{r}/R{r})', '0.00"x"')
+    put(wsP, r, 20, f'=D{r}*H{r}', MT); put(wsP, r, 21, f'=IF(L{r}="","",L{r}-T{r})', MT)
+
+r = HR + 1
+prow(r, 'CHINA, PEOPLES REPUBLIC OF', True); CH = r
+r += 1
+put(wsP, r, 1, 'Rest of World — sorted by Δ vs expected (largest surplus first)', font=Font(name=F, size=10, bold=True)).border = Border()
+r += 1; P1 = r
+for c in pace_list:
+    prow(r, c, False); r += 1
+P2 = r - 1
+TR = r
+put(wsP, TR, 2, 'RoW TOTAL (sum of destinations)', font=BOLD, fill=TOTFILL); put(wsP, TR, 3, '', fill=TOTFILL)
+for j in (4, 5, 7, 11, 12, 13, 16, 17, 18, 20, 21):
+    put(wsP, TR, j, f'=SUM({L(j)}{P1}:{L(j)}{P2})', MT, font=BOLD, fill=TOTFILL)
+put(wsP, TR, 8, f'=IF(G{TR}=0,0,K{TR}/G{TR})', '0%', font=BOLD, fill=TOTFILL)
+put(wsP, TR, 14, f'=IF(K{TR}=0,"",L{TR}/K{TR}-1)', PCT, font=BOLD, fill=TOTFILL)
+put(wsP, TR, 15, f'=IF(G{TR}=0,"",L{TR}/G{TR})', '0%', font=BOLD, fill=TOTFILL)
+put(wsP, TR, 19, f'=IF(R{TR}=0,"",Q{TR}/R{TR})', '0.00"x"', font=BOLD, fill=TOTFILL)
+GT2 = TR + 1
+put(wsP, GT2, 2, 'TOTAL China + RoW', font=BOLD, fill=TOTFILL); put(wsP, GT2, 3, '', fill=TOTFILL)
+for j in (4, 5, 7, 11, 12, 13, 16, 17, 18, 20, 21):
+    put(wsP, GT2, j, f'={L(j)}{CH}+{L(j)}{TR}', MT, font=BOLD, fill=TOTFILL)
+put(wsP, GT2, 14, f'=IF(K{GT2}=0,"",L{GT2}/K{GT2}-1)', PCT, font=BOLD, fill=TOTFILL)
+put(wsP, GT2, 15, f'=IF(G{GT2}=0,"",L{GT2}/G{GT2})', '0%', font=BOLD, fill=TOTFILL)
+put(wsP, GT2, 19, f'=IF(R{GT2}=0,"",Q{GT2}/R{GT2})', '0.00"x"', font=BOLD, fill=TOTFILL)
+# inputs depending on table
+wsP['B10'] = f'=D{TR}'; wsP['B11'] = '=IF(B10=0,0,RoW_Target/B10-1)'; wsP['B12'] = '=IF(B10=0,0,RoW_Target/B10)'
+for a in ('B10', 'B11', 'B12'): wsP[a].font = NORM
+# memo: Unknown
+m0 = GT2 + 2
+put(wsP, m0, 1, 'Memo — Unknown destinations', font=Font(name=F, size=11, bold=True)).border = Border()
+put(wsP, m0 + 1, 1, f'Unknown commitment at wk N ({CUR})'); put(wsP, m0 + 1, 12, f'=IF(Pace_Week>{WK},"",SUMIFS({wcol()},{KC},"UNKNOWN",{KM},"{CUR}"))', MT)
+put(wsP, m0 + 2, 1, 'China + Unknown at wk N vs China expected'); put(wsP, m0 + 2, 11, f'=K{CH}', MT); put(wsP, m0 + 2, 12, f'=L{CH}+L{m0+1}', MT)
+put(wsP, m0 + 2, 13, f'=L{m0+2}-K{m0+2}', MT, font=BOLD)
+put(wsP, m0 + 3, 1, 'Check: China + RoW + Unknown actual minus ESR total at wk N (must be 0)')
+put(wsP, m0 + 3, 12, f'=IF(Pace_Week>{WK},"",L{GT2}+L{m0+1}-SUMIFS({wcol()},{KM},"{CUR}"))', MT)
+notes = [
+    'How to read: Expected = Demand used × average share of the year that the destination had committed by week N in the base years. ABOVE/BELOW pace only when |Δ| ≥ one cargo (Cargo_MT on the RoW tab).',
+    f'Unknown ({CUR}) is not allocated to any destination. Historically most of it is re-declared to China at shipment, so China\'s own line understates its true pace; compare the memo line.',
+    'Pace uses ESR full-MY exports; USDA\'s total is Census basis, which usually runs above ESR. Scaling RoW to USDA therefore mixes bases slightly — treat Δ within a few % as noise.',
+    'China pace includes 2025/26 when China barely booked US beans early; that lowers China\'s average pace. Edit Base_MY (row 13) to test excluding it.',
+    'Small buyers (1–3 cargoes/season) have erratic pace; rely on the larger destinations and on the totals.']
+for k, t in enumerate(notes):
+    put(wsP, m0 + 5 + k, 1, t, font=Font(name=F, size=9, italic=True)).border = Border()
+wsP.column_dimensions['A'].width = 44; wsP.column_dimensions['B'].width = 28; wsP.column_dimensions['C'].width = 20
+for j in range(4, len(ph) + 1): wsP.column_dimensions[L(j)].width = 13
+wsP.column_dimensions[L(len(ph) + 1)].width = 3
+for k in range(5): wsP.column_dimensions[L(HC + k)].width = 9
+wsP.freeze_panes = f'D{HR+1}'
+for j in (13, 21):
+    rg = f'{L(j)}{CH}:{L(j)}{P2}'
+    wsP.conditional_formatting.add(rg, CellIsRule(operator='greaterThan', formula=['0'], fill=gr))
+    wsP.conditional_formatting.add(rg, CellIsRule(operator='lessThan', formula=['0'], fill=rd))
+
+# ---- Pace Chart (selectable destination) ----
+title(wsC, 'Seasonal pace chart — pick a destination in B4',
+      'Expected path = Demand used (from "Demand & Pace") × average base-year pace for each week. Actual = cumulative total commitment.')
+put(wsC, 4, 1, 'Destination', font=BOLD); put(wsC, 4, 2, 'EGYPT', font=BLUE, fill=YEL)
+dv = DataValidation(type='list', formula1=f"='Demand & Pace'!$B${CH}:$B${P2}", allow_blank=False); wsC.add_data_validation(dv); dv.add('B4')
+put(wsC, 5, 1, 'Demand used (MT)', font=BOLD)
+put(wsC, 5, 2, f"=INDEX('Demand & Pace'!$G:$G,MATCH($B$4,'Demand & Pace'!$B:$B,0))", MT, font=GREEN)
+put(wsC, 6, 1, 'Status at wk N', font=BOLD)
+put(wsC, 6, 2, f"=INDEX('Demand & Pace'!$A:$A,MATCH($B$4,'Demand & Pace'!$B:$B,0))", font=GREEN)
+ch_h = ['Week'] + [f'Pace yr {k+1}' for k in range(5)] + ['Avg pace', 'Expected path (MT)', f'Actual {CUR}', f'Actual {LY}']
+header(wsC, 8, ch_h)
+for w in range(1, NW + 1):
+    r = 8 + w
+    put(wsC, r, 1, w, '0')
+    col = f"INDEX({KW},0,$A{r})"
+    for k in range(5):
+        y = f'INDEX(Base_MY,{k+1})'
+        put(wsC, r, 2 + k, f'=IFERROR(SUMIFS({col},{KC},$B$4,{KM},{y})/SUMIFS({KF},{KC},$B$4,{KM},{y}),"")', '0%', font=Font(name=F, size=9, color='595959'))
+    put(wsC, r, 7, f'=IFERROR(AVERAGE(B{r}:F{r}),0)', '0%')
+    put(wsC, r, 8, f'=$B$5*G{r}', MT)
+    if w <= WK: put(wsC, r, 9, f'=SUMIFS({col},{KC},$B$4,{KM},"{CUR}")', MT, fill=CURFILL)
+    put(wsC, r, 10, f'=SUMIFS({col},{KC},$B$4,{KM},"{LY}")', MT)
+for j, w_ in zip('ABCDEFGHIJ', [8, 9, 9, 9, 9, 9, 10, 16, 14, 14]): wsC.column_dimensions[j].width = w_
+wsC.column_dimensions['A'].width = 18
+lc = LineChart(); lc.title = 'Cumulative commitment vs expected pace (selected destination)'; lc.y_axis.numFmt = '#,##0'
+lc.add_data(Reference(wsC, min_col=8, max_col=10, min_row=8, max_row=8 + NW), titles_from_data=True)
+lc.set_categories(Reference(wsC, min_col=1, min_row=9, max_row=8 + NW)); lc.width = 20; lc.height = 10
+lc.x_axis.title = 'MY week'; lc.x_axis.delete = False; lc.y_axis.delete = False
+wsC.add_chart(lc, 'L4')
+
 for ws in wb:
     ws.sheet_view.showGridLines = False
 wb.save(out)
