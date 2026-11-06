@@ -544,7 +544,7 @@ KW = f"'Weekly by Destination'!$D$5:${L(3+NW)}${KL}"
 
 # ---- inputs ----
 title(wsP, f'Annual demand by destination and {CUR} seasonal pace — are buyers ahead of or behind the pace needed to reach demand?',
-      'Yellow = inputs. Demand = 5-yr avg full-MY exports per destination, scaled so RoW sums to USDA total minus the China assumption (override any country in col F). '
+      'Yellow = inputs. Demand = each destination\'s share of RoW demand (USDA total − China assumption), allocated by the method in I4 (default: refined floor+swing); override any country in col F. '
       'Pace = average across base years of (commitment at week N ÷ that year\'s full-MY exports); years with zero exports are skipped. Expected = demand × pace.')
 inp = [
     ('USDA total US soybean exports (mln bu)', 1695, '#,##0', True, 'User input (USDA forecast).'),
@@ -570,7 +570,7 @@ for nm, ref in [('Conv', '$B$5'), ('Pace_Week', '$B$9'), ('RoW_Target', '$B$8'),
 
 # ---- per-country table ----
 HR = 15
-ph = ['Status (±1 cargo = on pace)', 'Destination', 'Region', 'Demand: own 5-yr avg full-MY exports', 'Demand: scaled to USDA',
+ph = ['Status (±1 cargo = on pace)', 'Destination', 'Region', 'Demand: own 5-yr avg full-MY exports', 'Demand: allocated to USDA (method in I4)',
       'Demand override (optional)', 'Demand used', 'Avg pace at wk N (% of year committed)', 'Pace min (base yrs)', 'Pace max (base yrs)',
       'Expected commitment at wk N', f'Actual {CUR} at wk N', 'Δ vs expected MT', 'Δ vs expected %', '% of demand committed',
       'Remaining to sell (MT)', 'Weekly sales needed rest of MY', 'Typical weekly sales rest of MY', 'Needed ÷ typical',
@@ -582,6 +582,8 @@ header(wsP, HR, ph); wsP.row_dimensions[HR].height = 70
 HC = len(ph) + 2   # helper per-year pace columns start (one spacer)
 for k in range(5):
     c = wsP.cell(HR, HC + k, f'Pace yr {k+1} (=Base_MY col {k+1})'); c.font = Font(name=F, size=8, bold=True, color='595959'); c.alignment = Alignment(wrap_text=True)
+for k, h in enumerate([f'Full-MY base yr {k+1}' for k in range(5)] + ['Floor (lowest yr)', 'Floor refined (2nd-lowest)', '5-yr high', 'Swing (avg − floor)', 'Swing refined (avg − 2nd-lowest)']):
+    c = wsP.cell(HR, HC + 6 + k, h); c.font = Font(name=F, size=8, bold=True, color='595959'); c.alignment = Alignment(wrap_text=True)
 
 # python mirror for ordering (USDA-scaled demand, avg-of-ratios pace)
 def pace_py(c, w):
@@ -597,7 +599,12 @@ row_sum = sum(v for c, v in dem5.items() if c not in ('CHINA, PEOPLES REPUBLIC O
 row_target = 1695e6 * 0.0272155 - 25e6
 curc = {c: (wp.loc[(CUR, c), WK] if (CUR, c) in wp.index else 0) for c in set(ins.Country)}
 pace_list = [c for c in set(ins.Country) if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') and (dem5[c] > 0 or curc[c] > 0)]
-def dpy(c): return curc[c] - dem5[c] * row_target / row_sum * pace_py(c, WK)
+def fyv(c): return [float(final.get((m, c), 0) or 0) for m in FIVE]
+_f2 = {c: sorted(fyv(c))[1] for c in pace_list}; _mx = {c: max(fyv(c)) for c in pace_list}
+_sw2 = {c: max(0.0, dem5[c] - _f2[c]) for c in pace_list}
+_fr = (row_target - sum(_f2.values())) / sum(_sw2.values())
+dem_ref = {c: min(_mx[c], _f2[c] + _sw2[c] * _fr) for c in pace_list}
+def dpy(c): return curc[c] - dem_ref[c] * pace_py(c, WK)
 pace_list.sort(key=lambda c: -dpy(c))
 
 def wcol(): return f'INDEX({KW},0,Pace_Week)'
@@ -613,7 +620,17 @@ def prow(r, c, is_china):
     put(wsP, r, 2, c, font=BOLD if is_china else NORM, fill=TOTFILL if is_china else None)
     put(wsP, r, 3, REGION[c], font=GREEN)
     put(wsP, r, 4, f'=SUMPRODUCT(({KC}={B})*ISNUMBER(MATCH({KM},Base_MY,0))*{KF})/COUNTA(Base_MY)', MT)
-    put(wsP, r, 5, '=China_Target' if is_china else f'=D{r}*RoW_Scale', MT)
+    for k in range(5):
+        put(wsP, r, HC + 6 + k, f'=SUMIFS({KF},{KC},{B},{KM},INDEX(Base_MY,{k+1}))', MT, font=Font(name=F, size=8, color='595959'))
+    fy = f'{L(HC+6)}{r}:{L(HC+10)}{r}'
+    put(wsP, r, HC + 11, f'=MIN({fy})', MT, font=Font(name=F, size=8, color='595959'))
+    put(wsP, r, HC + 12, f'=SMALL({fy},2)', MT, font=Font(name=F, size=8, color='595959'))
+    put(wsP, r, HC + 13, f'=MAX({fy})', MT, font=Font(name=F, size=8, color='595959'))
+    put(wsP, r, HC + 14, f'=D{r}-{L(HC+11)}{r}', MT, font=Font(name=F, size=8, color='595959'))
+    put(wsP, r, HC + 15, f'=MAX(0,D{r}-{L(HC+12)}{r})', MT, font=Font(name=F, size=8, color='595959'))
+    fl, fl2, mxx, sw, sw2 = (f'{L(HC+j)}{r}' for j in (11, 12, 13, 14, 15))
+    put(wsP, r, 5, '=China_Target' if is_china else
+        f'=CHOOSE(Method_Idx,D{r}*RoW_Scale,{fl}+{sw}*F_Basic,MIN({mxx},{fl2}+{sw2}*F_Ref))', MT)
     put(wsP, r, 6, None, MT, font=BLUE, fill=YEL)
     put(wsP, r, 7, f'=IF(F{r}<>"",F{r},E{r})', MT, font=BOLD)
     for k in range(5):
@@ -666,6 +683,28 @@ put(wsP, GT2 + 1, 2, 'Totals: implied full year = actual ÷ demand-weighted pace
 # inputs depending on table
 wsP['B10'] = f'=D{TR}'; wsP['B11'] = '=IF(B10=0,0,RoW_Target/B10-1)'; wsP['B12'] = '=IF(B10=0,0,RoW_Target/B10)'
 for a in ('B10', 'B11', 'B12'): wsP[a].font = NORM
+wsP['A12'] = 'One-factor scaling (used only when method = One factor)'; wsP['A12'].font = BOLD
+METHODS = ['One factor', 'Floor+swing', 'Floor+swing (refined)']
+mb = [('Demand allocation method (RoW)', 'Floor+swing (refined)', None, True),
+      ('Method index', '=MATCH(I4,{"One factor","Floor+swing","Floor+swing (refined)"},0)', '0', False),
+      ('Σ floors, lowest yr (MT)', f'=SUM({L(HC+11)}{P1}:{L(HC+11)}{P2})', MT, False),
+      ('Swing factor — floor+swing', f'=(RoW_Target-I6)/SUM({L(HC+14)}{P1}:{L(HC+14)}{P2})', '0.000', False),
+      ('Σ floors, 2nd-lowest yr (MT)', f'=SUM({L(HC+12)}{P1}:{L(HC+12)}{P2})', MT, False),
+      ('Swing factor — refined', f'=(RoW_Target-I8)/SUM({L(HC+15)}{P1}:{L(HC+15)}{P2})', '0.000', False),
+      ('Check: Σ RoW demand − RoW target (MT)', f'=E{TR}-RoW_Target', MT, False),
+      ('Warning', '=IF(CHOOSE(I5,0,F_Basic,F_Ref)<0,"RoW target below Σ floors: method invalid, use One factor",IF(ABS(I10)>1000,"Cap at 5-yr high binds: Σ demand ≠ target","OK"))', None, False)]
+for i, (lab, v, fmt, is_in) in enumerate(mb):
+    rr = 4 + i
+    put(wsP, rr, 8, lab, font=BOLD)
+    put(wsP, rr, 9, v, fmt, font=BLUE if is_in else NORM, fill=YEL if is_in else None)
+wsP['I4'].alignment = Alignment(horizontal='center')
+dvm = DataValidation(type='list', formula1='"One factor,Floor+swing,Floor+swing (refined)"', allow_blank=False); wsP.add_data_validation(dvm); dvm.add('I4')
+wsP['J4'] = ('One factor = every destination × same %. Floor+swing = keep each destination\'s lowest base-yr volume, share the rest of the RoW target '
+             'by its usual volume above that floor. Refined = floor is the 2nd-lowest year; capped at the 5-yr high.')
+wsP['J4'].font = Font(name=F, size=8, italic=True, color='595959')
+for nm, ref in [('Method_Idx', '$I$5'), ('F_Basic', '$I$7'), ('F_Ref', '$I$9')]:
+    wb.defined_names[nm] = DefinedName(nm, attr_text=f"'Demand & Pace'!{ref}")
+wsP.column_dimensions['H'].width = 30
 # memo: Unknown
 m0 = GT2 + 3
 put(wsP, m0, 1, 'Memo — Unknown destinations', font=Font(name=F, size=11, bold=True)).border = Border()
@@ -686,6 +725,7 @@ wsP.column_dimensions['A'].width = 44; wsP.column_dimensions['B'].width = 28; ws
 for j in range(4, len(ph) + 1): wsP.column_dimensions[L(j)].width = 13
 wsP.column_dimensions[L(len(ph) + 1)].width = 3
 for k in range(5): wsP.column_dimensions[L(HC + k)].width = 9
+for k in range(6, 16): wsP.column_dimensions[L(HC + k)].width = 11
 wsP.freeze_panes = f'D{HR+1}'
 for j in (13, 21):
     rg = f'{L(j)}{CH}:{L(j)}{P2}'
