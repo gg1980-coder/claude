@@ -10,6 +10,7 @@ from openpyxl.utils import get_column_letter as L
 from openpyxl.formatting.rule import CellIsRule
 
 src, out = sys.argv[1], sys.argv[2]
+UNK_CN = 0.60   # share of 'Unknown' sales historically re-declared to China (user indication)
 df = pd.read_csv(src, thousands=',')
 df.columns = [c.strip() for c in df.columns]
 df['Country'] = df['CountryName'].str.strip()
@@ -709,7 +710,7 @@ wsP.column_dimensions['H'].width = 30
 m0 = GT2 + 3
 put(wsP, m0, 1, 'Memo — Unknown destinations', font=Font(name=F, size=11, bold=True)).border = Border()
 put(wsP, m0 + 1, 1, f'Unknown commitment at wk N ({CUR})'); put(wsP, m0 + 1, 12, f'=IF(Pace_Week>{WK},"",SUMIFS({wcol()},{KC},"UNKNOWN",{KM},"{CUR}"))', MT)
-put(wsP, m0 + 2, 1, 'China + Unknown at wk N vs China expected'); put(wsP, m0 + 2, 11, f'=K{CH}', MT); put(wsP, m0 + 2, 12, f'=L{CH}+L{m0+1}', MT)
+put(wsP, m0 + 2, 1, 'China + its share of Unknown (USDA Check B3) vs China expected'); put(wsP, m0 + 2, 11, f'=K{CH}', MT); put(wsP, m0 + 2, 12, f'=L{CH}+Unk_China*L{m0+1}', MT)
 put(wsP, m0 + 2, 13, f'=L{m0+2}-K{m0+2}', MT, font=BOLD)
 put(wsP, m0 + 3, 1, 'Check: China + RoW + Unknown actual minus ESR total at wk N (must be 0)')
 put(wsP, m0 + 3, 12, f'=IF(Pace_Week>{WK},"",L{GT2}+L{m0+1}-SUMIFS({wcol()},{KM},"{CUR}"))', MT)
@@ -766,19 +767,23 @@ wsC.add_chart(lc, 'L4')
 wsU = wb.create_sheet('USDA Check', index=1)
 title(wsU, f'USDA export forecast check — what the week-N booking pace implies vs USDA (MT and mln bu)',
       'Inputs live on "Demand & Pace" (USDA mln bu, China assumption, pace week, base years). Implied full year = actual commitment ÷ average historical share booked by week N. '
-      'China line includes Unknown (historically mostly re-declared to China).')
+      'Unknown destinations are split: the share in B3 goes to China, the rest to RoW (applied to past years too, so pace stays like-for-like).')
+put(wsU, 3, 1, 'Share of "Unknown" that ends up China', font=BOLD)
+put(wsU, 3, 2, UNK_CN, '0%', font=BLUE, fill=YEL)
+put(wsU, 3, 3, 'User indication (~60%, give or take). Remainder (1 − this) is assigned to Rest of World.', font=Font(name=F, size=8, italic=True)).border = Border()
+wb.defined_names['Unk_China'] = DefinedName('Unk_China', attr_text="'USDA Check'!$B$3")
 CHN = '"CHINA, PEOPLES REPUBLIC OF"'
 col = f'INDEX({KW},0,Pace_Week)'
 put(wsU, 4, 1, 'A) Historical share of the full year committed by week N (ESR basis)', font=Font(name=F, size=11, bold=True)).border = Border()
-header(wsU, 5, ['Base MY', 'Total commit wk N', 'Total full-MY exports', 'Total pace', 'China+Unknown commit wk N', 'China full-MY exports',
-                'China+Unknown pace', 'RoW commit wk N', 'RoW full-MY exports', 'RoW pace'])
+header(wsU, 5, ['Base MY', 'Total commit wk N', 'Total full-MY exports', 'Total pace', 'China + its share of Unknown, commit wk N', 'China full-MY exports',
+                'China pace', 'RoW + rest of Unknown, commit wk N', 'RoW full-MY exports', 'RoW pace'])
 for k in range(5):
     r = 6 + k; y = f'$A{r}'
     put(wsU, r, 1, f'=INDEX(Base_MY,{k+1})', font=GREEN)
     put(wsU, r, 2, f'=SUMIFS({col},{KM},{y})', MT)
     put(wsU, r, 3, f'=SUMIFS({KF},{KM},{y})', MT)
     put(wsU, r, 4, f'=IF(C{r}=0,"",B{r}/C{r})', '0.0%')
-    put(wsU, r, 5, f'=SUMIFS({col},{KM},{y},{KC},{CHN})+SUMIFS({col},{KM},{y},{KC},"UNKNOWN")', MT)
+    put(wsU, r, 5, f'=SUMIFS({col},{KM},{y},{KC},{CHN})+Unk_China*SUMIFS({col},{KM},{y},{KC},"UNKNOWN")', MT)
     put(wsU, r, 6, f'=SUMIFS({KF},{KM},{y},{KC},{CHN})', MT)
     put(wsU, r, 7, f'=IF(F{r}=0,"",E{r}/F{r})', '0.0%')
     put(wsU, r, 8, f'=B{r}-E{r}', MT)
@@ -799,8 +804,8 @@ header(wsU, 16, ['Group', 'USDA / assumption (MT)', 'USDA / assumption (mln bu)'
                  'Implied @ 5-yr pace (MT)', 'Implied @ 5-yr pace (mln bu)', 'Δ vs USDA (mln bu)',
                  'Implied @ pace excl. first base yr (MT)', '(mln bu)', 'Δ vs USDA (mln bu)'])
 BUF = '#,##0;-#,##0;"-"'
-lines = [('China + Unknown', '=China_Target', f'=SUMIFS({col},{KM},"{CUR}",{KC},{CHN})+SUMIFS({col},{KM},"{CUR}",{KC},"UNKNOWN")', 'G'),
-         ('Rest of World', '=RoW_Target', f'=SUMIFS({col},{KM},"{CUR}")-D17', 'J')]
+lines = [('China + its share of Unknown', '=China_Target', f'=SUMIFS({col},{KM},"{CUR}",{KC},{CHN})+Unk_China*SUMIFS({col},{KM},"{CUR}",{KC},"UNKNOWN")', 'G'),
+         ('Rest of World + rest of Unknown', '=RoW_Target', f'=SUMIFS({col},{KM},"{CUR}")-D17', 'J')]
 for i, (g, usda, act, pc) in enumerate(lines):
     r = 17 + i
     put(wsU, r, 1, g, font=BOLD)
@@ -839,13 +844,13 @@ put(wsU, 26, 9, '=I20*(1+B24)', BUF); put(wsU, 26, 10, '=I26-C20', '+#,##0;-#,##
 # backtest (hardcoded, computed here)
 put(wsU, 28, 1, f'C) Backtest — how well did week-{WK} pace predict the final? (leave-one-out: each year projected with the other years\' average pace, max 5)',
     font=Font(name=F, size=11, bold=True)).border = Border()
-header(wsU, 29, ['MY', 'Total: implied (Mt)', 'Total: final (Mt)', 'Total: error', 'China+Unk: implied (Mt)', 'China: final (Mt)', 'China+Unk: error',
-                 'RoW: implied (Mt)', 'RoW: final (Mt)', 'RoW: error'])
+header(wsU, 29, ['MY', 'Total: implied (Mt)', 'Total: final (Mt)', 'Total: error', 'China (+60% Unk): implied (Mt)', 'China: final (Mt)', 'China: error',
+                 'RoW (+40% Unk): implied (Mt)', 'RoW: final (Mt)', 'RoW: error'])
 grpw = ins.assign(G=ins.Country.map(lambda c: 'China' if c.startswith('CHINA') else ('Unk' if c == 'UNKNOWN' else 'RoW')))
 w9g = grpw[grpw.WeekNumber == WK].groupby(['MY', 'G']).TotalCommitment.sum().unstack().fillna(0)
 fing = grpw.sort_values('date').groupby(['MY', 'Country']).tail(1)
 fing = fing[fing.MY != CUR].groupby(['MY', 'G']).AccumulatedExports.sum().unstack().fillna(0)
-bt = {'T': (w9g.sum(axis=1), fing.sum(axis=1)), 'C': (w9g['China'] + w9g['Unk'], fing['China']), 'R': (w9g['RoW'], fing['RoW'])}
+bt = {'T': (w9g.sum(axis=1), fing.sum(axis=1)), 'C': (w9g['China'] + UNK_CN * w9g['Unk'], fing['China']), 'R': (w9g['RoW'] + (1 - UNK_CN) * w9g['Unk'], fing['RoW'])}
 bys = [m for m in sorted(fing.index) if m in w9g.index]
 for i, m in enumerate(bys):
     r = 30 + i

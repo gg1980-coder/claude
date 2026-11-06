@@ -51,6 +51,14 @@ UNK = dict(now=rk.cell(unk_row, rkh[CUR]).value, ly=rk.cell(unk_row, rkh[LYc]).v
 uc = M['USDA Check']
 ROW_PACE5, ROW_PACE4 = uc['J11'].value, uc['J12'].value
 CU_PACE5, CU_PACE4 = uc['G11'].value, uc['G12'].value
+UNK_SHARE = uc['B3'].value if isinstance(uc['B3'].value, (int, float)) else 0.6
+HIST = []
+for r_ in range(6, 11):
+    y_ = uc.cell(r_, 1).value
+    tot_ = uc.cell(r_, 2).value
+    cn_ = rk.cell(rkrow['CHINA, PEOPLES REPUBLIC OF'], rkh[y_]).value or 0
+    un_ = rk.cell(rkrow['UNKNOWN'], rkh[y_]).value or 0
+    HIST.append((y_, cn_, un_, tot_ - cn_ - un_, uc.cell(r_, 6).value, uc.cell(r_, 9).value))
 # ---- pull from Europe workbook ----
 win = E['Nov-Feb Window']
 WIN = [(win.cell(r, 1).value, win.cell(r, 2).value, win.cell(r, 6).value, win.cell(r, 9).value) for r in range(9, 15)]
@@ -115,21 +123,37 @@ settings = [('USDA US soybean export forecast (mln bu)', USDA_BU, '#,##0', 'User
             ('Rest of World demand (kt)', '=B7-B8', KT, 'USDA − China'),
             ('"On pace" band: one cargo (kt)', 65, KT, 'Gaps smaller than this are timing noise'),
             ('Week of the season', WEEK, '0', f'w/e {DATE}'),
-            ('Rest of World: share usually booked by now (5-yr avg)', ROW_PACE5, P0, 'From the main analysis'),
-            ('Rest of World: share usually booked by now (excl. last year)', ROW_PACE4, P0, 'From the main analysis'),
-            ('Unknown destinations: booked now (kt)', UNK['now'] / 1000, KT, 'Mostly China historically'),
+            ('Rest of World: share usually booked by now (5-yr avg)', '=H26', P0, 'Incl. its share of Unknown — see history below'),
+            ('Rest of World: share usually booked by now (excl. last year)', '=H27', P0, ''),
+            ('Unknown destinations: booked now (kt)', UNK['now'] / 1000, KT, 'Sales not yet assigned to a destination'),
             ('Unknown: same week last year (kt)', UNK['ly'] / 1000, KT, ''),
-            ('Unknown: same week 5-yr avg (kt)', UNK['avg5'] / 1000, KT, '')]
+            ('Unknown: same week 5-yr avg (kt)', UNK['avg5'] / 1000, KT, ''),
+            ('Share of Unknown that ends up China', UNK_SHARE, P0, 'User indication (~60%, give or take); the rest is assigned to Rest of World')]
 for i, (lab, v, fmt, nt) in enumerate(settings):
     r = 5 + i
     put(wsD, r, 1, lab, f=font(10, True))
     put(wsD, r, 2, v, fmt, f=font(10, False, '000000' if isinstance(v, str) else '0000FF'),
-        fill=YEL if i in (0, 3, 5) else None)
+        fill=YEL if i in (0, 3, 5, 12) else None)
     note(wsD, r, nt, 3)
 for nm, ref in [('USDA_kt', '$B$7'), ('China_kt', '$B$8'), ('RoW_kt', '$B$9'), ('Cargo', '$B$10'), ('Conv', '$B$6'),
-                ('RoW_pace5', '$B$12'), ('RoW_pace4', '$B$13'), ('Unk_now', '$B$14'), ('Unk_ly', '$B$15'), ('Unk_avg', '$B$16')]:
+                ('RoW_pace5', '$B$12'), ('RoW_pace4', '$B$13'), ('Unk_now', '$B$14'), ('Unk_ly', '$B$15'), ('Unk_avg', '$B$16'), ('Unk_CN', '$B$17'), ('CN_p5', '$G$26'), ('CN_p4', '$G$27')]:
     wb.defined_names[nm] = DefinedName(nm, attr_text=f"Data!{ref}")
-DR = 19
+HR0 = 19
+put(wsD, HR0, 1, 'China / Unknown / Rest of World by season — bookings at this week and full-year exports (kt)', f=font(11, True, NAVY), border=False)
+header(wsD, HR0 + 1, ['Season', 'China booked', 'Unknown booked', 'Rest of World booked (named)', 'China full year', 'Rest of World full year',
+                      'China: share booked by now (incl. its share of Unknown)', 'Rest of World: share booked by now (incl. rest of Unknown)'], h=48)
+for i, (y_, cn_, un_, rw_, cf_, rf_) in enumerate(HIST):
+    r = HR0 + 2 + i
+    put(wsD, r, 1, y_)
+    for j, v in enumerate((cn_, un_, rw_, cf_, rf_), 2): put(wsD, r, j, v / 1000, KT, f=font(10, False, '0000FF'))
+    put(wsD, r, 7, f'=(B{r}+Unk_CN*C{r})/E{r}', P0); put(wsD, r, 8, f'=(D{r}+(1-Unk_CN)*C{r})/F{r}', P0)
+put(wsD, 26, 1, '5-yr average', f=font(10, True), fill=TOT); put(wsD, 27, 1, 'Excl. last year', f=font(10, True), fill=TOT)
+for c in (7, 8):
+    put(wsD, 26, c, f'=AVERAGE({L(c)}21:{L(c)}25)', P0, f=font(10, True), fill=TOT)
+    put(wsD, 27, c, f'=AVERAGE({L(c)}22:{L(c)}25)', P0, f=font(10, True), fill=TOT)
+for c in range(2, 7): put(wsD, 26, c, None, fill=TOT); put(wsD, 27, c, None, fill=TOT)
+note(wsD, 28, 'Unknown is split between China and Rest of World in past seasons too, so "share booked by now" stays like-for-like with this season.')
+DR = 31
 put(wsD, DR - 1, 1, 'By destination', f=font(11, True, NAVY), border=False)
 DH = ['Destination', 'Region', 'EU / non-EU', f'Booked so far {CUR}', 'Same week last year', 'Same week 5-yr avg',
       'Full-year 5-yr avg', 'Demand this year', 'Share usually booked by now', 'Not yet shipped']
@@ -181,9 +205,9 @@ kpi(wsS, 4, 1, 'USDA export forecast', '=Data!B5', '#,##0" mln bu"', None)
 wsS['A6'] = '=TEXT(USDA_kt,"#,##0")&" kt"'; wsS['A6'].font = font(8, False, '595959', True); wsS['A6'].fill = KF
 kpi(wsS, 4, 3, 'Booked so far (all buyers)', '=SUM(d_now)+Unk_now', KT, None)
 wsS['C6'] = '=TEXT((SUM(d_now)+Unk_now)/USDA_kt,"0%")&" of USDA\'s total"'; wsS['C6'].font = font(8, False, '595959', True); wsS['C6'].fill = KF
-kpi(wsS, 4, 5, 'China + Unknown booked', f'=SUMIFS(d_now,d_reg,"China")+Unk_now', KT, None)
-wsS['E6'] = '=TEXT((SUMIFS(d_now,d_reg,"China")+Unk_now)/China_kt,"0%")&" of the 25 Mt assumption"'; wsS['E6'].font = font(8, False, '595959', True); wsS['E6'].fill = KF
-kpi(wsS, 4, 7, 'Rest of World vs pace', '=SUMIFS(d_now,d_reg,"<>China")-SUMPRODUCT((d_reg<>"China")*d_dem*d_pace)', SKT, None)
+kpi(wsS, 4, 5, 'China booked (+60% of Unknown)', f'=SUMIFS(d_now,d_reg,"China")+Unk_CN*Unk_now', KT, None)
+wsS['E6'] = '=TEXT((SUMIFS(d_now,d_reg,"China")+Unk_CN*Unk_now)/China_kt,"0%")&" of the 25 Mt assumption"'; wsS['E6'].font = font(8, False, '595959', True); wsS['E6'].fill = KF
+kpi(wsS, 4, 7, 'Rest of World vs pace', '=SUMIFS(d_now,d_reg,"<>China")+(1-Unk_CN)*Unk_now-RoW_kt*RoW_pace5', SKT, None)
 wsS['G6'] = 'kt ahead (+) / behind (−) of the pace needed'; wsS['G6'].font = font(8, False, '595959', True); wsS['G6'].fill = KF
 for c in range(1, 9): wsS.column_dimensions[L(c)].width = 16
 wsS.column_dimensions['A'].width = 30
@@ -191,7 +215,7 @@ r0 = 9
 put(wsS, r0, 1, '1) Bookings at this point of the season', f=font(12, True, NAVY), border=False)
 header(wsS, r0 + 1, ['Buyer', 'Booked so far', 'Same week last year', 'Same week 5-yr avg', 'vs last year', 'vs 5-yr avg'])
 grp = [('China', f'=SUMIFS(d_now,d_reg,"China")', f'=SUMIFS(d_ly,d_reg,"China")', f'=SUMIFS(d_avg,d_reg,"China")'),
-       ('Unknown (mostly China)', '=Unk_now', '=Unk_ly', '=Unk_avg'),
+       ('Unknown (≈60% China / 40% RoW)', '=Unk_now', '=Unk_ly', '=Unk_avg'),
        ('Rest of World', f'=SUMIFS(d_now,d_reg,"<>China")', f'=SUMIFS(d_ly,d_reg,"<>China")', f'=SUMIFS(d_avg,d_reg,"<>China")'),
        ('   of which Europe', f'=SUMIFS(d_now,d_reg,"Europe")', f'=SUMIFS(d_ly,d_reg,"Europe")', f'=SUMIFS(d_avg,d_reg,"Europe")')]
 for i, (lab, a, b, c) in enumerate(grp):
@@ -213,8 +237,8 @@ wsS.add_chart(ch, 'H9')
 r1 = rt + 3
 put(wsS, r1, 1, '2) What USDA\'s forecast implies for each buyer', f=font(12, True, NAVY), border=False)
 header(wsS, r1 + 1, ['Buyer', 'Demand this year', 'Should have booked by now', 'Booked so far', 'Gap', 'Status'])
-lines = [('China (incl. Unknown)', '=China_kt', f'=SUMPRODUCT((d_reg="China")*d_dem*d_pace)', f'=SUMIFS(d_now,d_reg,"China")+Unk_now'),
-         ('Rest of World', '=RoW_kt', f'=SUMPRODUCT((d_reg<>"China")*d_dem*d_pace)', f'=SUMIFS(d_now,d_reg,"<>China")'),
+lines = [('China (+60% of Unknown)', '=China_kt', '=China_kt*CN_p5', f'=SUMIFS(d_now,d_reg,"China")+Unk_CN*Unk_now'),
+         ('Rest of World (+40% of Unknown)', '=RoW_kt', '=RoW_kt*RoW_pace5', f'=SUMIFS(d_now,d_reg,"<>China")+(1-Unk_CN)*Unk_now'),
          ('   of which Europe', f'=SUMIFS(d_dem,d_reg,"Europe")', f'=SUMPRODUCT((d_reg="Europe")*d_dem*d_pace)', f'=SUMIFS(d_now,d_reg,"Europe")')]
 for i, (lab, a, b, c) in enumerate(lines):
     r = r1 + 2 + i
@@ -222,14 +246,14 @@ for i, (lab, a, b, c) in enumerate(lines):
     put(wsS, r, 5, f'=D{r}-C{r}', SKT, f=font(10, True))
     put(wsS, r, 6, f'=IF(ABS(E{r})<Cargo,"On pace",IF(E{r}>0,"Ahead","Behind"))', f=font(10, True), al=Alignment(horizontal='center'))
 status_colors(wsS, f'F{r1+2}:F{r1+4}', f'F{r1+2}')
-note(wsS, r1 + 5, 'China\'s "should have" uses China\'s own history, which includes 2025/26 (almost no early buying) — so China looks further ahead than it really is.')
-note(wsS, r1 + 6, '"Demand this year": Rest of World total split by destination with the floor + swing method (see Read Me).')
+wsS.cell(r1 + 5, 1, f'="China\'s history includes 2025/26 (almost no early buying). Without that year China should have booked "&TEXT(China_kt*CN_p4,"#,##0")&" kt by now — still ahead by "&TEXT(D{r1+2}-China_kt*CN_p4,"#,##0")&" kt."').font = font(9, False, '404040', True)
+note(wsS, r1 + 6, 'Unknown sales are split 60% China / 40% Rest of World (Data tab, cell B17), in this season and in past seasons alike. Europe uses named sales only.')
 
 r2 = r1 + 8
 put(wsS, r2, 1, '3) What this means for USDA\'s 1,695 mln bu', f=font(12, True, NAVY), border=False)
 header(wsS, r2 + 1, ['Scenario', 'Full-year exports (kt)', 'Full-year (mln bu)', 'vs USDA (mln bu)'])
-sc = [('China at 25 Mt, Rest of World at its usual pace (5-yr)', f'=China_kt+SUMIFS(d_now,d_reg,"<>China")/RoW_pace5'),
-      ('China at 25 Mt, Rest of World at its usual pace (excl. last year)', f'=China_kt+SUMIFS(d_now,d_reg,"<>China")/RoW_pace4')]
+sc = [('China at 25 Mt, Rest of World at its usual pace (5-yr)', f'=China_kt+(SUMIFS(d_now,d_reg,"<>China")+(1-Unk_CN)*Unk_now)/RoW_pace5'),
+      ('China at 25 Mt, Rest of World at its usual pace (excl. last year)', f'=China_kt+(SUMIFS(d_now,d_reg,"<>China")+(1-Unk_CN)*Unk_now)/RoW_pace4')]
 for i, (lab, f_) in enumerate(sc):
     r = r2 + 2 + i
     put(wsS, r, 1, lab, f=font(10, True)); put(wsS, r, 2, f_, KT)
@@ -280,6 +304,7 @@ for c in (1, 3, 9): put(wsA, rt, c, None, fill=TOT)
 for c in (4, 5, 6, 8, 10, 11, 13): put(wsA, rt, c, f'=SUM({L(c)}{A1}:{L(c)}{ro})', SKT if c == 6 else KT, f=font(10, True), fill=TOT)
 put(wsA, rt, 7, f'=IF(ABS(F{rt})<Cargo,"On pace",IF(F{rt}>0,"Ahead","Behind"))', f=font(10, True), fill=TOT, al=Alignment(horizontal='center'))
 put(wsA, rt, 12, f'=D{rt}/K{rt}-1', PC, f=font(10, True), fill=TOT)
+note(wsA, rt + 2, 'Named destinations only. The Summary\'s Rest of World line also includes 40% of Unknown sales, so its gap vs pace is larger.', c=2)
 put(wsA, rt + 1, 2, 'Check vs Summary (must be 0)', f=font(8, False, '7F7F7F', True))
 put(wsA, rt + 1, 4, f"=D{rt}-Summary!B{r0+4}", KT, f=font(8, False, '7F7F7F'))
 status_colors(wsA, f'G{A1}:G{rt}', f'G{A1}')
@@ -381,6 +406,7 @@ title(wsR, 'US soybean export sales by destination — how to read this file',
 steps = [
     ('What we measure', '"Booked" = soybeans sold to a destination for this season, whether already shipped or not yet shipped.'),
     ('Step 1 — Same point in the season', f'We compare bookings at week {WEEK} of this season with week {WEEK} of the previous five seasons.'),
+    ('Unknown destinations', 'Some sales are booked without a declared destination ("Unknown"). Historically about 60% ends up in China, so we assign 60% to China and 40% to the Rest of World — in this season and in past seasons, so comparisons stay like-for-like.'),
     ('Step 2 — Benchmarks', 'Last year, and the 5-year average. Last year is unusual: China bought almost no US beans early in 2025/26.'),
     ('Step 3 — This year\'s total', f'USDA forecast {USDA_BU:,.0f} mln bu = {USDA_BU*CONV*1000:,.0f} kt. We assume China takes {CHINA_T/1000:,.0f} kt; '
                                     'the rest goes to all other buyers ("Rest of World").'),
