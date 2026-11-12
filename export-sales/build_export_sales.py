@@ -548,7 +548,7 @@ title(wsP, f'Annual demand by destination and {CUR} seasonal pace — are buyers
       'Yellow = inputs. Demand = each destination\'s share of RoW demand (USDA total − China assumption), allocated by the method in I4 (default: refined floor+swing); override any country in col F. '
       'Pace = average across base years of (commitment at week N ÷ that year\'s full-MY exports); years with zero exports are skipped. Expected = demand × pace.')
 inp = [
-    ('USDA total US soybean exports (mln bu)', 1695, '#,##0', True, 'User input (USDA forecast).'),
+    ('USDA total US soybean exports (mln bu)', 1720, '#,##0', True, 'USDA Nov-2026 WASDE (Oct: 1,695).'),
     ('Conversion (MT per bushel)', 0.0272155, '0.0000000', False, '1 bu soybeans = 60 lb = 27.2155 kg.'),
     ('USDA total exports (MT)', '=B4*1000000*B5', MT, None, ''),
     ('China assumption (MT)', 25000000, MT, True, 'User assumption.'),
@@ -597,7 +597,7 @@ def pace_py(c, w):
     return sum(vals) / len(vals) if vals else 0
 dem5 = {c: sum((final.get((m, c), 0) or 0) for m in FIVE) / 5 for c in set(ins.Country)}
 row_sum = sum(v for c, v in dem5.items() if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN'))
-row_target = 1695e6 * 0.0272155 - 25e6
+row_target = 1720e6 * 0.0272155 - 25e6
 curc = {c: (wp.loc[(CUR, c), WK] if (CUR, c) in wp.index else 0) for c in set(ins.Country)}
 pace_list = [c for c in set(ins.Country) if c not in ('CHINA, PEOPLES REPUBLIC OF', 'UNKNOWN') and (dem5[c] > 0 or curc[c] > 0)]
 def fyv(c): return [float(final.get((m, c), 0) or 0) for m in FIVE]

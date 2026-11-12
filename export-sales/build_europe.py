@@ -95,7 +95,7 @@ title(wsH, f'Europe — US soybean export sales monitor, MY {CUR} (data through 
       'Yellow cells are inputs. Everything else is formula-driven from the Data tabs (USDA FAS Export Sales, SOYBEANS). '
       'Europe = EU-27 + non-EU Europe (UK, Norway, Switzerland, …).')
 inputs = [
-    ('USDA total US soybean exports (mln bu)', 1695, '#,##0', True, 'User input (USDA forecast).'),
+    ('USDA total US soybean exports (mln bu)', 1720, '#,##0', True, 'USDA Nov-2026 WASDE (Oct: 1,695).'),
     ('Conversion (MT per bushel)', 0.0272155, '0.0000000', True, '60 lb bushel = 27.2155 kg.'),
     ('USDA total exports (MT)', '=B4*1000000*B5', MT, False, ''),
     ('China assumption (MT)', 25000000, MT, True, 'User assumption.'),

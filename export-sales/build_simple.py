@@ -266,7 +266,7 @@ wsS.cell(r1 + 5, 1, f'="China\'s history includes 2025/26 (almost no early buyin
 note(wsS, r1 + 6, 'Unknown sales are split 60% China / 40% Rest of World (Data tab, cell B17), in this season and in past seasons alike. Europe uses named sales only.')
 
 r2 = r1 + 8
-put(wsS, r2, 1, '3) What this means for USDA\'s 1,695 mln bu', f=font(12, True, NAVY), border=False)
+wsS.cell(r2, 1, f'3) What this means for USDA\'s {USDA_BU:,.0f} mln bu').font = font(12, True, NAVY)
 header(wsS, r2 + 1, ['Scenario', 'Full-year exports (kt)', 'Full-year (mln bu)', 'vs USDA (mln bu)'])
 sc = [('China at 25 Mt, Rest of World at its usual pace (5-yr)', f'=China_kt+(SUMIFS(d_now,d_reg,"<>China")+(1-Unk_CN)*Unk_now)/RoW_pace5'),
       ('China at 25 Mt, Rest of World at its usual pace (excl. last year)', f'=China_kt+(SUMIFS(d_now,d_reg,"<>China")+(1-Unk_CN)*Unk_now)/RoW_pace4')]
