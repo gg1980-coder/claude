@@ -26,7 +26,7 @@ ins = df[(df.date >= lo) & (df.date <= hi)].copy()
 cs = int(ins.loc[ins.date.idxmax(), 'Y'])
 WK = int(ins[ins.Y == cs].WeekNumber.max()); DATE = ins[ins.Y == cs].date.max()
 def lab(y): return f'{y}/{str(y+1)[-2:]}'
-YEARS = [y for y in sorted(ins.Y.unique()) if cs - 6 <= y <= cs]
+YEARS = [y for y in sorted(ins.Y.unique()) if cs - 10 <= y <= cs]
 PRIOR = [y for y in YEARS if y < cs]
 CUR = lab(cs); NW = 52
 ins = ins[ins.Y.isin(YEARS)]
@@ -36,7 +36,7 @@ fin = ins[ins.Y < cs].sort_values('date').groupby(['Y', 'Country']).tail(1).grou
 GROUPS = ['China', 'Unknown', 'Rest of World']
 
 # USDA (balance-sheet / Census basis) final exports, mln bu — APPROXIMATE, from memory; user should verify/replace.
-USDA_FINAL = {2020: 2266, 2021: 2152, 2022: 1979, 2023: 1703, 2024: 1892, 2025: 1515}
+USDA_FINAL = {2016: 2167, 2017: 2134, 2018: 1753, 2019: 1683, 2020: 2266, 2021: 2152, 2022: 1979, 2023: 1703, 2024: 1892, 2025: 1515}
 USDA_SRC = {y: 'Official (Census) — monthly export file; matches WASDE' for y in USDA_FINAL}
 
 # ---------------- styles ----------------
@@ -214,15 +214,15 @@ CNN, RWN, TTN = f'$B${r0+2}', f'$B${r0+3}', f'$B${r0+4}'
 r1 = r0 + 8
 section(wsM, r1, '2) Probability of ending ABOVE the USDA forecast — four models')
 RH = ['Model', 'Expected full year (Mt, ESR)', 'Uncertainty ±1 sd (Mt)', 'Expected full year (mln bu, USDA basis)', 'vs USDA (mln bu)',
-      '80% range low (mln bu)', '80% range high (mln bu)', 'Probability ABOVE USDA', 'Probability BELOW USDA', 'Backtest error, normal seasons (Mt)']
+      '80% range low (mln bu)', '80% range high (mln bu)', 'Probability ABOVE USDA', 'Probability BELOW USDA', 'Backtest error at week 9, all seasons (Mt)']
 header(wsM, r1 + 1, RH, h=48)
 SE = 'SQRT(1+1/n_yrs)'
 T80 = 'TINV(0.2,n_yrs-1)'
 models = [
-    ('A. RECOMMENDED — China = assumption; RoW = sold so far + its usual sales still to come', f'China_A+{RWN}+RoWrem_mean', f'RoWrem_sd*{SE}', 3.0),
-    ('B. China = assumption; RoW = sold so far × its usual multiplier', f'China_A+{RWN}*RoWmul_mean', f'{RWN}*RoWmul_sd*{SE}', 2.9),
-    ('C. All destinations: sold so far + usual total still to come', f'{TTN}+Totrem_mean', f'Totrem_sd*{SE}', 2.9),
-    ('D. All destinations: sold so far × usual multiplier (classic "implied FY")', f'{TTN}*Totmul_mean', f'{TTN}*Totmul_sd*{SE}', 3.2),
+    ('A. RECOMMENDED — China = assumption; RoW = sold so far + its usual sales still to come', f'China_A+{RWN}+RoWrem_mean', f'RoWrem_sd*{SE}', '=Backtest!B6'),
+    ('B. China = assumption; RoW = sold so far × its usual multiplier', f'China_A+{RWN}*RoWmul_mean', f'{RWN}*RoWmul_sd*{SE}', None),
+    ('C. All destinations: sold so far + usual total still to come', f'{TTN}+Totrem_mean', f'Totrem_sd*{SE}', '=Backtest!D6'),
+    ('D. All destinations: sold so far × usual multiplier (classic "implied FY")', f'{TTN}*Totmul_mean', f'{TTN}*Totmul_sd*{SE}', '=Backtest!F6'),
 ]
 for i, (lb, mean, se, bt) in enumerate(models):
     r = r1 + 2 + i
@@ -232,14 +232,14 @@ for i, (lb, mean, se, bt) in enumerate(models):
     put(wsM, r, 6, f'=(B{r}-{T80}*C{r})/Ratio/Conv', BU); put(wsM, r, 7, f'=(B{r}+{T80}*C{r})/Ratio/Conv', BU)
     put(wsM, r, 8, '=' + prob_ge('Need_ESR', f'B{r}', f'C{r}', 'n_yrs-1'), P0, f=font(12, True, NAVY), al=Alignment(horizontal='center'))
     put(wsM, r, 9, f'=1-H{r}', P0, al=Alignment(horizontal='center'))
-    put(wsM, r, 10, bt, '0.0', f=BLUE)
+    put(wsM, r, 10, bt, '0.0', f=GREENF)
     wsM.row_dimensions[r].height = 30
 RA = r1 + 2
 wsM.conditional_formatting.add(f'H{RA}:H{RA+3}', CellIsRule(operator='greaterThanOrEqual', formula=['0.7'], fill=GRN))
 wsM.conditional_formatting.add(f'H{RA}:H{RA+3}', CellIsRule(operator='lessThanOrEqual', formula=['0.3'], fill=RED))
 note(wsM, RA + 4, 'Probabilities use a Student-t distribution on the base seasons (n−1 degrees of freedom), widened for the fact that next season is not in the sample. '
-                  'Backtest error = leave-one-out RMSE at week 9 in the four "normal" seasons (see Backtest tab). Models C and D ignore the China deal and are shown as context.')
-note(wsM, RA + 5, 'Model D is what most "pace" reports (incl. the PDF) show. It failed badly in 2020/21 (+31 Mt) and 2025/26 (−13 Mt) because China changed behaviour; '
+                  'Backtest error = leave-one-out RMSE at week 9 across all base seasons (see Backtest tab). Models C and D ignore the China deal and are shown as context.')
+note(wsM, RA + 5, 'Model D is what most "pace" reports (incl. the PDF) show. It fails badly in seasons when China changes behaviour (see Backtest tab, errors by season); '
                   'model A isolates China as an assumption and models only the rest of the world, which has been far more stable.')
 
 r2 = RA + 7
@@ -314,7 +314,8 @@ def finals(y):
 BW = [5, 9, 13, 17, 22, 26, 30, 35, 40]
 header(wsB, 4, ['Week', 'A: China known + RoW still to come — all seasons', 'A — normal seasons', 'C: total still to come — all seasons',
                 'C — normal seasons', 'D: total × multiplier — all seasons', 'D — normal seasons'], h=48)
-normal = [y for y in PRIOR if y not in (cs - 6, cs - 1)]
+ANOM = {2018: 'trade war', 2019: 'Phase One deal', 2020: 'record China buying', 2025: 'China absent'}
+normal = [y for y in PRIOR if y not in ANOM]
 for i, w in enumerate(BW):
     errs = {'A': [], 'C': [], 'D': []}
     for y in PRIOR:
@@ -330,7 +331,7 @@ for i, w in enumerate(BW):
     for j, k in enumerate('ACD'):
         e = np.array(errs[k]); en = np.array([errs[k][PRIOR.index(y)] for y in normal])
         put(wsB, r, 2 + 2 * j, float(np.sqrt((e ** 2).mean())), '0.0', f=BLUE); put(wsB, r, 3 + 2 * j, float(np.sqrt((en ** 2).mean())), '0.0', f=BLUE)
-note(wsB, 5 + len(BW), f'"Normal seasons" = {", ".join(lab(y) for y in normal)} (excludes 2020/21 record China buying and 2025/26 China absent).')
+note(wsB, 5 + len(BW), f'"Normal seasons" = {", ".join(lab(y) for y in normal)} (excludes ' + ', '.join(f'{lab(y)} {v}' for y, v in ANOM.items()) + ').')
 r = 7 + len(BW)
 put(wsB, r, 1, f'Errors by season at week {WK} (Mt)', f=font(11, True, NAVY), border=False)
 header(wsB, r + 1, ['Season', 'Model A', 'Model C', 'Model D', 'Actual full-year'], h=24)
@@ -363,7 +364,8 @@ for lst, nm in [(['JAPAN', 'TAIWAN', 'KOREA, REPUBLIC OF', 'HONG KONG'], 'East A
                 (['COSTA RICA', 'EL SALVADOR', 'GUATEMALA', 'HONDURAS', 'NICARAGUA', 'PANAMA', 'DOMINICAN REPUBLIC', 'CUBA', 'BARBADOS',
                   'LEEWARD-WINDWARD ISLANDS', 'VIRGIN ISLANDS OF THE U.S.'], 'Central America & Caribbean'),
                 (['COLOMBIA', 'VENEZUELA', 'PERU', 'ARGENTINA', 'BRAZIL', 'CHILE'], 'South America'),
-                (['GHANA', 'NIGER', 'NIGERIA', 'SENEGAL', 'SOUTH AFRICA, REPUBLIC OF'], 'Sub-Saharan Africa')]:
+                (['GHANA', 'NIGER', 'NIGERIA', 'SENEGAL', 'SOUTH AFRICA, REPUBLIC OF', 'CAMEROON', 'KENYA'], 'Sub-Saharan Africa'),
+                (['INDIA'], 'South Asia'), (['UNITED ARAB EMIRATES'], 'Middle East & N. Africa')]:
     for c_ in lst: RMAP[c_] = nm
 REGS = ['China', 'Mexico', 'Canada', 'East Asia ex-China', 'Southeast Asia', 'South Asia', 'Middle East & N. Africa', 'Europe',
         'Central America & Caribbean', 'South America', 'Sub-Saharan Africa', 'Other']
@@ -436,21 +438,22 @@ put(wsP, 4, 1, 'USDA export forecast (mln bu)', f=font(10, True)); put(wsP, 4, 2
 put(wsP, 5, 1, 'USDA forecast on ESR basis (Mt) — the bar to clear', f=font(10, True)); put(wsP, 5, 2, '=Need_ESR', MT, f=GREENF)
 put(wsP, 6, 1, 'Week N', f=font(10, True)); put(wsP, 6, 2, '=Wk_N', '0', f=GREENF)
 put(wsP, 7, 1, '5-yr base seasons', f=font(10, True)); put(wsP, 7, 2, f'{lab(PRIOR[-5])} – {lab(PRIOR[-1])}')
-put(wsP, 8, 1, '10-yr figures', f=font(10, True)); put(wsP, 8, 2, 'ESR pace report p.21 (2016/17–2025/26), valid for week 9 only')
+put(wsP, 8, 1, '10-yr base seasons', f=font(10, True)); put(wsP, 8, 2, f'{lab(PRIOR[0])} – {lab(PRIOR[-1])} (weekly ESR data)')
 put(wsP, 9, 1, 'China full-year (Mt, ESR) — blank = use China\'s own pace', f=font(10, True)); put(wsP, 9, 2, 25, MT, f=BLUE, fill=YEL)
 put(wsP, 9, 3, 'Fixed at 25 Mt: China\'s uncertainty is removed; the probability then reflects the rest of the world only.', f=font(9, False, '404040', True), border=False)
 name(wb, 'China_fix', 'Pace Model', '$B$9')
 B5Y = [lab(y) for y in PRIOR[-5:]]
+NP = len(PRIOR)
 # regional table first (totals reference it)
 rr0 = 22
 put(wsP, rr0, 1, '2) Regional view — what each region is on track for, and how that compares with its share of USDA\'s number (Mt, ESR basis)', f=font(12, True, NAVY), border=False)
 RH = ['Region', 'Committed so far', '5-yr avg committed by wk N', '5-yr avg full year', '5-yr usual still to come', 'Expected full year (5-yr)',
-      '10-yr avg committed by wk 9', '10-yr avg full year', 'Expected full year (10-yr)', 'Share of USDA total (5-yr share)', 'Gap vs USDA share (5-yr)',
+      '10-yr avg committed by wk N', '10-yr avg full year', 'Expected full year (10-yr)', 'Share of USDA total (5-yr share)', 'Gap vs USDA share (5-yr)',
       'Gap vs USDA share (10-yr)', 'Still to sell to reach USDA share', 'Needed ÷ usual still to come', 'Chance region reaches its USDA share',
-      'Gap in mln bu (5-yr)', 'Std dev of still-to-come (6 seasons)', 'Expected full year — multiplier (5-yr)']
+      'Gap in mln bu (5-yr)', f'Std dev of still-to-come ({NP} seasons)', 'Expected full year — multiplier (5-yr)']
 header(wsP, rr0 + 1, RH, h=56)
 hb = len(RH) + 2
-for k in range(6):
+for k in range(NP):
     x = wsP.cell(rr0 + 1, hb + k, f'Still to come {lab(PRIOR[k])}'); x.font = font(8, True, '595959'); x.alignment = Alignment(wrap_text=True)
 R1 = rr0 + 2
 for i, g in enumerate(REGS):
@@ -462,9 +465,9 @@ for i, g in enumerate(REGS):
     put(wsP, r, 5, f'=D{r}-C{r}', MT)
     FX = (lambda e: f'=IF(ISNUMBER(China_fix),China_fix,{e})') if g == 'China' else (lambda e: '=' + e)
     put(wsP, r, 6, FX(f'B{r}+E{r}'), MT, f=font(10, True), fill=CURF if g == 'China' else None)
-    a10, f10 = PDF10[g]
-    put(wsP, r, 7, a10 / 1000, MT, f=BLUE); put(wsP, r, 8, f10 / 1000, MT, f=BLUE)
-    put(wsP, r, 9, FX(f'IF(Wk_N=9,B{r}+H{r}-G{r},"n/a (wk 9 only)")'), MT, f=font(10, True), fill=CURF if g == 'China' else None)
+    put(wsP, r, 7, '=(' + '+'.join(rwk(G, f'"{lab(y)}"') for y in PRIOR) + f')/{NP}', MT)
+    put(wsP, r, 8, '=(' + '+'.join(rfy(G, f'"{lab(y)}"') for y in PRIOR) + f')/{NP}', MT)
+    put(wsP, r, 9, FX(f'B{r}+H{r}-G{r}'), MT, f=font(10, True), fill=CURF if g == 'China' else None)
     put(wsP, r, 10, f'=$B$5*D{r}/$D${R1+len(REGS)}', MT)
     put(wsP, r, 11, f'=F{r}-J{r}', SBU.replace('0;', '0.00;').replace('0;0', '0.00;0') if False else '+0.00;-0.00;0.00', f=font(10, True))
     put(wsP, r, 12, f'=IF(ISNUMBER(I{r}),I{r}-J{r},"")', '+0.00;-0.00;0.00')
@@ -472,8 +475,8 @@ for i, g in enumerate(REGS):
     put(wsP, r, 14, f'=IF(E{r}<=0,"",M{r}/E{r})', '0%')
     for k, y in enumerate(PRIOR):
         put(wsP, r, hb + k, f'={rfy(G, chr(34)+lab(y)+chr(34))}-{rwk(G, chr(34)+lab(y)+chr(34))}', MT, f=font(8, False, '595959'), border=False)
-    put(wsP, r, 17, f'=STDEV({L(hb)}{r}:{L(hb+5)}{r})', MT)
-    pf = f'IF(Q{r}=0,IF(E{r}>=M{r},1,0),' + prob_ge(f'M{r}', f'E{r}', f'Q{r}*SQRT(1+1/6)', 5) + ')'
+    put(wsP, r, 17, f'=STDEV({L(hb)}{r}:{L(hb+NP-1)}{r})', MT)
+    pf = f'IF(Q{r}=0,IF(E{r}>=M{r},1,0),' + prob_ge(f'M{r}', f'E{r}', f'Q{r}*SQRT(1+1/{NP})', NP - 1) + ')'
     put(wsP, r, 15, (f'=IF(ISNUMBER(China_fix),"fixed",{pf})' if g == 'China' else '=' + pf), P0, f=font(10, True), al=Alignment(horizontal='right'))
     put(wsP, r, 16, f'=K{r}/Ratio/Conv', '+#,##0;-#,##0;0', f=font(10, True))
     put(wsP, r, 18, FX(f'IF(C{r}>0,B{r}*D{r}/C{r},0)'), MT)
@@ -482,17 +485,17 @@ RT = R2 + 1
 put(wsP, RT, 1, 'TOTAL (named destinations)', f=font(10, True), fill=TOT)
 for c in [2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 18]:
     put(wsP, RT, c, f'=SUM({L(c)}{R1}:{L(c)}{R2})', '+#,##0;-#,##0;0' if c == 16 else ('+0.00;-0.00;0.00' if c == 11 else MT), f=font(10, True), fill=TOT)
-put(wsP, RT, 9, f'=IF(Wk_N=9,SUM(I{R1}:I{R2}),"n/a")', MT, f=font(10, True), fill=TOT)
+put(wsP, RT, 9, f'=SUM(I{R1}:I{R2})', MT, f=font(10, True), fill=TOT)
 put(wsP, RT, 12, f'=IF(ISNUMBER(I{RT}),I{RT}-J{RT},"")', '+0.00;-0.00;0.00', f=font(10, True), fill=TOT)
 for c in (14, 15, 17): put(wsP, RT, c, None, fill=TOT)
 RU = RT + 1
 put(wsP, RU, 1, 'Memo: Unknown (not counted — its usual level is already inside each region\'s "still to come")', f=font(9, False, '404040', True))
 put(wsP, RU, 2, f'=IF(Wk_N>{WK},"",{rwk(chr(34)+"Unknown"+chr(34), chr(34)+CUR+chr(34))})', MT)
 put(wsP, RU, 3, '=(' + '+'.join(rwk('"Unknown"', f'"{m}"') for m in B5Y) + ')/5', MT)
-put(wsP, RU, 7, PDF10['Unknown'][0] / 1000, MT, f=BLUE)
+put(wsP, RU, 7, '=(' + '+'.join(rwk('"Unknown"', f'"{lab(y)}"') for y in PRIOR) + f')/{NP}', MT)
 note(wsP, RU + 1, '"Share of USDA total": USDA publishes no split by destination, so its total is shared out by each region\'s 5-yr share of exports. '
                   '"Gap" = expected full year − that share: positive = the region is on track to deliver more than a USDA-consistent amount.')
-note(wsP, RU + 2, '"Chance region reaches its USDA share" uses the spread of that region\'s "still to come" across the six seasons (Student-t, 5 df).')
+note(wsP, RU + 2, '"Chance region reaches its USDA share" uses the spread of that region\'s "still to come" across the ' + str(NP) + ' seasons (Student-t, ' + str(NP - 1) + ' df).')
 for rg_ in (f'K{R1}:K{R2}', f'L{R1}:L{R2}', f'P{R1}:P{R2}'):
     wsP.conditional_formatting.add(rg_, CellIsRule(operator='greaterThan', formula=['0'], fill=GRN))
     wsP.conditional_formatting.add(rg_, CellIsRule(operator='lessThan', formula=['0'], fill=RED))
@@ -507,16 +510,16 @@ TH = ['Method', 'Expected full year (Mt, ESR)', 'Expected (mln bu, USDA basis)',
 header(wsP, t0 + 1, TH, h=48)
 SDA, SDM = 'IF(ISNUMBER(China_fix),INDEX(RMSE_addC,Wk_N),INDEX(RMSE_add,Wk_N))', 'IF(ISNUMBER(China_fix),INDEX(RMSE_mulC,Wk_N),INDEX(RMSE_mul,Wk_N))'
 tm = [('Remaining sales, 5-yr (RECOMMENDED)', f'=F{RT}', SDA),
-      ('Remaining sales, 10-yr (pace report)', f'=IF(ISNUMBER(I{RT}),I{RT},"")', SDA),
+      ('Remaining sales, 10-yr', f'=I{RT}', SDA),
       ('Multiplier ("implied FY"), 5-yr', f'=R{RT}', SDM),
-      ('Multiplier ("implied FY"), 10-yr — as in the pace report', f'=IF(Wk_N=9,IF(ISNUMBER(China_fix),China_fix+SUMPRODUCT(B{R1+1}:B{R2},H{R1+1}:H{R2}/G{R1+1}:G{R2}),SUMPRODUCT(B{R1}:B{R2},H{R1}:H{R2}/G{R1}:G{R2})),"")', SDM)]
+      ('Multiplier ("implied FY"), 10-yr — as in the pace report', f'=IF(ISNUMBER(China_fix),China_fix+SUMPRODUCT(B{R1+1}:B{R2},H{R1+1}:H{R2}/G{R1+1}:G{R2}),SUMPRODUCT(B{R1}:B{R2},H{R1}:H{R2}/G{R1}:G{R2}))', SDM)]
 for i, (lb, ex, sd) in enumerate(tm):
     r = t0 + 2 + i
     put(wsP, r, 1, lb, f=font(10, i == 0)); put(wsP, r, 2, ex, MT, f=font(10, True)); put(wsP, r, 5, '=' + sd, '0.0')
     put(wsP, r, 3, f'=IF(B{r}="","",B{r}/Ratio/Conv)', BU, f=font(10, True)); put(wsP, r, 4, f'=IF(C{r}="","",C{r}-$B$4)', SBU, f=font(10, True))
-    put(wsP, r, 6, f'=IF(B{r}="","",(B{r}-TINV(0.2,5)*E{r}*SQRT(1+1/6))/Ratio/Conv)', BU)
-    put(wsP, r, 7, f'=IF(B{r}="","",(B{r}+TINV(0.2,5)*E{r}*SQRT(1+1/6))/Ratio/Conv)', BU)
-    put(wsP, r, 8, f'=IF(B{r}="","",' + prob_ge('Need_ESR', f'B{r}', f'E{r}*SQRT(1+1/6)', 5) + ')', P0, f=font(12, True, NAVY), al=Alignment(horizontal='center'))
+    put(wsP, r, 6, f'=IF(B{r}="","",(B{r}-TINV(0.2,{NP-1})*E{r}*SQRT(1+1/{NP}))/Ratio/Conv)', BU)
+    put(wsP, r, 7, f'=IF(B{r}="","",(B{r}+TINV(0.2,{NP-1})*E{r}*SQRT(1+1/{NP}))/Ratio/Conv)', BU)
+    put(wsP, r, 8, f'=IF(B{r}="","",' + prob_ge('Need_ESR', f'B{r}', f'E{r}*SQRT(1+1/{NP})', NP - 1) + ')', P0, f=font(12, True, NAVY), al=Alignment(horizontal='center'))
     put(wsP, r, 9, f'=IF(H{r}="","",1-H{r})', P0, al=Alignment(horizontal='center'))
 T1 = t0 + 2
 wsP.conditional_formatting.add(f'H{T1}:H{T1+3}', CellIsRule(operator='greaterThanOrEqual', formula=['0.7'], fill=GRN))
@@ -525,15 +528,15 @@ rs = t0 + 7
 put(wsP, rs, 1, 'Season-by-season test: this year\'s bookings + each past season\'s regional "still to come"', f=font(10, True))
 header(wsP, rs + 1, ['Season pattern'] + [lab(y) for y in PRIOR] + ['Seasons above USDA'], h=24)
 put(wsP, rs + 2, 1, 'Full year (mln bu, USDA basis)', f=font(10, True))
-for k in range(6):
+for k in range(NP):
     put(wsP, rs + 2, 2 + k, f'=IF(ISNUMBER(China_fix),China_fix+B{RT}-B{R1}+SUM({L(hb+k)}{R1+1}:{L(hb+k)}{R2}),B{RT}+SUM({L(hb+k)}{R1}:{L(hb+k)}{R2}))/Ratio/Conv', BU)
-put(wsP, rs + 2, 8, f'=COUNTIF(B{rs+2}:G{rs+2},">"&$B$4)&" of 6"', f=font(11, True, NAVY))
-wsP.conditional_formatting.add(f'B{rs+2}:G{rs+2}', CellIsRule(operator='greaterThan', formula=['$B$4'], fill=GRN))
-wsP.conditional_formatting.add(f'B{rs+2}:G{rs+2}', CellIsRule(operator='lessThanOrEqual', formula=['$B$4'], fill=RED))
+put(wsP, rs + 2, 2 + NP, f'=COUNTIF(B{rs+2}:{L(1+NP)}{rs+2},">"&$B$4)&" of {NP}"', f=font(11, True, NAVY))
+wsP.conditional_formatting.add(f'B{rs+2}:{L(1+NP)}{rs+2}', CellIsRule(operator='greaterThan', formula=['$B$4'], fill=GRN))
+wsP.conditional_formatting.add(f'B{rs+2}:{L(1+NP)}{rs+2}', CellIsRule(operator='lessThanOrEqual', formula=['$B$4'], fill=RED))
 
 wsP.column_dimensions['A'].width = 46
 for c in range(2, len(RH) + 1): wsP.column_dimensions[L(c)].width = 12
-for k in range(6): wsP.column_dimensions[L(hb + k)].width = 9
+for k in range(NP): wsP.column_dimensions[L(hb + k)].width = 9
 gc = BarChart(); gc.type = 'bar'; gc.title = 'Gap vs USDA-consistent share by region (mln bu, 5-yr pace)'; gc.y_axis.numFmt = '+#,##0;-#,##0'
 gc.add_data(Reference(wsP, min_col=16, min_row=rr0 + 1, max_row=R2), titles_from_data=True)
 gc.set_categories(Reference(wsP, min_col=1, min_row=R1, max_row=R2)); gc.legend = None
@@ -554,9 +557,9 @@ steps = [
     ('Step 5 — probability', 'With only a few seasons of history we use a Student-t distribution (wider tails than a normal curve) to turn the average and spread '
                              'into the chance of beating USDA\'s number.'),
     ('Why not just "pace"', 'The classic pace method (sold so far ÷ share usually sold by now) gives very unstable answers when China changes behaviour: '
-                            'its backtest error was +31 Mt in 2020/21 and −13 Mt in 2025/26. Modelling only the Rest of World from history cut the error to ~±3 Mt.'),
-    ('Limitations', 'Six seasons of history (the ESR file starts in 2020/21). The China number is an assumption. USDA\'s past finals on the basis tab are '
-                    'approximate and should be checked. Cancellations, logistics or a crop shortfall are not modelled explicitly.'),
+                            'see the Backtest tab for its error by season. Modelling only the Rest of World from history keeps the error to a few Mt.'),
+    ('Limitations', f'{len(PRIOR)} seasons of weekly history ({lab(PRIOR[0])}–{lab(PRIOR[-1])}). The China number is an assumption. '
+                    'Cancellations, logistics or a crop shortfall are not modelled explicitly.'),
     ('Weekly update', 'Re-run the build script on the new ESR export: week N, commitments and history update automatically.'),
 ]
 for i, (k, v) in enumerate(steps):

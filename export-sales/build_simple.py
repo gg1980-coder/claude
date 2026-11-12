@@ -61,9 +61,12 @@ for r_ in range(6, 11):
     HIST.append((y_, cn_, un_, tot_ - cn_ - un_, uc.cell(r_, 6).value, uc.cell(r_, 9).value))
 # ---- pull from Europe workbook ----
 win = E['Nov-Feb Window']
-WIN = [(win.cell(r, 1).value, win.cell(r, 2).value, win.cell(r, 6).value, win.cell(r, 9).value) for r in range(9, 15)]
-BENCH = {'normal': win['G20'].value, 'avg': win['G19'].value, 'needed': win['G22'].value}
-WEAK = min(x[2] for x in WIN if x[0] != WIN[0][0]) / 17
+_wr = {win.cell(r, 1).value: r for r in range(1, win.max_row + 1) if win.cell(r, 1).value}
+_wend = _wr[f'{CUR} so far']
+WIN = [(win.cell(r, 1).value, win.cell(r, 2).value, win.cell(r, 6).value, win.cell(r, 9).value) for r in range(9, _wend)][-6:]
+BENCH = {'normal': win.cell(_wr['5-yr avg excl. newest base yr'], 7).value, 'avg': win.cell(_wr['5-yr avg (base years)'], 7).value,
+         'needed': win.cell(_wr['Needed in window for demand used (expected path)'], 7).value}
+WEAK = min(x[2] for x in WIN[-5:]) / 17
 we = E['Weekly Europe']
 EW = [(we.cell(r, 1).value, we.cell(r, 3).value, we.cell(r, 4).value, we.cell(r, 5).value, we.cell(r, 9).value, we.cell(r, 10).value, we.cell(r, 11).value)
       for r in range(5, 57)]

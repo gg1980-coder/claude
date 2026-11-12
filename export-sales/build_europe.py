@@ -27,7 +27,7 @@ cs = int(ins.loc[ins.date.idxmax(), 'MYstart'])
 CUR = f"{cs}/{str(cs+1)[-2:]}"
 WK = int(ins[ins.MYstart == cs].WeekNumber.max())
 CUR_DATE = ins[ins.MYstart == cs].date.max()
-MYS = [f"{y}/{str(y+1)[-2:]}" for y in range(cs - 6, cs + 1)]          # 6 prior + current
+MYS = [f"{y}/{str(y+1)[-2:]}" for y in range(cs - 10, cs + 1)]          # 10 prior + current
 PRIOR = MYS[:-1]; LY = PRIOR[-1]; FIVE = PRIOR[::-1][:5]                  # FIVE newest first
 ins = ins[ins.MY.isin(MYS)]
 NW = 52

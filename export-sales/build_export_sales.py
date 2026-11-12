@@ -26,7 +26,7 @@ cur_start = int(ins.loc[ins.date.idxmax(), 'MYstart'])
 CUR = f"{cur_start}/{str(cur_start+1)[-2:]}"
 WK = int(ins[ins.MYstart == cur_start].WeekNumber.max())
 CUR_DATE = ins[ins.MYstart == cur_start].date.max()
-mys = sorted(m for m in ins.MY.unique() if int(m[:4]) <= cur_start and int(m[:4]) >= cur_start - 6)
+mys = sorted(m for m in ins.MY.unique() if int(m[:4]) <= cur_start and int(m[:4]) >= cur_start - 10)
 PRIOR = [m for m in mys if m != CUR][::-1]          # newest first
 LY, FIVE = PRIOR[0], PRIOR[:5]
 assert len(FIVE) == 5, FIVE
@@ -48,6 +48,7 @@ REGION = {
  'ARGENTINA':'Americas','BRAZIL':'Americas','CHILE':'Americas','CUBA':'Americas','DOMINICAN REPUBLIC':'Americas','EL SALVADOR':'Americas',
  'GUATEMALA':'Americas','HONDURAS':'Americas','NICARAGUA':'Americas','PANAMA':'Americas','BARBADOS':'Americas',
  'LEEWARD-WINDWARD ISLANDS':'Americas','VIRGIN ISLANDS OF THE U.S.':'Americas',
+ 'INDIA':'South Asia','UNITED ARAB EMIRATES':'Middle East & N. Africa','CAMEROON':'Sub-Saharan Africa','KENYA':'Sub-Saharan Africa','PAPUA NEW GUINEA':'Oceania',
  'GHANA':'Sub-Saharan Africa','NIGER':'Sub-Saharan Africa','NIGERIA':'Sub-Saharan Africa','SENEGAL':'Sub-Saharan Africa',
  'SOUTH AFRICA, REPUBLIC OF':'Sub-Saharan Africa','AUSTRALIA':'Oceania',
 }
