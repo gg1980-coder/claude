@@ -15,6 +15,19 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 src, out = sys.argv[1], sys.argv[2]
 BASE_MBU = float(sys.argv[3]) if len(sys.argv) > 3 else 1825
+ESR_CSV = sys.argv[4] if len(sys.argv) > 4 else None
+ESR = {}
+if ESR_CSV:   # this season's US position by destination from the weekly export sales (ESR) data
+    e = pd.read_csv(ESR_CSV, thousands=','); e.columns = [c.strip() for c in e.columns]
+    e['C'] = e.CountryName.str.strip(); e['dt'] = pd.to_datetime(e.WeekendingDate)
+    e['Y'] = e.ReportingMarketingYearName.str.extract(r'Sep (\d{4})').astype(int)
+    e = e[(e.dt >= pd.to_datetime(e.Y.astype(str) + '-08-31')) & (e.dt <= pd.to_datetime((e.Y + 1).astype(str) + '-09-07'))]
+    ecs = int(e.loc[e.dt.idxmax(), 'Y']); EWK = int(e[e.Y == ecs].WeekNumber.max())
+    now_ = e[(e.Y == ecs) & (e.WeekNumber == EWK)].groupby('C').TotalCommitment.sum() / 1000
+    fin_ = e[(e.Y < ecs) & (e.Y >= ecs - 5)].sort_values('dt').groupby(['Y', 'C']).tail(1).groupby('C').AccumulatedExports.sum() / 5000
+    ESR = {'now': now_, 'fy5': fin_, 'wk': EWK}
+ESRNAME = {'South Korea': 'KOREA, REPUBLIC OF'}
+def esr_name(p): return ESRNAME.get(p, p.upper())
 d = pd.read_csv(src)
 d = d[(d.Product == 'SBS') & (d.Reporter_MappedName.isin(['United States', 'Brazil'])) & (~d.Forecast)].copy()
 d['O'] = d.Reporter_MappedName.map({'United States': 'US', 'Brazil': 'BR'}); d['M'] = d.Month.astype(int)
@@ -159,7 +172,9 @@ wsS.cell(4, 3, f'10-season range {brx.min():.1f}–{brx.max():.1f} Mt (record {b
 SH = ['Destination', 'Type', 'US avg (kt, 5 seasons)', 'Brazil avg (kt, 10 seasons)', 'US share of US+Brazil (avg)', 'US share — lowest season',
       'US share — highest season', 'US share Sep–Feb', 'US share Mar–Aug', 'Correlation US vs Brazil volumes',
       'Share of US volume swings due to switching', 'Sensitivity: US share pts per +1 Mt Brazil (simple)',
-      'Sensitivity: detrended', 't-stat (detrended)', 'US+Brazil volume Nov–Aug (kt, 5-season avg)', 'US volume at risk in scenario (kt)', 'At risk (mln bu)']
+      'Sensitivity: detrended', 't-stat (detrended)', 'US+Brazil volume Nov–Aug (kt, 5-season avg)', 'US volume at risk in scenario (kt)', 'At risk (mln bu)',
+      'US booked so far this season (kt, export sales)', 'US 5-yr avg full year (kt, export sales)', 'US still to book on usual pace (kt)',
+      'At risk, capped at what is still to book (kt)', 'At risk, capped (mln bu)']
 R0 = 13
 section(wsS, R0 - 1, '1) Ranking by destination')
 header(wsS, R0, SH, h=64)
@@ -173,12 +188,20 @@ for i, (p, x) in enumerate(T.iterrows()):
         put(wsS, r, 1 + j, v, fm, f=font(10, j in (0, 1)) if j < 2 else BLUE)
     put(wsS, r, 16, f'=MIN(0,IF(OR($B$8="N",ABS(N{r})>=1),CHOOSE($B$7,M{r},L{r}),0)/100*$B$6*O{r})', '#,##0;-#,##0;0', f=font(10, True))
     put(wsS, r, 17, f'=P{r}/{CONV}/1000', '#,##0;-#,##0;0')
+    en = esr_name(p)
+    put(wsS, r, 18, float(ESR['now'].get(en, 0)) if ESR else None, KT, f=BLUE)
+    put(wsS, r, 19, float(ESR['fy5'].get(en, 0)) if ESR else None, KT, f=BLUE)
+    put(wsS, r, 20, f'=MAX(0,S{r}-R{r})', KT)
+    put(wsS, r, 21, f'=IF(S{r}="",P{r},MAX(P{r},-T{r}))', '#,##0;-#,##0;0', f=font(10, True))
+    put(wsS, r, 22, f'=U{r}/{CONV}/1000', '#,##0;-#,##0;0')
 R2 = R1 + len(T) - 1
 RT = R2 + 1
 put(wsS, RT, 1, 'TOTAL US volume at risk', f=font(10, True), fill=TOT)
-for c in range(2, 18): put(wsS, RT, c, None, fill=TOT)
+for c in range(2, 23): put(wsS, RT, c, None, fill=TOT)
 put(wsS, RT, 16, f'=SUM(P{R1}:P{R2})', '#,##0;-#,##0;0', f=font(11, True, NAVY), fill=TOT)
 put(wsS, RT, 17, f'=SUM(Q{R1}:Q{R2})', '#,##0;-#,##0;0', f=font(11, True, NAVY), fill=TOT)
+for c in (18, 19, 20): put(wsS, RT, c, f'=SUM({L(c)}{R1}:{L(c)}{R2})', KT, f=font(10, True), fill=TOT)
+for c in (21, 22): put(wsS, RT, c, f'=SUM({L(c)}{R1}:{L(c)}{R2})', '#,##0;-#,##0;0', f=font(11, True, NAVY), fill=TOT)
 wsS.conditional_formatting.add(f'B{R1}:B{R2}', FormulaRule(formula=[f'$B{R1}="Switcher"'], fill=RED))
 wsS.conditional_formatting.add(f'B{R1}:B{R2}', FormulaRule(formula=[f'$B{R1}="Mixed"'], fill=AMB))
 wsS.conditional_formatting.add(f'B{R1}:B{R2}', FormulaRule(formula=[f'$B{R1}="Demand-driven"'], fill=GRN))
@@ -187,7 +210,7 @@ wsS.conditional_formatting.add(f'P{R1}:P{R2}', CellIsRule(operator='lessThan', f
 s0 = RT + 2
 section(wsS, s0, '2) What it means for the US export number')
 res = [('Base case (China 25 Mt, rest of world at its usual pace)', '=B9', KT),
-       ('Volume at risk from extra Brazilian competition (mln bu)', f'=Q{RT}', '+#,##0;-#,##0;0'),
+       ('Volume at risk from extra Brazilian competition (mln bu, capped)', f'=V{RT}', '+#,##0;-#,##0;0'),
        ('Adjusted US export number (mln bu)', f'=B{s0+1}+B{s0+2}', KT),
        ('vs USDA (mln bu)', f'=B{s0+3}-B10', '+#,##0;-#,##0;0')]
 for i, (lb, f_, fm) in enumerate(res):
@@ -196,7 +219,7 @@ header(wsS, s0 + 6, ['Extra Brazil supply to non-China buyers (Mt)', 'US volume 
 for i, dlt in enumerate([0, 1, 2, 3, 4, 5, 6]):
     r = s0 + 7 + i
     put(wsS, r, 1, dlt, '+0;-0;0', f=BLUE)
-    put(wsS, r, 2, f'=IF($B$6=0,0,$Q${RT}*A{r}/$B$6)', '+#,##0;-#,##0;0')
+    put(wsS, r, 2, f'=IF($B$6=0,0,SUMPRODUCT(-(-1)*($P${R1}:$P${R2}*A{r}/$B$6<-$T${R1}:$T${R2})*(-$T${R1}:$T${R2})+($P${R1}:$P${R2}*A{r}/$B$6>=-$T${R1}:$T${R2})*$P${R1}:$P${R2}*A{r}/$B$6)/{CONV}/1000)', '+#,##0;-#,##0;0')
     put(wsS, r, 3, f'=$B$9+B{r}', KT); put(wsS, r, 4, f'=C{r}-$B$10', '+#,##0;-#,##0;0', f=font(10, True))
 wsS.conditional_formatting.add(f'D{s0+7}:D{s0+13}', CellIsRule(operator='lessThan', formula=['0'], fill=RED))
 wsS.conditional_formatting.add(f'D{s0+7}:D{s0+13}', CellIsRule(operator='greaterThanOrEqual', formula=['0'], fill=GRN))
@@ -213,14 +236,14 @@ for k, t in enumerate([
     'Not included: price spreads (US Gulf vs Paranaguá FOB). Brazil\'s non-China export volume is used as the proxy for how aggressively Brazil competes.']):
     note(wsS, n0 + k, t)
 wsS.column_dimensions['A'].width = 62; wsS.column_dimensions['B'].width = 14
-for c in range(3, 18): wsS.column_dimensions[L(c)].width = 11
+for c in range(3, 23): wsS.column_dimensions[L(c)].width = 11
 wsS.freeze_panes = f'C{R1}'
 bc = BarChart(); bc.type = 'bar'; bc.title = 'US volume at risk by destination (kt)'; bc.y_axis.numFmt = '#,##0'
-bc.add_data(Reference(wsS, min_col=16, min_row=R0, max_row=R2), titles_from_data=True)
+bc.add_data(Reference(wsS, min_col=21, min_row=R0, max_row=R2), titles_from_data=True)
 bc.set_categories(Reference(wsS, min_col=1, min_row=R1, max_row=R2)); bc.legend = None
 bc.x_axis.scaling.orientation = 'maxMin'; bc.x_axis.tickLblPos = 'low'; bc.width = 16; bc.height = 12
 bc.x_axis.delete = False; bc.y_axis.delete = False
-wsS.add_chart(bc, f'S{R0}')
+wsS.add_chart(bc, f'X{R0}')
 
 # ================= Country Profile =================
 title(wsC, 'Destination profile — US share of US + Brazil purchases by month and season (pick a destination in B4)',
