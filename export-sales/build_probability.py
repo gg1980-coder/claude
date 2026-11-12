@@ -400,9 +400,9 @@ def rfy(g, my): return f'SUMIFS(RD_F,RD_G,{g},RD_MY,{my})'
 def yt(y, w): return {g: (float(rcum.loc[(y, g), w]) if (y, g) in rcum.index else 0.0) / 1e6 for g in REGS}
 def fn(y): return {g: float(rfin.get((y, g), 0)) / 1e6 for g in REGS}
 FT = {y: sum(float(rfin.get((y, g), 0)) for g in REGS + ['Unknown']) / 1e6 for y in PRIOR}
-rmse_add, rmse_mul = {}, {}
+rmse_add, rmse_mul, rmse_addC, rmse_mulC = {}, {}, {}, {}
 for w in range(1, NW + 1):
-    ea, em = [], []
+    ea, em, eac, emc = [], [], [], []
     for y in PRIOR:
         oth = [o for o in PRIOR if o != y]
         cur_ = yt(y, w)
@@ -412,25 +412,34 @@ for w in range(1, NW + 1):
             pa += cur_[g] + af - ay
             pm += cur_[g] * af / ay if ay > 0 else 0
         ea.append(pa - FT[y]); em.append(pm - FT[y])
+        ayc = np.mean([yt(o, w)['China'] for o in oth]); afc = np.mean([fn(o)['China'] for o in oth])
+        cpa = cur_['China'] + afc - ayc; cpm = cur_['China'] * afc / ayc if ayc > 0 else 0
+        eac.append(pa - cpa + fn(y)['China'] - FT[y]); emc.append(pm - cpm + fn(y)['China'] - FT[y])
     rmse_add[w] = float(np.sqrt(np.mean(np.square(ea)))); rmse_mul[w] = float(np.sqrt(np.mean(np.square(em))))
+    rmse_addC[w] = float(np.sqrt(np.mean(np.square(eac)))); rmse_mulC[w] = float(np.sqrt(np.mean(np.square(emc))))
 c0b = 10
 put(wsB, 3, c0b, 'Regional pace methods — leave-one-out RMSE by week (Mt, all seasons; used as the uncertainty on the Pace Model tab)', f=font(10, True, NAVY), border=False)
-header(wsB, 4, ['Week', 'Remaining-sales method', 'Multiplier method'], c0b, h=36)
+header(wsB, 4, ['Week', 'Remaining-sales method', 'Multiplier method', 'Remaining-sales, China known', 'Multiplier, China known'], c0b, h=48)
 for w in range(1, NW + 1):
     put(wsB, 4 + w, c0b, w, '0'); put(wsB, 4 + w, c0b + 1, rmse_add[w], '0.0', f=BLUE); put(wsB, 4 + w, c0b + 2, rmse_mul[w], '0.0', f=BLUE)
+    put(wsB, 4 + w, c0b + 3, rmse_addC[w], '0.0', f=BLUE); put(wsB, 4 + w, c0b + 4, rmse_mulC[w], '0.0', f=BLUE)
+name(wb, 'RMSE_addC', 'Backtest', f'${L(c0b+3)}$5:${L(c0b+3)}${4+NW}'); name(wb, 'RMSE_mulC', 'Backtest', f'${L(c0b+4)}$5:${L(c0b+4)}${4+NW}')
 name(wb, 'RMSE_add', 'Backtest', f'${L(c0b+1)}$5:${L(c0b+1)}${4+NW}'); name(wb, 'RMSE_mul', 'Backtest', f'${L(c0b+2)}$5:${L(c0b+2)}${4+NW}')
 wsB.column_dimensions[L(c0b)].width = 8; wsB.column_dimensions[L(c0b+1)].width = 14; wsB.column_dimensions[L(c0b+2)].width = 14
 for _ch in wsB._charts: _ch.anchor = 'N4'
 
 # ================= Pace Model (no China assumption) =================
 wsP = wb.create_sheet('Pace Model', index=0)
-title(wsP, f'Pace-only view: probability that {CUR} US soybean exports beat USDA, and how each region gets us there',
-      'No China assumption: every region (China included) is projected from its own 5-yr and 10-yr seasonal pace. USDA number, ratio and week N are set on the "Model" tab.')
+title(wsP, f'Pace view: probability that {CUR} US soybean exports beat USDA, and how each region gets us there',
+      'Every region is projected from its own 5-yr and 10-yr seasonal pace; China can be fixed in B9 (leave blank to project China from its pace too). USDA number, ratio and week N are set on the "Model" tab.')
 put(wsP, 4, 1, 'USDA export forecast (mln bu)', f=font(10, True)); put(wsP, 4, 2, '=Model!B4', BU, f=GREENF)
 put(wsP, 5, 1, 'USDA forecast on ESR basis (Mt) — the bar to clear', f=font(10, True)); put(wsP, 5, 2, '=Need_ESR', MT, f=GREENF)
 put(wsP, 6, 1, 'Week N', f=font(10, True)); put(wsP, 6, 2, '=Wk_N', '0', f=GREENF)
 put(wsP, 7, 1, '5-yr base seasons', f=font(10, True)); put(wsP, 7, 2, f'{lab(PRIOR[-5])} – {lab(PRIOR[-1])}')
 put(wsP, 8, 1, '10-yr figures', f=font(10, True)); put(wsP, 8, 2, 'ESR pace report p.21 (2016/17–2025/26), valid for week 9 only')
+put(wsP, 9, 1, 'China full-year (Mt, ESR) — blank = use China\'s own pace', f=font(10, True)); put(wsP, 9, 2, 25, MT, f=BLUE, fill=YEL)
+put(wsP, 9, 3, 'Fixed at 25 Mt: China\'s uncertainty is removed; the probability then reflects the rest of the world only.', f=font(9, False, '404040', True), border=False)
+name(wb, 'China_fix', 'Pace Model', '$B$9')
 B5Y = [lab(y) for y in PRIOR[-5:]]
 # regional table first (totals reference it)
 rr0 = 22
@@ -450,10 +459,12 @@ for i, g in enumerate(REGS):
     put(wsP, r, 2, f'=IF(Wk_N>{WK},"",{rwk(G, chr(34)+CUR+chr(34))})', MT, fill=CURF)
     put(wsP, r, 3, '=(' + '+'.join(rwk(G, f'"{m}"') for m in B5Y) + ')/5', MT)
     put(wsP, r, 4, '=(' + '+'.join(rfy(G, f'"{m}"') for m in B5Y) + ')/5', MT)
-    put(wsP, r, 5, f'=D{r}-C{r}', MT); put(wsP, r, 6, f'=B{r}+E{r}', MT, f=font(10, True))
+    put(wsP, r, 5, f'=D{r}-C{r}', MT)
+    FX = (lambda e: f'=IF(ISNUMBER(China_fix),China_fix,{e})') if g == 'China' else (lambda e: '=' + e)
+    put(wsP, r, 6, FX(f'B{r}+E{r}'), MT, f=font(10, True), fill=CURF if g == 'China' else None)
     a10, f10 = PDF10[g]
     put(wsP, r, 7, a10 / 1000, MT, f=BLUE); put(wsP, r, 8, f10 / 1000, MT, f=BLUE)
-    put(wsP, r, 9, f'=IF(Wk_N=9,B{r}+H{r}-G{r},"n/a (wk 9 only)")', MT, f=font(10, True))
+    put(wsP, r, 9, FX(f'IF(Wk_N=9,B{r}+H{r}-G{r},"n/a (wk 9 only)")'), MT, f=font(10, True), fill=CURF if g == 'China' else None)
     put(wsP, r, 10, f'=$B$5*D{r}/$D${R1+len(REGS)}', MT)
     put(wsP, r, 11, f'=F{r}-J{r}', SBU.replace('0;', '0.00;').replace('0;0', '0.00;0') if False else '+0.00;-0.00;0.00', f=font(10, True))
     put(wsP, r, 12, f'=IF(ISNUMBER(I{r}),I{r}-J{r},"")', '+0.00;-0.00;0.00')
@@ -462,9 +473,10 @@ for i, g in enumerate(REGS):
     for k, y in enumerate(PRIOR):
         put(wsP, r, hb + k, f'={rfy(G, chr(34)+lab(y)+chr(34))}-{rwk(G, chr(34)+lab(y)+chr(34))}', MT, f=font(8, False, '595959'), border=False)
     put(wsP, r, 17, f'=STDEV({L(hb)}{r}:{L(hb+5)}{r})', MT)
-    put(wsP, r, 15, f'=IF(Q{r}=0,IF(E{r}>=M{r},1,0),' + prob_ge(f'M{r}', f'E{r}', f'Q{r}*SQRT(1+1/6)', 5) + ')', P0, f=font(10, True))
+    pf = f'IF(Q{r}=0,IF(E{r}>=M{r},1,0),' + prob_ge(f'M{r}', f'E{r}', f'Q{r}*SQRT(1+1/6)', 5) + ')'
+    put(wsP, r, 15, (f'=IF(ISNUMBER(China_fix),"fixed",{pf})' if g == 'China' else '=' + pf), P0, f=font(10, True), al=Alignment(horizontal='right'))
     put(wsP, r, 16, f'=K{r}/Ratio/Conv', '+#,##0;-#,##0;0', f=font(10, True))
-    put(wsP, r, 18, f'=IF(C{r}>0,B{r}*D{r}/C{r},0)', MT)
+    put(wsP, r, 18, FX(f'IF(C{r}>0,B{r}*D{r}/C{r},0)'), MT)
 R2 = R1 + len(REGS) - 1
 RT = R2 + 1
 put(wsP, RT, 1, 'TOTAL (named destinations)', f=font(10, True), fill=TOT)
@@ -493,11 +505,11 @@ put(wsP, t0, 1, '1) Probability that full-year exports beat USDA — pace method
 TH = ['Method', 'Expected full year (Mt, ESR)', 'Expected (mln bu, USDA basis)', 'vs USDA (mln bu)', 'Historical error ±1 sd (Mt)',
       '80% range low (mln bu)', '80% range high (mln bu)', 'Probability ABOVE USDA', 'Probability BELOW USDA']
 header(wsP, t0 + 1, TH, h=48)
-SDA, SDM = 'INDEX(RMSE_add,Wk_N)', 'INDEX(RMSE_mul,Wk_N)'
+SDA, SDM = 'IF(ISNUMBER(China_fix),INDEX(RMSE_addC,Wk_N),INDEX(RMSE_add,Wk_N))', 'IF(ISNUMBER(China_fix),INDEX(RMSE_mulC,Wk_N),INDEX(RMSE_mul,Wk_N))'
 tm = [('Remaining sales, 5-yr (RECOMMENDED)', f'=F{RT}', SDA),
       ('Remaining sales, 10-yr (pace report)', f'=IF(ISNUMBER(I{RT}),I{RT},"")', SDA),
       ('Multiplier ("implied FY"), 5-yr', f'=R{RT}', SDM),
-      ('Multiplier ("implied FY"), 10-yr — as in the pace report', f'=IF(Wk_N=9,SUMPRODUCT(B{R1}:B{R2},H{R1}:H{R2}/G{R1}:G{R2}),"")', SDM)]
+      ('Multiplier ("implied FY"), 10-yr — as in the pace report', f'=IF(Wk_N=9,IF(ISNUMBER(China_fix),China_fix+SUMPRODUCT(B{R1+1}:B{R2},H{R1+1}:H{R2}/G{R1+1}:G{R2}),SUMPRODUCT(B{R1}:B{R2},H{R1}:H{R2}/G{R1}:G{R2})),"")', SDM)]
 for i, (lb, ex, sd) in enumerate(tm):
     r = t0 + 2 + i
     put(wsP, r, 1, lb, f=font(10, i == 0)); put(wsP, r, 2, ex, MT, f=font(10, True)); put(wsP, r, 5, '=' + sd, '0.0')
@@ -514,7 +526,7 @@ put(wsP, rs, 1, 'Season-by-season test: this year\'s bookings + each past season
 header(wsP, rs + 1, ['Season pattern'] + [lab(y) for y in PRIOR] + ['Seasons above USDA'], h=24)
 put(wsP, rs + 2, 1, 'Full year (mln bu, USDA basis)', f=font(10, True))
 for k in range(6):
-    put(wsP, rs + 2, 2 + k, f'=(B{RT}+SUM({L(hb+k)}{R1}:{L(hb+k)}{R2}))/Ratio/Conv', BU)
+    put(wsP, rs + 2, 2 + k, f'=IF(ISNUMBER(China_fix),China_fix+B{RT}-B{R1}+SUM({L(hb+k)}{R1+1}:{L(hb+k)}{R2}),B{RT}+SUM({L(hb+k)}{R1}:{L(hb+k)}{R2}))/Ratio/Conv', BU)
 put(wsP, rs + 2, 8, f'=COUNTIF(B{rs+2}:G{rs+2},">"&$B$4)&" of 6"', f=font(11, True, NAVY))
 wsP.conditional_formatting.add(f'B{rs+2}:G{rs+2}', CellIsRule(operator='greaterThan', formula=['$B$4'], fill=GRN))
 wsP.conditional_formatting.add(f'B{rs+2}:G{rs+2}', CellIsRule(operator='lessThanOrEqual', formula=['$B$4'], fill=RED))
