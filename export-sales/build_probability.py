@@ -36,8 +36,8 @@ fin = ins[ins.Y < cs].sort_values('date').groupby(['Y', 'Country']).tail(1).grou
 GROUPS = ['China', 'Unknown', 'Rest of World']
 
 # USDA (balance-sheet / Census basis) final exports, mln bu — APPROXIMATE, from memory; user should verify/replace.
-USDA_FINAL = {2020: 2266, 2021: 2152, 2022: 1980, 2023: 1695, 2024: 1892, 2025: 1515}
-USDA_SRC = {2024: 'WASDE Nov-2026', 2025: 'WASDE Nov-2026 (estimate)'}
+USDA_FINAL = {2020: 2266, 2021: 2152, 2022: 1979, 2023: 1703, 2024: 1892, 2025: 1515}
+USDA_SRC = {y: 'Official (Census) — monthly export file; matches WASDE' for y in USDA_FINAL}
 
 # ---------------- styles ----------------
 F = 'Arial'; NAVY = '1F4E78'
@@ -102,7 +102,7 @@ def fy(g, my): return f'SUMIFS(WD_F,WD_G,"{g}",WD_MY,{my})'
 
 # ================= USDA vs ESR basis =================
 title(wsR, 'USDA (balance-sheet) vs export-sales (ESR) full-year exports — conversion ratio',
-      '2024/25 and 2025/26 from the Nov-2026 WASDE; earlier seasons entered from memory — please check against USDA PS&D and overwrite. ESR finals come from the data.')
+      'USDA (Census-basis) finals from the monthly export file you provided (they match the WASDE). ESR finals come from the weekly data.')
 header(wsR, 4, ['Marketing year', 'USDA final exports (mln bu)', 'USDA final (Mt)', 'ESR full-year (Mt)', 'ESR ÷ USDA', 'Use? (Y/N)', 'Source of USDA number'])
 for i, y in enumerate(PRIOR):
     r = 5 + i
