@@ -36,7 +36,8 @@ fin = ins[ins.Y < cs].sort_values('date').groupby(['Y', 'Country']).tail(1).grou
 GROUPS = ['China', 'Unknown', 'Rest of World']
 
 # USDA (balance-sheet / Census basis) final exports, mln bu — APPROXIMATE, from memory; user should verify/replace.
-USDA_FINAL = {2020: 2266, 2021: 2152, 2022: 1980, 2023: 1695, 2024: 1875}
+USDA_FINAL = {2020: 2266, 2021: 2152, 2022: 1980, 2023: 1695, 2024: 1892, 2025: 1515}
+USDA_SRC = {2024: 'WASDE Nov-2026', 2025: 'WASDE Nov-2026 (estimate)'}
 
 # ---------------- styles ----------------
 F = 'Arial'; NAVY = '1F4E78'
@@ -101,8 +102,8 @@ def fy(g, my): return f'SUMIFS(WD_F,WD_G,"{g}",WD_MY,{my})'
 
 # ================= USDA vs ESR basis =================
 title(wsR, 'USDA (balance-sheet) vs export-sales (ESR) full-year exports — conversion ratio',
-      'USDA finals in blue are APPROXIMATE values entered from memory: please check against USDA WASDE / PS&D and overwrite. ESR finals come from the data.')
-header(wsR, 4, ['Marketing year', 'USDA final exports (mln bu)', 'USDA final (Mt)', 'ESR full-year (Mt)', 'ESR ÷ USDA', 'Use? (Y/N)'])
+      '2024/25 and 2025/26 from the Nov-2026 WASDE; earlier seasons entered from memory — please check against USDA PS&D and overwrite. ESR finals come from the data.')
+header(wsR, 4, ['Marketing year', 'USDA final exports (mln bu)', 'USDA final (Mt)', 'ESR full-year (Mt)', 'ESR ÷ USDA', 'Use? (Y/N)', 'Source of USDA number'])
 for i, y in enumerate(PRIOR):
     r = 5 + i
     put(wsR, r, 1, lab(y))
@@ -111,6 +112,7 @@ for i, y in enumerate(PRIOR):
     put(wsR, r, 4, '=' + '+'.join(fy(g, f'$A{r}') for g in GROUPS), MT)
     put(wsR, r, 5, f'=IF(C{r}="","",D{r}/C{r})', '0.000')
     put(wsR, r, 6, 'Y' if y in USDA_FINAL else 'N', f=BLUE, fill=YEL, al=Alignment(horizontal='center'))
+    put(wsR, r, 7, USDA_SRC.get(y, 'From memory — please verify'), f=font(9, False, '404040', True))
 RL = 5 + len(PRIOR) - 1
 put(wsR, RL + 1, 1, 'Average ratio (rows marked Y)', f=font(10, True), fill=TOT)
 put(wsR, RL + 1, 5, f'=AVERAGEIFS(E5:E{RL},F5:F{RL},"Y")', '0.000', f=font(10, True), fill=TOT)
@@ -120,11 +122,12 @@ note(wsR, RL + 4, 'ESR usually runs ~2–3% below USDA\'s official (Census-based
 name(wb, 'Ratio', wsR.title, f'$B${RL+3}')
 wsR.column_dimensions['A'].width = 30
 for c in 'BCDEF': wsR.column_dimensions[c].width = 16
+wsR.column_dimensions['G'].width = 28
 
 # ================= Model: inputs =================
 title(wsM, f'US soybean exports {CUR}: probability of ending above USDA\'s forecast, based on sales pace',
       f'Data through w/e {DATE:%d %b %Y} (week {WK}). Yellow = inputs. ESR = USDA weekly export sales; USDA forecast is on balance-sheet (Census) basis — converted with the ratio on "USDA vs ESR basis".')
-inp = [('USDA export forecast (mln bu)', 1695, BU, True, 'Current WASDE'),
+inp = [('USDA export forecast (mln bu)', 1720, BU, True, 'Nov-2026 WASDE (Oct: 1,695)'),
        ('Bushels → tonnes (MT per bu)', 0.0272155, '0.0000000', False, '60 lb bushel'),
        ('USDA forecast (Mt, balance-sheet basis)', '=B4*B5', MT, False, ''),
        ('ESR ÷ USDA ratio', '=Ratio', '0.000', False, 'From "USDA vs ESR basis" tab'),
@@ -348,6 +351,183 @@ lb_.set_categories(Reference(wsB, min_col=1, min_row=5, max_row=4 + len(BW))); l
 lb_.x_axis.title = 'Week'; lb_.x_axis.delete = False; lb_.y_axis.delete = False
 for s2 in lb_.series: s2.smooth = False
 wsB.add_chart(lb_, 'I4')
+
+# ================= Regions: data =================
+RMAP = {'CHINA, PEOPLES REPUBLIC OF': 'China', 'MEXICO': 'Mexico', 'CANADA': 'Canada', 'UNKNOWN': 'Unknown'}
+for lst, nm in [(['JAPAN', 'TAIWAN', 'KOREA, REPUBLIC OF', 'HONG KONG'], 'East Asia ex-China'),
+                (['INDONESIA', 'VIETNAM', 'MALAYSIA', 'THAILAND', 'PHILIPPINES', 'BURMA', 'CAMBODIA', 'LAOS', 'SINGAPORE'], 'Southeast Asia'),
+                (['BANGLADESH', 'PAKISTAN', 'NEPAL', 'SRI LANKA'], 'South Asia'),
+                (['EGYPT', 'ALGERIA', 'TURKEY', 'TUNISIA', 'MOROCCO', 'IRAN', 'IRAQ', 'ISRAEL', 'JORDAN', 'LEBANON', 'LIBYA', 'SAUDI ARABIA', 'QATAR'], 'Middle East & N. Africa'),
+                (['SPAIN', 'NETHERLANDS', 'PORTUGAL', 'ITALY', 'GERMANY', 'UNITED KINGDOM', 'GREECE', 'BELGIUM-LUXEMBOURG', 'FRANCE', 'IRELAND', 'NORWAY',
+                  'ROMANIA', 'SWITZERLAND', 'UKRAINE', 'GEORGIA, REPUBLIC OF'], 'Europe'),
+                (['COSTA RICA', 'EL SALVADOR', 'GUATEMALA', 'HONDURAS', 'NICARAGUA', 'PANAMA', 'DOMINICAN REPUBLIC', 'CUBA', 'BARBADOS',
+                  'LEEWARD-WINDWARD ISLANDS', 'VIRGIN ISLANDS OF THE U.S.'], 'Central America & Caribbean'),
+                (['COLOMBIA', 'VENEZUELA', 'PERU', 'ARGENTINA', 'BRAZIL', 'CHILE'], 'South America'),
+                (['GHANA', 'NIGER', 'NIGERIA', 'SENEGAL', 'SOUTH AFRICA, REPUBLIC OF'], 'Sub-Saharan Africa')]:
+    for c_ in lst: RMAP[c_] = nm
+REGS = ['China', 'Mexico', 'Canada', 'East Asia ex-China', 'Southeast Asia', 'South Asia', 'Middle East & N. Africa', 'Europe',
+        'Central America & Caribbean', 'South America', 'Sub-Saharan Africa', 'Other']
+ins['R'] = ins.Country.map(RMAP).fillna('Other')
+rcum = ins.pivot_table(index=['Y', 'R'], columns='WeekNumber', values='TotalCommitment', aggfunc='sum').reindex(columns=range(1, NW + 1)).fillna(0)
+rfin = ins[ins.Y < cs].sort_values('date').groupby(['Y', 'Country']).tail(1).groupby(['Y', 'R']).AccumulatedExports.sum()
+# 10-yr region figures from the ESR pace report (page 21, week 9): 10y avg commitments at wk 9 and 10y avg full-year (kt)
+PDF10 = {'China': (13239, 24964), 'Mexico': (2403, 4699), 'Canada': (117, 242), 'East Asia ex-China': (1736, 4244),
+         'Southeast Asia': (1480, 4370), 'South Asia': (860, 1718), 'Middle East & N. Africa': (1223, 4105), 'Europe': (1398, 5452),
+         'Central America & Caribbean': (158, 395), 'South America': (308, 951), 'Sub-Saharan Africa': (7, 33), 'Other': (1, 2),
+         'Unknown': (6274, 0)}
+wsRD = wb.create_sheet('Weekly by Region')
+title(wsRD, 'Cumulative commitments by region and in-season week (Mt), with full-year exports',
+      f'Hardcoded from the ESR file (blue). Regions follow the pace report. {CUR} through week {WK}.')
+header(wsRD, 4, ['Marketing year', 'Region', 'Full-year exports (Mt)'] + [f'W{w}' for w in range(1, NW + 1)])
+r = 5
+for y in YEARS:
+    for g in REGS + ['Unknown']:
+        put(wsRD, r, 1, lab(y), f=BLUE, border=False); put(wsRD, r, 2, g, f=BLUE, border=False)
+        put(wsRD, r, 3, None if y == cs else float(rfin.get((y, g), 0)) / 1e6, MT, f=BLUE, border=False)
+        for w in range(1, NW + 1):
+            if y == cs and w > WK: continue
+            x = wsRD.cell(r, 3 + w, float(rcum.loc[(y, g), w]) / 1e6 if (y, g) in rcum.index else 0.0); x.number_format = MT; x.font = BLUE
+        r += 1
+RDL = r - 1
+for n_, c_ in [('RD_MY', 'A'), ('RD_G', 'B'), ('RD_F', 'C')]: name(wb, n_, 'Weekly by Region', f'${c_}$5:${c_}${RDL}')
+name(wb, 'RD_W', 'Weekly by Region', f'$D$5:${L(3+NW)}${RDL}')
+wsRD.column_dimensions['A'].width = 12; wsRD.column_dimensions['B'].width = 26; wsRD.column_dimensions['C'].width = 12
+wsRD.freeze_panes = 'D5'
+def rwk(g, my): return f'SUMIFS(INDEX(RD_W,0,Wk_N),RD_G,{g},RD_MY,{my})'
+def rfy(g, my): return f'SUMIFS(RD_F,RD_G,{g},RD_MY,{my})'
+
+# backtest by week (named regions; LOO over all prior seasons) -> RMSE used as the model's uncertainty
+def yt(y, w): return {g: (float(rcum.loc[(y, g), w]) if (y, g) in rcum.index else 0.0) / 1e6 for g in REGS}
+def fn(y): return {g: float(rfin.get((y, g), 0)) / 1e6 for g in REGS}
+FT = {y: sum(float(rfin.get((y, g), 0)) for g in REGS + ['Unknown']) / 1e6 for y in PRIOR}
+rmse_add, rmse_mul = {}, {}
+for w in range(1, NW + 1):
+    ea, em = [], []
+    for y in PRIOR:
+        oth = [o for o in PRIOR if o != y]
+        cur_ = yt(y, w)
+        pa = pm = 0.0
+        for g in REGS:
+            ay = np.mean([yt(o, w)[g] for o in oth]); af = np.mean([fn(o)[g] for o in oth])
+            pa += cur_[g] + af - ay
+            pm += cur_[g] * af / ay if ay > 0 else 0
+        ea.append(pa - FT[y]); em.append(pm - FT[y])
+    rmse_add[w] = float(np.sqrt(np.mean(np.square(ea)))); rmse_mul[w] = float(np.sqrt(np.mean(np.square(em))))
+c0b = 10
+put(wsB, 3, c0b, 'Regional pace methods — leave-one-out RMSE by week (Mt, all seasons; used as the uncertainty on the Pace Model tab)', f=font(10, True, NAVY), border=False)
+header(wsB, 4, ['Week', 'Remaining-sales method', 'Multiplier method'], c0b, h=36)
+for w in range(1, NW + 1):
+    put(wsB, 4 + w, c0b, w, '0'); put(wsB, 4 + w, c0b + 1, rmse_add[w], '0.0', f=BLUE); put(wsB, 4 + w, c0b + 2, rmse_mul[w], '0.0', f=BLUE)
+name(wb, 'RMSE_add', 'Backtest', f'${L(c0b+1)}$5:${L(c0b+1)}${4+NW}'); name(wb, 'RMSE_mul', 'Backtest', f'${L(c0b+2)}$5:${L(c0b+2)}${4+NW}')
+wsB.column_dimensions[L(c0b)].width = 8; wsB.column_dimensions[L(c0b+1)].width = 14; wsB.column_dimensions[L(c0b+2)].width = 14
+for _ch in wsB._charts: _ch.anchor = 'N4'
+
+# ================= Pace Model (no China assumption) =================
+wsP = wb.create_sheet('Pace Model', index=0)
+title(wsP, f'Pace-only view: probability that {CUR} US soybean exports beat USDA, and how each region gets us there',
+      'No China assumption: every region (China included) is projected from its own 5-yr and 10-yr seasonal pace. USDA number, ratio and week N are set on the "Model" tab.')
+put(wsP, 4, 1, 'USDA export forecast (mln bu)', f=font(10, True)); put(wsP, 4, 2, '=Model!B4', BU, f=GREENF)
+put(wsP, 5, 1, 'USDA forecast on ESR basis (Mt) — the bar to clear', f=font(10, True)); put(wsP, 5, 2, '=Need_ESR', MT, f=GREENF)
+put(wsP, 6, 1, 'Week N', f=font(10, True)); put(wsP, 6, 2, '=Wk_N', '0', f=GREENF)
+put(wsP, 7, 1, '5-yr base seasons', f=font(10, True)); put(wsP, 7, 2, f'{lab(PRIOR[-5])} – {lab(PRIOR[-1])}')
+put(wsP, 8, 1, '10-yr figures', f=font(10, True)); put(wsP, 8, 2, 'ESR pace report p.21 (2016/17–2025/26), valid for week 9 only')
+B5Y = [lab(y) for y in PRIOR[-5:]]
+# regional table first (totals reference it)
+rr0 = 22
+put(wsP, rr0, 1, '2) Regional view — what each region is on track for, and how that compares with its share of USDA\'s number (Mt, ESR basis)', f=font(12, True, NAVY), border=False)
+RH = ['Region', 'Committed so far', '5-yr avg committed by wk N', '5-yr avg full year', '5-yr usual still to come', 'Expected full year (5-yr)',
+      '10-yr avg committed by wk 9', '10-yr avg full year', 'Expected full year (10-yr)', 'Share of USDA total (5-yr share)', 'Gap vs USDA share (5-yr)',
+      'Gap vs USDA share (10-yr)', 'Still to sell to reach USDA share', 'Needed ÷ usual still to come', 'Chance region reaches its USDA share',
+      'Gap in mln bu (5-yr)', 'Std dev of still-to-come (6 seasons)', 'Expected full year — multiplier (5-yr)']
+header(wsP, rr0 + 1, RH, h=56)
+hb = len(RH) + 2
+for k in range(6):
+    x = wsP.cell(rr0 + 1, hb + k, f'Still to come {lab(PRIOR[k])}'); x.font = font(8, True, '595959'); x.alignment = Alignment(wrap_text=True)
+R1 = rr0 + 2
+for i, g in enumerate(REGS):
+    r = R1 + i; G = f'$A{r}'
+    put(wsP, r, 1, g, f=font(10, True))
+    put(wsP, r, 2, f'=IF(Wk_N>{WK},"",{rwk(G, chr(34)+CUR+chr(34))})', MT, fill=CURF)
+    put(wsP, r, 3, '=(' + '+'.join(rwk(G, f'"{m}"') for m in B5Y) + ')/5', MT)
+    put(wsP, r, 4, '=(' + '+'.join(rfy(G, f'"{m}"') for m in B5Y) + ')/5', MT)
+    put(wsP, r, 5, f'=D{r}-C{r}', MT); put(wsP, r, 6, f'=B{r}+E{r}', MT, f=font(10, True))
+    a10, f10 = PDF10[g]
+    put(wsP, r, 7, a10 / 1000, MT, f=BLUE); put(wsP, r, 8, f10 / 1000, MT, f=BLUE)
+    put(wsP, r, 9, f'=IF(Wk_N=9,B{r}+H{r}-G{r},"n/a (wk 9 only)")', MT, f=font(10, True))
+    put(wsP, r, 10, f'=$B$5*D{r}/$D${R1+len(REGS)}', MT)
+    put(wsP, r, 11, f'=F{r}-J{r}', SBU.replace('0;', '0.00;').replace('0;0', '0.00;0') if False else '+0.00;-0.00;0.00', f=font(10, True))
+    put(wsP, r, 12, f'=IF(ISNUMBER(I{r}),I{r}-J{r},"")', '+0.00;-0.00;0.00')
+    put(wsP, r, 13, f'=MAX(0,J{r}-B{r})', MT)
+    put(wsP, r, 14, f'=IF(E{r}<=0,"",M{r}/E{r})', '0%')
+    for k, y in enumerate(PRIOR):
+        put(wsP, r, hb + k, f'={rfy(G, chr(34)+lab(y)+chr(34))}-{rwk(G, chr(34)+lab(y)+chr(34))}', MT, f=font(8, False, '595959'), border=False)
+    put(wsP, r, 17, f'=STDEV({L(hb)}{r}:{L(hb+5)}{r})', MT)
+    put(wsP, r, 15, f'=IF(Q{r}=0,IF(E{r}>=M{r},1,0),' + prob_ge(f'M{r}', f'E{r}', f'Q{r}*SQRT(1+1/6)', 5) + ')', P0, f=font(10, True))
+    put(wsP, r, 16, f'=K{r}/Ratio/Conv', '+#,##0;-#,##0;0', f=font(10, True))
+    put(wsP, r, 18, f'=IF(C{r}>0,B{r}*D{r}/C{r},0)', MT)
+R2 = R1 + len(REGS) - 1
+RT = R2 + 1
+put(wsP, RT, 1, 'TOTAL (named destinations)', f=font(10, True), fill=TOT)
+for c in [2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 18]:
+    put(wsP, RT, c, f'=SUM({L(c)}{R1}:{L(c)}{R2})', '+#,##0;-#,##0;0' if c == 16 else ('+0.00;-0.00;0.00' if c == 11 else MT), f=font(10, True), fill=TOT)
+put(wsP, RT, 9, f'=IF(Wk_N=9,SUM(I{R1}:I{R2}),"n/a")', MT, f=font(10, True), fill=TOT)
+put(wsP, RT, 12, f'=IF(ISNUMBER(I{RT}),I{RT}-J{RT},"")', '+0.00;-0.00;0.00', f=font(10, True), fill=TOT)
+for c in (14, 15, 17): put(wsP, RT, c, None, fill=TOT)
+RU = RT + 1
+put(wsP, RU, 1, 'Memo: Unknown (not counted — its usual level is already inside each region\'s "still to come")', f=font(9, False, '404040', True))
+put(wsP, RU, 2, f'=IF(Wk_N>{WK},"",{rwk(chr(34)+"Unknown"+chr(34), chr(34)+CUR+chr(34))})', MT)
+put(wsP, RU, 3, '=(' + '+'.join(rwk('"Unknown"', f'"{m}"') for m in B5Y) + ')/5', MT)
+put(wsP, RU, 7, PDF10['Unknown'][0] / 1000, MT, f=BLUE)
+note(wsP, RU + 1, '"Share of USDA total": USDA publishes no split by destination, so its total is shared out by each region\'s 5-yr share of exports. '
+                  '"Gap" = expected full year − that share: positive = the region is on track to deliver more than a USDA-consistent amount.')
+note(wsP, RU + 2, '"Chance region reaches its USDA share" uses the spread of that region\'s "still to come" across the six seasons (Student-t, 5 df).')
+for rg_ in (f'K{R1}:K{R2}', f'L{R1}:L{R2}', f'P{R1}:P{R2}'):
+    wsP.conditional_formatting.add(rg_, CellIsRule(operator='greaterThan', formula=['0'], fill=GRN))
+    wsP.conditional_formatting.add(rg_, CellIsRule(operator='lessThan', formula=['0'], fill=RED))
+wsP.conditional_formatting.add(f'O{R1}:O{R2}', CellIsRule(operator='greaterThanOrEqual', formula=['0.7'], fill=GRN))
+wsP.conditional_formatting.add(f'O{R1}:O{R2}', CellIsRule(operator='lessThanOrEqual', formula=['0.3'], fill=RED))
+
+# totals section (rows 10-20)
+t0 = 10
+put(wsP, t0, 1, '1) Probability that full-year exports beat USDA — pace methods, all destinations', f=font(12, True, NAVY), border=False)
+TH = ['Method', 'Expected full year (Mt, ESR)', 'Expected (mln bu, USDA basis)', 'vs USDA (mln bu)', 'Historical error ±1 sd (Mt)',
+      '80% range low (mln bu)', '80% range high (mln bu)', 'Probability ABOVE USDA', 'Probability BELOW USDA']
+header(wsP, t0 + 1, TH, h=48)
+SDA, SDM = 'INDEX(RMSE_add,Wk_N)', 'INDEX(RMSE_mul,Wk_N)'
+tm = [('Remaining sales, 5-yr (RECOMMENDED)', f'=F{RT}', SDA),
+      ('Remaining sales, 10-yr (pace report)', f'=IF(ISNUMBER(I{RT}),I{RT},"")', SDA),
+      ('Multiplier ("implied FY"), 5-yr', f'=R{RT}', SDM),
+      ('Multiplier ("implied FY"), 10-yr — as in the pace report', f'=IF(Wk_N=9,SUMPRODUCT(B{R1}:B{R2},H{R1}:H{R2}/G{R1}:G{R2}),"")', SDM)]
+for i, (lb, ex, sd) in enumerate(tm):
+    r = t0 + 2 + i
+    put(wsP, r, 1, lb, f=font(10, i == 0)); put(wsP, r, 2, ex, MT, f=font(10, True)); put(wsP, r, 5, '=' + sd, '0.0')
+    put(wsP, r, 3, f'=IF(B{r}="","",B{r}/Ratio/Conv)', BU, f=font(10, True)); put(wsP, r, 4, f'=IF(C{r}="","",C{r}-$B$4)', SBU, f=font(10, True))
+    put(wsP, r, 6, f'=IF(B{r}="","",(B{r}-TINV(0.2,5)*E{r}*SQRT(1+1/6))/Ratio/Conv)', BU)
+    put(wsP, r, 7, f'=IF(B{r}="","",(B{r}+TINV(0.2,5)*E{r}*SQRT(1+1/6))/Ratio/Conv)', BU)
+    put(wsP, r, 8, f'=IF(B{r}="","",' + prob_ge('Need_ESR', f'B{r}', f'E{r}*SQRT(1+1/6)', 5) + ')', P0, f=font(12, True, NAVY), al=Alignment(horizontal='center'))
+    put(wsP, r, 9, f'=IF(H{r}="","",1-H{r})', P0, al=Alignment(horizontal='center'))
+T1 = t0 + 2
+wsP.conditional_formatting.add(f'H{T1}:H{T1+3}', CellIsRule(operator='greaterThanOrEqual', formula=['0.7'], fill=GRN))
+wsP.conditional_formatting.add(f'H{T1}:H{T1+3}', CellIsRule(operator='lessThanOrEqual', formula=['0.3'], fill=RED))
+rs = t0 + 7
+put(wsP, rs, 1, 'Season-by-season test: this year\'s bookings + each past season\'s regional "still to come"', f=font(10, True))
+header(wsP, rs + 1, ['Season pattern'] + [lab(y) for y in PRIOR] + ['Seasons above USDA'], h=24)
+put(wsP, rs + 2, 1, 'Full year (mln bu, USDA basis)', f=font(10, True))
+for k in range(6):
+    put(wsP, rs + 2, 2 + k, f'=(B{RT}+SUM({L(hb+k)}{R1}:{L(hb+k)}{R2}))/Ratio/Conv', BU)
+put(wsP, rs + 2, 8, f'=COUNTIF(B{rs+2}:G{rs+2},">"&$B$4)&" of 6"', f=font(11, True, NAVY))
+wsP.conditional_formatting.add(f'B{rs+2}:G{rs+2}', CellIsRule(operator='greaterThan', formula=['$B$4'], fill=GRN))
+wsP.conditional_formatting.add(f'B{rs+2}:G{rs+2}', CellIsRule(operator='lessThanOrEqual', formula=['$B$4'], fill=RED))
+
+wsP.column_dimensions['A'].width = 46
+for c in range(2, len(RH) + 1): wsP.column_dimensions[L(c)].width = 12
+for k in range(6): wsP.column_dimensions[L(hb + k)].width = 9
+gc = BarChart(); gc.type = 'bar'; gc.title = 'Gap vs USDA-consistent share by region (mln bu, 5-yr pace)'; gc.y_axis.numFmt = '+#,##0;-#,##0'
+gc.add_data(Reference(wsP, min_col=16, min_row=rr0 + 1, max_row=R2), titles_from_data=True)
+gc.set_categories(Reference(wsP, min_col=1, min_row=R1, max_row=R2)); gc.legend = None
+gc.x_axis.scaling.orientation = 'maxMin'; gc.x_axis.tickLblPos = 'low'; gc.width = 18; gc.height = 10
+gc.x_axis.delete = False; gc.y_axis.delete = False
+wsP.add_chart(gc, f'A{RU + 5}')
 
 # ================= Method =================
 title(wsN, 'Method — how the probability is calculated', 'Plain-language summary; all numbers on the Model tab are live formulas.')
