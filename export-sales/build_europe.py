@@ -519,20 +519,36 @@ for j in range(2, 14):
     put(wsM, rsh, j, f'=IF($N${MCR}=0,0,{L(j)}{MCR}/$N${MCR})', '0%')
     put(wsM, rsh + 1, j, f'=IF($N${ra_}=0,0,{L(j)}{ra_}/$N${ra_})', '0%')
 
-b0 = rsh + 3
+r10 = rsh + 2
+H1, H2 = 6, ML - 1   # all historical seasons in the table (current season excluded)
+put(wsM, r10, 1, f'10-yr avg ({MS[0]}–{MS[-2]})', font=BOLD, fill=TOTFILL)
+put(wsM, r10 + 1, 1, '10-yr median', font=BOLD, fill=TOTFILL)
+for j in range(2, 17):
+    put(wsM, r10, j, f'=AVERAGE({L(j)}{H1}:{L(j)}{H2})', MT, font=BOLD, fill=TOTFILL)
+    put(wsM, r10 + 1, j, f'=MEDIAN({L(j)}{H1}:{L(j)}{H2})', MT, fill=TOTFILL)
+put(wsM, r10, 17, f'=P{r10}/N{r10}', '0%', font=BOLD, fill=TOTFILL); put(wsM, r10 + 1, 17, None, fill=TOTFILL)
+put(wsM, r10 + 2, 1, f'{CUR} vs 10-yr avg', font=BOLD)
+for j in range(2, 17): put(wsM, r10 + 2, j, f'=IF({L(j)}{r10}=0,"",{L(j)}{MCR}/{L(j)}{r10}-1)', PCT, font=BOLD)
+posneg(wsM, f'B{r10+2}:P{r10+2}')
+b0 = r10 + 4
 section(wsM, b0, f'B) What the market\'s {CUR} number assumes')
 kb = [('Market estimate for the season (kt)', f'=N{MCR}', MT),
       ('vs last season', f'=N{MCR}/{mk("N", "LY_MY")}-1', PCT),
       ('vs 5-yr avg', f'=N{MCR}/N{ra_}-1', PCT),
       ('Sep–Feb vs 5-yr avg', f'=O{MCR}/O{ra_}-1', PCT),
       ('Mar–Aug vs 5-yr avg', f'=P{MCR}/P{ra_}-1', PCT),
-      ('Mar–Aug share of the year: market vs 5-yr avg', f'=TEXT(Q{MCR},"0%")&" vs "&TEXT(Q{ra_},"0%")', None)]
+      ('Mar–Aug share of the year: market vs 5-yr avg', f'=TEXT(Q{MCR},"0%")&" vs "&TEXT(Q{ra_},"0%")', None),
+      ('vs 10-yr avg', f'=N{MCR}/N{r10}-1', PCT),
+      ('Sep–Feb vs 10-yr avg', f'=O{MCR}/O{r10}-1', PCT),
+      ('Mar–Aug vs 10-yr avg', f'=P{MCR}/P{r10}-1', PCT),
+      ('Rank of the market total among the last 10 seasons + this one (1 = lowest)', f'=RANK(N{MCR},N{H1}:N{MCR},1)&" of "&COUNT(N{H1}:N{MCR})', None),
+      ('Seasons in 10 with Mar–Aug at or below the market\'s', f'=COUNTIF(P{H1}:P{H2},"<="&P{MCR})&" of 10"', None)]
 for i, (lab, f, fmt) in enumerate(kb):
     put(wsM, b0 + 1 + i, 1, lab, font=BOLD); put(wsM, b0 + 1 + i, 2, f, fmt, font=Font(name=F, size=11, bold=True, color='1F4E78'))
-text(wsM, b0 + 7, 1, 'Reading: the market keeps Sep–Feb close to a normal year and cuts almost all of Mar–Aug, i.e. it assumes the US is priced out of the EU '
+text(wsM, b0 + 12, 1, 'Reading: the market keeps Sep–Feb close to a normal year and cuts almost all of Mar–Aug, i.e. it assumes the US is priced out of the EU '
                      'once Brazil\'s crop arrives. EUDR (if applied from 30 Dec 2026, US low-risk) is the main risk to that assumption.')
 
-c0 = b0 + 9
+c0 = b0 + 14
 UKR = D1 + EUR.index('UNITED KINGDOM')
 section(wsM, c0, 'C) Bridge to our model (USDA export-sales basis, EU-27 + UK = same countries as the market table)')
 header(wsM, c0 + 1, ['Base season', 'Market table (kt)', 'Export sales, EU-27 + UK full-MY (kt)', 'Ratio (export sales ÷ market)'], h=40)
