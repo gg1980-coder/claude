@@ -28,6 +28,23 @@ if ESR_CSV:   # this season's US position by destination from the weekly export 
     ESR = {'now': now_, 'fy5': fin_, 'wk': EWK}
 ESRNAME = {'South Korea': 'KOREA, REPUBLIC OF'}
 def esr_name(p): return ESRNAME.get(p, p.upper())
+REG = {'China': 'China', 'Mexico': 'Mexico', 'Canada': 'Canada'}
+for _l, _r in [(['Japan', 'South Korea', 'Taiwan', 'Hong Kong'], 'East Asia ex-China'),
+               (['Indonesia', 'Malaysia', 'Myanmar', 'Philippines', 'Thailand', 'Vietnam', 'Singapore'], 'Southeast Asia'),
+               (['Bangladesh', 'India', 'Pakistan', 'Sri Lanka'], 'South Asia'),
+               (['Algeria', 'Egypt', 'Morocco', 'Tunisia', 'Iran', 'Iraq', 'Israel', 'Jordan', 'Lebanon', 'Saudi Arabia', 'Syrian Arab Republic',
+                 'United Arab Emirates', 'Yemen', 'Turkey'], 'Middle East & N. Africa'),
+               (['Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic', 'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece',
+                 'Hungary', 'Ireland', 'Italy', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta', 'Netherlands', 'Poland', 'Portugal', 'Romania', 'Slovakia',
+                 'Slovenia', 'Spain', 'Sweden', 'United Kingdom', 'Norway'], 'Europe'),
+               (['Russian Federation', 'Ukraine', 'Uzbekistan'], 'Russia & CIS'),
+               (['Costa Rica', 'Cuba', 'Dominican Republic', 'El Salvador', 'Guatemala', 'Honduras', 'Jamaica', 'Nicaragua', 'Panama'], 'Central America & Caribbean'),
+               (['Argentina', 'Chile', 'Colombia', 'Ecuador', 'Peru', 'Uruguay', 'Venezuela'], 'South America'),
+               (['Ethiopia', 'South Africa', 'Tanzania', 'Ghana', 'Nigeria', 'Senegal', 'Togo'], 'Sub-Saharan Africa')]:
+    for _n in _l: REG[_n] = _r
+REGS = ['China', 'Mexico', 'Canada', 'East Asia ex-China', 'Southeast Asia', 'South Asia', 'Middle East & N. Africa', 'Europe', 'Russia & CIS',
+        'Central America & Caribbean', 'South America', 'Sub-Saharan Africa', 'Other']
+def reg(p): return REG.get(p, 'Other')
 d = pd.read_csv(src)
 d = d[(d.Product == 'SBS') & (d.Reporter_MappedName.isin(['United States', 'Brazil'])) & (~d.Forecast)].copy()
 d['O'] = d.Reporter_MappedName.map({'United States': 'US', 'Brazil': 'BR'}); d['M'] = d.Month.astype(int)
@@ -174,7 +191,7 @@ SH = ['Destination', 'Type', 'US avg (kt, 5 seasons)', 'Brazil avg (kt, 10 seaso
       'Share of US volume swings due to switching', 'Sensitivity: US share pts per +1 Mt Brazil (simple)',
       'Sensitivity: detrended', 't-stat (detrended)', 'US+Brazil volume Nov–Aug (kt, 5-season avg)', 'US volume at risk in scenario (kt)', 'At risk (mln bu)',
       'US booked so far this season (kt, export sales)', 'US 5-yr avg full year (kt, export sales)', 'US still to book on usual pace (kt)',
-      'At risk, capped at what is still to book (kt)', 'At risk, capped (mln bu)']
+      'At risk, capped at what is still to book (kt)', 'At risk, capped (mln bu)', 'Region']
 R0 = 13
 section(wsS, R0 - 1, '1) Ranking by destination')
 header(wsS, R0, SH, h=64)
@@ -194,10 +211,11 @@ for i, (p, x) in enumerate(T.iterrows()):
     put(wsS, r, 20, f'=MAX(0,S{r}-R{r})', KT)
     put(wsS, r, 21, f'=IF(S{r}="",P{r},MAX(P{r},-T{r}))', '#,##0;-#,##0;0', f=font(10, True))
     put(wsS, r, 22, f'=U{r}/{CONV}/1000', '#,##0;-#,##0;0')
+    put(wsS, r, 23, reg(p), f=font(9, False, '595959'))
 R2 = R1 + len(T) - 1
 RT = R2 + 1
 put(wsS, RT, 1, 'TOTAL US volume at risk', f=font(10, True), fill=TOT)
-for c in range(2, 23): put(wsS, RT, c, None, fill=TOT)
+for c in range(2, 24): put(wsS, RT, c, None, fill=TOT)
 put(wsS, RT, 16, f'=SUM(P{R1}:P{R2})', '#,##0;-#,##0;0', f=font(11, True, NAVY), fill=TOT)
 put(wsS, RT, 17, f'=SUM(Q{R1}:Q{R2})', '#,##0;-#,##0;0', f=font(11, True, NAVY), fill=TOT)
 for c in (18, 19, 20): put(wsS, RT, c, f'=SUM({L(c)}{R1}:{L(c)}{R2})', KT, f=font(10, True), fill=TOT)
@@ -237,13 +255,14 @@ for k, t in enumerate([
     note(wsS, n0 + k, t)
 wsS.column_dimensions['A'].width = 62; wsS.column_dimensions['B'].width = 14
 for c in range(3, 23): wsS.column_dimensions[L(c)].width = 11
+wsS.column_dimensions['W'].width = 24
 wsS.freeze_panes = f'C{R1}'
 bc = BarChart(); bc.type = 'bar'; bc.title = 'US volume at risk by destination (kt)'; bc.y_axis.numFmt = '#,##0'
 bc.add_data(Reference(wsS, min_col=21, min_row=R0, max_row=R2), titles_from_data=True)
 bc.set_categories(Reference(wsS, min_col=1, min_row=R1, max_row=R2)); bc.legend = None
 bc.x_axis.scaling.orientation = 'maxMin'; bc.x_axis.tickLblPos = 'low'; bc.width = 16; bc.height = 12
 bc.x_axis.delete = False; bc.y_axis.delete = False
-wsS.add_chart(bc, f'X{R0}')
+wsS.add_chart(bc, f'Y{R0}')
 
 # ================= Country Profile =================
 title(wsC, 'Destination profile — US share of US + Brazil purchases by month and season (pick a destination in B4)',
@@ -293,6 +312,89 @@ lc.set_categories(Reference(wsC, min_col=2, max_col=13, min_row=7)); lc.y_axis.s
 lc.width = 18; lc.height = 9; lc.x_axis.delete = False; lc.y_axis.delete = False
 for s_ in lc.series: s_.smooth = False
 wsC.add_chart(lc, 'P4')
+
+# ================= By Region =================
+wsR = wb.create_sheet('By Region', index=1)
+title(wsR, 'By region — how much US business Brazil can take, and the Sep–Feb vs Mar–Aug split of US and Brazilian exports',
+      'Table A is live (follows the scenario on "Switching Ranking"). Tables B–C are computed from the monthly customs data (kt / Mt). Regions as in the pace model.')
+section(wsR, 4, 'A) US volume Brazil could take this season, by region (kt)')
+AH = ['Region', 'US still to book on usual pace (kt)', 'At risk — scenario on Ranking tab (kt)', 'At risk if Brazil +3 Mt (kt)', 'At risk if Brazil +5 Mt (kt)',
+      'At risk if Brazil +7.2 Mt (provider forecast) (kt)', 'Share of what is still to book at risk (+7.2 Mt)', 'Main switchers']
+header(wsR, 5, AH, h=52)
+RNK = "'Switching Ranking'"
+def risk_static(D):
+    out = {}
+    for p_, x_ in T.iterrows():
+        still = float(max(0, ESR['fy5'].get(esr_name(p_), 0) - ESR['now'].get(esr_name(p_), 0))) if ESR else 1e9
+        v = min(0.0, x_.detr / 100 * D * x_.comb) if abs(x_.t) >= 1 else 0.0
+        out[p_] = max(v, -still)
+    return out
+RS = {D: risk_static(D) for D in (3, 5, 7.2)}
+regs_sw = [g for g in REGS if g != 'China' and any(reg(p_) == g for p_ in T.index)]
+for i, g in enumerate(regs_sw):
+    r = 6 + i
+    put(wsR, r, 1, g, f=font(10, True))
+    put(wsR, r, 2, f"=SUMIF({RNK}!$W${R1}:$W${R2},$A{r},{RNK}!$T${R1}:$T${R2})", KT)
+    put(wsR, r, 3, f"=SUMIF({RNK}!$W${R1}:$W${R2},$A{r},{RNK}!$U${R1}:$U${R2})", '#,##0;-#,##0;0', f=font(10, True))
+    for j, D in enumerate((3, 5, 7.2)):
+        put(wsR, r, 4 + j, sum(v for p_, v in RS[D].items() if reg(p_) == g), '#,##0;-#,##0;0', f=BLUE)
+    put(wsR, r, 7, f'=IF(B{r}=0,"",-F{r}/B{r})', P0)
+    sw_ = sorted([(v, p_) for p_, v in RS[7.2].items() if reg(p_) == g and v < -20])
+    put(wsR, r, 8, ', '.join(p_ for _, p_ in sw_), f=font(9))
+ra_ = 6 + len(regs_sw)
+put(wsR, ra_, 1, 'TOTAL (destinations ≥150 kt/yr US)', f=font(10, True), fill=TOT)
+for c in range(2, 7): put(wsR, ra_, c, f'=SUM({L(c)}6:{L(c)}{ra_-1})', '#,##0;-#,##0;0', f=font(10, True), fill=TOT)
+put(wsR, ra_, 7, f'=IF(B{ra_}=0,"",-F{ra_}/B{ra_})', P0, f=font(10, True), fill=TOT); put(wsR, ra_, 8, None, fill=TOT)
+put(wsR, ra_ + 1, 1, '   in mln bu', f=font(10, True))
+for c in range(3, 7): put(wsR, ra_ + 1, c, f'={L(c)}{ra_}/{CONV}/1000', '#,##0;-#,##0;0', f=font(10, True, NAVY))
+note(wsR, ra_ + 2, '"Still to book" = 5-yr average full-year US sales minus what is already booked (weekly export sales). A destination cannot switch more than that. '
+                   'China is excluded (fixed at 25 Mt). Brazil +7.2 Mt = provider forecast of 33.5 Mt to non-China buyers vs 26.3 Mt 5-yr average.')
+
+b0 = ra_ + 5
+section(wsR, b0, f'B) Who ships when — 5-season average {B5[0]}–{B5[-1]} (Mt; customs basis; Sep–Feb = US season, Mar–Aug = Brazil season)')
+BH = ['Region', 'US Sep–Feb', 'US Mar–Aug', 'Brazil Sep–Feb', 'Brazil Mar–Aug', 'US share Sep–Feb', 'US share Mar–Aug', 'US share full year', 'US volume in Mar–Aug as % of its year']
+header(wsR, b0 + 1, BH, h=44)
+hh = d[~d.Partner_Name.isin(['United States', 'Brazil'])].copy()
+hh['R'] = hh.Partner_Name.map(reg); hh['H'] = np.where(hh.M.isin([9, 10, 11, 12, 1, 2]), 'H1', 'H2')
+def split(years):
+    x = hh[hh.CropYear.isin(years)].pivot_table(index='R', columns=['O', 'H'], values='Quantity', aggfunc='sum').fillna(0) / len(years) / 1000
+    return x.reindex(REGS).fillna(0)
+def write_split(r0, x, label_total):
+    for i, g in enumerate(REGS):
+        r = r0 + i
+        put(wsR, r, 1, g, f=font(10, g == 'China'))
+        for j, k in enumerate([('US', 'H1'), ('US', 'H2'), ('BR', 'H1'), ('BR', 'H2')]):
+            put(wsR, r, 2 + j, float(x.loc[g, k]) if k in x.columns else 0.0, '0.0', f=BLUE)
+        put(wsR, r, 6, f'=IF(B{r}+D{r}=0,"",B{r}/(B{r}+D{r}))', P0); put(wsR, r, 7, f'=IF(C{r}+E{r}=0,"",C{r}/(C{r}+E{r}))', P0)
+        put(wsR, r, 8, f'=IF(SUM(B{r}:E{r})=0,"",(B{r}+C{r})/SUM(B{r}:E{r}))', P0); put(wsR, r, 9, f'=IF(B{r}+C{r}=0,"",C{r}/(B{r}+C{r}))', P0)
+    rt = r0 + len(REGS)
+    for k_, (lab, rows_) in enumerate([(label_total, f'{r0}:{rt-1}'), ('Rest of world (excl. China)', None)]):
+        r = rt + k_
+        put(wsR, r, 1, lab, f=font(10, True), fill=TOT)
+        for c in range(2, 6):
+            cl = L(c)
+            f_ = f'=SUM({cl}{r0}:{cl}{rt-1})' if rows_ else f'={cl}{rt}-{cl}{r0}'
+            put(wsR, r, c, f_, '0.0', f=font(10, True), fill=TOT)
+        put(wsR, r, 6, f'=B{r}/(B{r}+D{r})', P0, f=font(10, True), fill=TOT); put(wsR, r, 7, f'=C{r}/(C{r}+E{r})', P0, f=font(10, True), fill=TOT)
+        put(wsR, r, 8, f'=(B{r}+C{r})/SUM(B{r}:E{r})', P0, f=font(10, True), fill=TOT); put(wsR, r, 9, f'=C{r}/(B{r}+C{r})', P0, f=font(10, True), fill=TOT)
+    return rt
+bt = write_split(b0 + 2, split(B5), 'TOTAL (all destinations)')
+c0_ = bt + 4
+section(wsR, c0_, f'C) Same split for the last season {SEAS[-1]} (Mt) — China bought almost no US beans')
+header(wsR, c0_ + 1, BH, h=44)
+ct = write_split(c0_ + 2, split([SEAS[-1]]), 'TOTAL (all destinations)')
+note(wsR, ct + 3, 'Reading: the US ships about three-quarters of its year in Sep–Feb; Brazil ships about three-quarters of its year in Mar–Aug. '
+                  'Outside China the US holds ~3/4 of the Sep–Feb market but only ~1/3 of Mar–Aug — that second-half share is what extra Brazilian supply attacks.')
+wsR.column_dimensions['A'].width = 34
+for c in range(2, 8): wsR.column_dimensions[L(c)].width = 14
+wsR.column_dimensions['H'].width = 40; wsR.column_dimensions['I'].width = 14
+from openpyxl.chart import BarChart as _BC, Series as _S
+ch_ = _BC(); ch_.type = 'col'; ch_.grouping = 'stacked'; ch_.overlap = 100; ch_.title = 'Rest of world (excl. China): who ships when (Mt, 5-season avg)'
+rr_ = bt + 1
+for c, t_ in ((2, 'US Sep–Feb'), (3, 'US Mar–Aug'), (4, 'Brazil Sep–Feb'), (5, 'Brazil Mar–Aug')):
+    ch_.series.append(_S(Reference(wsR, min_col=c, min_row=rr_), title=t_))
+ch_.width = 14; ch_.height = 8; ch_.x_axis.delete = True; ch_.y_axis.delete = False
+wsR.add_chart(ch_, f'K{b0}')
 
 # ================= Method =================
 title(wsN, 'Method', 'How the switching metrics and the risk scenario are calculated.')

@@ -39,6 +39,39 @@ For 1,800, the rest of world needs roughly **650 kt/week in November, 520 in Dec
 
 [Chart 2: milestone paths]
 
+---
+
+**Brazil: who ships when, and how much US business it can take**
+
+[Chart 6: who ships when]
+
+| 5-yr avg, Mt | US Sep–Feb | US Mar–Aug | Brazil Sep–Feb | Brazil Mar–Aug | US share Sep–Feb | US share Mar–Aug |
+|---|---|---|---|---|---|---|
+| China | 20.3 | 3.9 | 20.3 | 51.6 | 50% | 7% |
+| Rest of world | 16.8 | 9.3 | 5.8 | 20.4 | 74% | 31% |
+| **Total** | **37.1** | **13.2** | **26.1** | **72.0** | **59%** | **15%** |
+
+- **The US ships ~74% of its year in Sep–Feb; Brazil ships ~73% of its year in Mar–Aug.**
+- Outside China, the US still holds **~9 Mt of Mar–Aug business (31% share)**. That is the volume Brazil can take.
+
+**US business Brazil could take this season, by region (Mt, China excluded)**
+
+| Region | US still to book | At risk if Brazil +3 Mt | At risk if Brazil +7.2 Mt (provider forecast) | Main switchers |
+|---|---|---|---|---|
+| Europe | 4.0 | −0.37 | −0.71 | Netherlands, Italy, UK |
+| South Asia | 0.7 | −0.18 | −0.43 | Bangladesh |
+| East Asia ex-China | 2.8 | −0.15 | −0.37 | Taiwan, South Korea |
+| Middle East & N. Africa | 2.7 | −0.23 | −0.32 | Turkey, Saudi Arabia |
+| Mexico | 2.8 | −0.12 | −0.28 | — |
+| Southeast Asia | 2.1 | −0.12 | −0.26 | Thailand |
+| Americas & others | 0.6 | −0.02 | −0.06 | Colombia |
+| **Total** | **15.8** | **−1.2 Mt (≈ −44 mln bu)** | **−2.4 Mt (≈ −89 mln bu)** | |
+
+"Brazil +X Mt" means Brazilian exports to non-China buyers X Mt above their 5-yr average of 26.3 Mt.
+
+- Our 1,800 already allows about 25 mln bu for Brazil competing harder than normal (roughly +2 Mt).
+- **If Brazil reaches the provider's forecast of 33.5 Mt to non-China buyers, our number drops to ~1,735, which is about USDA's level.** Brazil's line-ups from February are the key check.
+
 **Other checkpoints**
 
 | What | Now | Signal |

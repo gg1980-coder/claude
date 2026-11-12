@@ -1,7 +1,7 @@
 """Render email.md to a self-contained HTML email (charts embedded) for preview / pasting into Outlook."""
 import base64, re, markdown
 md = open('email.md', encoding='utf-8').read()
-charts = {'Chart 1': '1_bridge.png', 'Chart 2': '2_milestones.png', 'Chart 4': '4_mental_map.png'}
+charts = {'Chart 1': '1_bridge.png', 'Chart 2': '2_milestones.png', 'Chart 4': '4_mental_map.png', 'Chart 6': '6_who_ships_when.png'}
 def img(m):
     key = m.group(1).split(':')[0].strip()
     b64 = base64.b64encode(open(charts[key], 'rb').read()).decode()

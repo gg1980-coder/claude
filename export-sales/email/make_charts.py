@@ -137,3 +137,26 @@ ax.spines[['top', 'right']].set_visible(False); ax.grid(color=GRID, lw=0.8)
 ax.set_title('Probability of beating USDA by China outcome (centred on the 1,800 desk number)', loc='left', fontsize=12, color=INK)
 fig.tight_layout(); fig.savefig(OUT + '5_probability_vs_china.png', dpi=200); plt.close(fig)
 print('P', round(P, 3), 'BE', round(BE, 2)); print(open(OUT + 'milestones.csv').read())
+
+# 6) Who ships when: US vs Brazil, Sep–Feb vs Mar–Aug (5-season avg, customs data), China vs rest of world
+import openpyxl as _ox
+_w = _ox.load_workbook('/home/user/claude/export-sales/US_vs_Brazil_Soybean_Origin_Switching.xlsx', data_only=True)['By Region']
+_rows = {_w.cell(r, 1).value: [_w.cell(r, c).value for c in range(2, 6)] for r in range(21, 38) if _w.cell(r, 1).value}
+cn_, rw_ = _rows['China'], _rows['Rest of world (excl. China)']
+fig, axs = plt.subplots(1, 2, figsize=(11, 4.6), sharey=True)
+for ax, (ttl, v) in zip(axs, (('China', cn_), ('Rest of world (excl. China)', rw_))):
+    for k, (lab, us, br) in enumerate((('Sep–Feb\n(US season)', v[0], v[2]), ('Mar–Aug\n(Brazil season)', v[1], v[3]))):
+        ax.bar(k, us, color=BLUE, width=0.55, zorder=3); ax.bar(k, br, bottom=us, color=ORANGE, width=0.55, zorder=3)
+        if us >= 6: ax.text(k, us / 2, f'US\n{us:.1f}', ha='center', va='center', color='white', fontsize=9.5, fontweight='bold')
+        else: ax.text(k + 0.31, us / 2, f'US {us:.1f}', ha='left', va='center', color=BLUE, fontsize=9.5, fontweight='bold')
+        if br >= 8: ax.text(k, us + br / 2, f'Brazil\n{br:.1f}', ha='center', va='center', color='white', fontsize=9.5, fontweight='bold')
+        else: ax.text(k + 0.31, us + br / 2, f'Brazil {br:.1f}', ha='left', va='center', color=ORANGE, fontsize=9.5, fontweight='bold')
+        ax.text(k, us + br + 1.2, f'US share {us/(us+br):.0%}', ha='center', va='bottom', fontsize=10, fontweight='bold', color=INK)
+    ax.set_xticks([0, 1], ['Sep–Feb\n(US season)', 'Mar–Aug\n(Brazil season)']); ax.set_title(ttl, loc='left', fontsize=11.5, color=INK)
+    ax.spines[['top', 'right']].set_visible(False); ax.grid(axis='y', color=GRID, lw=0.8, zorder=0)
+axs[0].set_ylabel('Mt per season (5-yr avg)'); axs[0].set_ylim(0, 62)
+fig.suptitle('Who ships when: the US owns Sep–Feb, Brazil owns Mar–Aug', x=0.01, ha='left', fontsize=13, color=INK)
+fig.text(0.01, 0.01, 'Monthly customs exports, 5-season average 2021/22–2025/26. Outside China the US still holds ~1/3 of the Mar–Aug market — that is the volume extra Brazilian supply attacks.',
+         fontsize=7.5, color=INK2)
+fig.tight_layout(rect=(0, 0.04, 1, 0.94)); fig.savefig(OUT + '6_who_ships_when.png', dpi=200); plt.close(fig)
+print('split chart done')
