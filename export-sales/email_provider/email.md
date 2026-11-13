@@ -24,35 +24,37 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 - Net sales of 1.15 Mt. Of this, **0.70 Mt went to the rest of the world**, above what either 1,700 or 1,720 needs in a week.
 - China +0.69 Mt (including 0.25 Mt switched from Unknown). China plus 60% of Unknown is now 19.9 Mt, so 5.1 Mt is left to reach 25 Mt.
 - Shipments of 1.88 Mt. Exports to date are 13.9 Mt, 30% of 1,700.
+- Mexico (+53 kt) and East Asia (+58 kt) were again below what 1,700 needs.
 
 **Why we think the risk is to the upside**
 
 - **The current pace is above both numbers.** Over the last 4 weeks, the rest of the world booked ~25% more than 1,700 needs and ~20% more than 1,720 needs.
-- **The strength is broad.** Europe, the Middle East & N. Africa, South Asia and Southeast Asia are ahead (table below). Only Mexico and East Asia are weak, and they were again small this week.
+- **The strength is concentrated, but large.** Europe, the Middle East & N. Africa and South Asia are booking ~530 kt/week, against ~300 needed for 1,700. Southeast Asia is on pace. Mexico and East Asia are behind: that is the real downside risk, and where we'd most like your view.
 - **The alternative explanation is China.** If the rest of the world books normally, 1,700 implies China stops at ~21.8 Mt (only ~1.9 Mt more than today's 19.9 Mt), against a 25 Mt commitment. 1,720 implies ~22.3 Mt.
 - **Brazil alone doesn't close the gap.** Even with a record 33.5 Mt of Brazilian exports to non-China buyers, our model gives ~1,730.
 - **Probability:** on our model (10-season backtest, error about ±3 Mt), there is a ~73% chance of finishing above 1,700 and ~66% above 1,720. 1,700 is possible, but it is the low end.
 
 **By region: weekly sales vs what's needed (kt/week)**
 
-| Region | Avg, last 4 weeks to w/e 29 Oct | This week (w/e 5 Nov) | Needed for 1,700 | Needed for 1,720 | |
+| Region | Last 4 weeks (avg) | This week | Needed for 1,700 | Needed for 1,720 | |
 |---|---|---|---|---|---|
-| Europe | 200 | 258+ (Spain 198, UK 60) | 180 | 188 | ahead |
-| Middle East & N. Africa | 154 | 100+ (Algeria) | 113 | 118 | ahead |
-| South Asia | 109 | 116+ (Bangladesh) | 19 | 21 | ahead |
-| Southeast Asia | 104 | under 60 | 74 | 77 | ahead |
-| East Asia ex-China | 59 | under 60 | 84 | 88 | **behind** |
-| Mexico | 45 | under 60 | 96 | 101 | **behind** |
-| Other | 18 | Canada −23 | 19 | 21 | on pace |
-| **Rest of world** | **689** | **700** | **585** | **615** | **ahead** |
+| Europe | 252 | 305 | 178 | 186 | ahead |
+| Middle East & N. Africa | 165 | 153 | 107 | 111 | ahead |
+| South Asia | 111 | 122 | 13 | 14 | ahead |
+| Southeast Asia | 90 | 30 | 87 | 91 | on pace |
+| East Asia ex-China | 45 | 58 | 76 | 79 | **behind** |
+| Mexico | 58 | 53 | 101 | 105 | **behind** |
+| Other (Americas, Africa) | 11 | −21 | 25 | 26 | behind (small) |
+| **Rest of world** | **732** | **700** | **586** | **613** | **ahead** |
 
-This week's regional figures come from USDA's highlights, which list only the five largest destinations. The remaining ~250 kt went to other destinations, each under 60 kt.
+"Needed" is the November pace each region needs, sharing the rest-of-world requirement in proportion to what each region normally buys from this point.
 
 **What we'd like to discuss**
 
 1. Given this data, do you still see 1,700 as right? If not, where would you revise it?
 2. What is behind your 1,700: how much China, how much rest of world, how much Brazil?
-3. What would you need to see in the coming weeks to move your number?
+3. How do you see Mexico and East Asia? Is their weakness behind your 1,700?
+4. What would you need to see in the coming weeks to move your number?
 
 **Milestones we suggest we both track** (rest-of-world bookings, cumulative, Mt)
 

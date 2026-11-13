@@ -213,16 +213,18 @@ CNN, RWN, TTN = f'$B${r0+2}', f'$B${r0+3}', f'$B${r0+4}'
 
 r1 = r0 + 8
 section(wsM, r1, '2) Probability of ending ABOVE the USDA forecast — four models')
+BW = sorted(set([5, 9, 13, 17, 22, 26, 30, 35, 40, WK]))
+BTR = 5 + BW.index(WK)
 RH = ['Model', 'Expected full year (Mt, ESR)', 'Uncertainty ±1 sd (Mt)', 'Expected full year (mln bu, USDA basis)', 'vs USDA (mln bu)',
-      '80% range low (mln bu)', '80% range high (mln bu)', 'Probability ABOVE USDA', 'Probability BELOW USDA', 'Backtest error at week 9, all seasons (Mt)']
+      '80% range low (mln bu)', '80% range high (mln bu)', 'Probability ABOVE USDA', 'Probability BELOW USDA', f'Backtest error at week {WK}, all seasons (Mt)']
 header(wsM, r1 + 1, RH, h=48)
 SE = 'SQRT(1+1/n_yrs)'
 T80 = 'TINV(0.2,n_yrs-1)'
 models = [
-    ('A. RECOMMENDED — China = assumption; RoW = sold so far + its usual sales still to come', f'China_A+{RWN}+RoWrem_mean', f'RoWrem_sd*{SE}', '=Backtest!B6'),
+    ('A. RECOMMENDED — China = assumption; RoW = sold so far + its usual sales still to come', f'China_A+{RWN}+RoWrem_mean', f'RoWrem_sd*{SE}', f'=Backtest!B{BTR}'),
     ('B. China = assumption; RoW = sold so far × its usual multiplier', f'China_A+{RWN}*RoWmul_mean', f'{RWN}*RoWmul_sd*{SE}', None),
-    ('C. All destinations: sold so far + usual total still to come', f'{TTN}+Totrem_mean', f'Totrem_sd*{SE}', '=Backtest!D6'),
-    ('D. All destinations: sold so far × usual multiplier (classic "implied FY")', f'{TTN}*Totmul_mean', f'{TTN}*Totmul_sd*{SE}', '=Backtest!F6'),
+    ('C. All destinations: sold so far + usual total still to come', f'{TTN}+Totrem_mean', f'Totrem_sd*{SE}', f'=Backtest!D{BTR}'),
+    ('D. All destinations: sold so far × usual multiplier (classic "implied FY")', f'{TTN}*Totmul_mean', f'{TTN}*Totmul_sd*{SE}', f'=Backtest!F{BTR}'),
 ]
 for i, (lb, mean, se, bt) in enumerate(models):
     r = r1 + 2 + i
@@ -238,7 +240,7 @@ RA = r1 + 2
 wsM.conditional_formatting.add(f'H{RA}:H{RA+3}', CellIsRule(operator='greaterThanOrEqual', formula=['0.7'], fill=GRN))
 wsM.conditional_formatting.add(f'H{RA}:H{RA+3}', CellIsRule(operator='lessThanOrEqual', formula=['0.3'], fill=RED))
 note(wsM, RA + 4, 'Probabilities use a Student-t distribution on the base seasons (n−1 degrees of freedom), widened for the fact that next season is not in the sample. '
-                  'Backtest error = leave-one-out RMSE at week 9 across all base seasons (see Backtest tab). Models C and D ignore the China deal and are shown as context.')
+                  f'Backtest error = leave-one-out RMSE at week {WK} across all base seasons (see Backtest tab). Models C and D ignore the China deal and are shown as context.')
 note(wsM, RA + 5, 'Model D is what most "pace" reports (incl. the PDF) show. It fails badly in seasons when China changes behaviour (see Backtest tab, errors by season); '
                   'model A isolates China as an assumption and models only the rest of the world, which has been far more stable.')
 
@@ -284,10 +286,12 @@ bc.x_axis.delete = False; bc.y_axis.delete = False
 wsM.add_chart(bc, f'F{r2}')
 
 r4 = EX1 + 2
-section(wsM, r4, '5) Cross-check with the 10-year figures in the pace report (PDF, week 9 only)')
-cx = [('10-yr avg total commitments at week 9 (Mt, 2016/17–2025/26)', 29.205, MT, True),
-      ('10-yr avg full-year exports, ESR (Mt)', 51.176, MT, True),
-      ('10-yr avg still to come after week 9 (Mt)', f'=B{r4+2}-B{r4+1}', MT, False),
+section(wsM, r4, f'5) Cross-check: 10-year averages at week {WK} (as in the ESR pace report)')
+AVG_TC = float(np.mean([cum.loc[y, WK].sum() for y in PRIOR])) / 1e6
+AVG_FY = float(np.mean([fin.loc[y].sum() for y in PRIOR])) / 1e6
+cx = [(f'10-yr avg total commitments at week {WK} (Mt, {lab(PRIOR[0])}–{lab(PRIOR[-1])})', AVG_TC, MT, True),
+      ('10-yr avg full-year exports, ESR (Mt)', AVG_FY, MT, True),
+      (f'10-yr avg still to come after week {WK} (Mt)', f'=B{r4+2}-B{r4+1}', MT, False),
       ('Implied full year = sold so far + 10-yr still to come (Mt, ESR)', f'={TTN}+B{r4+3}', MT, False),
       ('   in mln bu, USDA basis', f'=B{r4+4}/Ratio/Conv', BU, False),
       ('Implied full year = sold so far × 10-yr multiplier (Mt, ESR) — as in the PDF', f'={TTN}*B{r4+2}/B{r4+1}', MT, False),
@@ -295,7 +299,7 @@ cx = [('10-yr avg total commitments at week 9 (Mt, 2016/17–2025/26)', 29.205, 
 for i, (lb, v, fmt, isin) in enumerate(cx):
     r = r4 + 1 + i
     put(wsM, r, 1, lb, f=font(10, True)); put(wsM, r, 2, v, fmt, f=BLUE if isin else font(10, True, NAVY))
-note(wsM, r4 + 8, 'Source of the two blue numbers: ESR pace report, soybeans region summary (page 21), w/e 29-Oct-26. Valid for week 9 only.')
+note(wsM, r4 + 8, f'The two blue numbers are computed from the ESR weekly data (same basis as the pace report; at week 9 they matched the PDF, 29.2 and 51.2 Mt).')
 
 wsM.column_dimensions['A'].width = 58
 for c, w_ in zip('BCDEFGHIJ', [15, 13, 16, 11, 12, 12, 13, 12, 13]): wsM.column_dimensions[c].width = w_
@@ -311,7 +315,6 @@ def grp(y, w):
     return c + s_ * u, rw + (1 - s_) * u, c + u + rw
 def finals(y):
     return fin.get((y, 'China'), 0), fin.get((y, 'Rest of World'), 0) + fin.get((y, 'Unknown'), 0)
-BW = [5, 9, 13, 17, 22, 26, 30, 35, 40]
 header(wsB, 4, ['Week', 'A: China known + RoW still to come — all seasons', 'A — normal seasons', 'C: total still to come — all seasons',
                 'C — normal seasons', 'D: total × multiplier — all seasons', 'D — normal seasons'], h=48)
 ANOM = {2018: 'trade war', 2019: 'Phase One deal', 2020: 'record China buying', 2025: 'China absent'}

@@ -982,7 +982,7 @@ nb = W2 + 3
 put(wsE, nb, 1, 'D) What to monitor (analyst notes, not data)', font=Font(name=F, size=11, bold=True)).border = Border()
 for k, t in enumerate([
     'Season timing: Europe books roughly 45–55% of its US year between weeks 10 and 26 (Nov–Feb), before Brazil\'s harvest. Weekly net sales vs the 5-yr avg column in this window are the key signal.',
-    'Crush hubs (Netherlands, Germany) carry no unshipped US sales at week 9: everything booked has already shipped. A forward book building there is the first sign of demand returning.',
+    f'Crush hubs (Netherlands, Germany) carry no unshipped US sales at week {WK}: everything booked has already shipped. A forward book building there is the first sign of demand returning.',
     'Spain/Portugal/Italy (feed demand) hold most of Europe\'s outstanding sales; Spain is Europe\'s largest US buyer by 5-yr average.',
     'Policy: EU deforestation regulation (EUDR). Our understanding as of mid-2026: obligations for large operators apply from 30 Dec 2026, with the US benchmarked as low-risk and Brazil as standard-risk. '
     'If that holds, it may tilt EU buyers toward US beans for Jan–Aug 2027 shipment, normally Brazil\'s window. Verify the current EUDR status before relying on this.',
