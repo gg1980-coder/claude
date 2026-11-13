@@ -1,8 +1,12 @@
-**Subject: US soybean exports 2026/27: why we think 1,700 mln bu is too low (for discussion at next week's meeting)**
+**Subject: US soybean exports 2026/27: your view on 1,700 mln bu in light of the latest data (for next week's meeting)**
 
 Hi [name],
 
-Ahead of next week's meeting, here is why we think your **1,700 mln bu** US export assumption for 2026/27 is too low. Our base case is **1,760**, and it is deliberately conservative: with China at 25 Mt, it assumes the rest of the world books about 10% less than its 5-year average from here. USDA's November WASDE has **1,720** (raised by 25, citing the early-season pace). Everything below comes from USDA's weekly export sales data for the last 10 seasons, at the same point of the season (week 9, end of October). We'd like to use it as the basis for the discussion.
+Ahead of next week's meeting, we'd like to get your view on the **1,700 mln bu** US export number for 2026/27, and **how you would revise it, if at all, given the data we have today.**
+
+For context: USDA moved to **1,720** in the November WASDE (+25, citing the early-season pace). On our side, the sales and shipment data point higher. Our base case is **1,760**, and we built it to be conservative: with China at 25 Mt, it assumes the rest of the world books about 10% less than its 5-year average from here.
+
+Below is the data behind our view, from USDA's weekly export sales for the last 10 seasons, compared at the same point of the season (week 9, end of October). We'd like to go through it with you and understand where you see things differently.
 
 **1. What 1,700 implies, in numbers**
 
@@ -58,7 +62,7 @@ We split the rest-of-world requirement by region in proportion to what each regi
 **What the regional view says**
 
 - **1,700 needs weakness everywhere at once.** It implies East Asia at its lowest full year in 10 seasons, and Mexico, Europe and the smaller markets at their second lowest, all in the same season.
-- **Mexico and East Asia are genuinely weak today.** They are booking below even the 1,700 pace, so that is where the downside risk sits, and where we would like to understand your view.
+- **Mexico and East Asia are genuinely weak today.** They are booking below even the 1,700 pace. That is where the downside risk sits, and where we'd most like to hear your view.
 - **The other five regions are ahead.** Southeast Asia, South Asia, the Middle East & N. Africa and Europe are already above the 1,760 pace. In total, the rest of the world is booking ~20% above what 1,700 needs.
 
 **4. Or, if the rest of the world books normally, 1,700 needs China to stop well short of 25 Mt**
@@ -84,26 +88,28 @@ Our regional method was within about ±3 Mt (±110 mln bu) of the final number a
 - Outside China, the US still holds ~9 Mt of March–August business (31% market share), and that is the volume Brazil competes for.
 - We measured which buyers switch to Brazil (Netherlands, Bangladesh, Taiwan, S. Korea, Thailand, Turkey) and how much US business they still have to book.
 - Even if Brazil ships **33.5 Mt to non-China buyers** (a new record, +7 Mt vs its 5-year average, and the forecast in the monthly trade dataset we use), the model gives **~1,728**, still above 1,700.
-- The same dataset carries a 2026/27 US export forecast of **49.5 Mt (≈1,819 mln bu) with China at 25.0 Mt**. If that is your dataset, it would be worth reconciling with the 1,700.
+- The same dataset carries a 2026/27 US export forecast of **49.5 Mt (≈1,819 mln bu) with China at 25.0 Mt**. If that comes from your side, it would be helpful to understand how it fits with the 1,700.
 
-**7. Why it matters, and what would have to be true for 1,700**
+**7. Why it matters, and what we think 1,700 needs**
 
 The difference between 1,700 and 1,760 is ~60 mln bu of US ending stocks: **~320 mln bu at 1,700 vs ~260 at 1,760** (USDA: 300 at 1,720, with crush unchanged).
 
-For 1,700 to be right, one of these has to happen:
+On our reading of the data, for 1,700 to hold, one of these would need to happen. We'd value your take on how likely each one is:
 
 1. China stops at ~22 Mt despite a 25 Mt commitment, or large cancellations of the current China/Unknown book.
 2. The rest of the world books less from here than in any of the last 10 seasons (≤12.6 Mt vs a 13.1 Mt minimum).
 3. Brazil takes far more than a record share of non-China demand: well beyond 33.5 Mt to non-China buyers, combined with weak total demand.
 
-**Questions we'd like to cover next week**
+**What we'd like to hear from you next week**
 
-1. What China number (and timing) is behind 1,700? Do you assume cancellations or roll-overs of the current book?
-2. What rest-of-world total do you assume, and which regions are lower than in a normal year? Is the 1,700 driven by Mexico and East Asia, or by a broader slowdown?
-3. What do you assume for Brazil's exports to non-China buyers, and how much US business do they displace?
-4. Which data would make you move toward 1,750 or higher?
+1. **Looking at today's data, do you still see 1,700 as the right number?** If you would revise it, to what level?
+2. **What drives your 1,700?** How much China (and do you assume cancellations or roll-overs of the current book), how much rest of world, and what level of Brazilian competition?
+3. **How do you read the regions?** In particular, the weakness in Mexico and East Asia against the strength in the Middle East, Southeast Asia and Europe.
+4. **What would you need to see in the coming weeks to move your number, and in which direction?**
 
-**A proposed way to settle it:** weekly milestones for rest-of-world bookings (all destinations except China and Unknown):
+We're equally open to being challenged on our 1,760. If you see something in the data that we are missing, that is exactly what we'd like to discuss.
+
+**A shared way to track it:** weekly milestones for rest-of-world bookings (all destinations except China and Unknown):
 
 | Date | Needed for 1,700 | Needed for USDA 1,720 | Needed for our 1,760 |
 |---|---|---|---|
@@ -113,7 +119,7 @@ For 1,700 to be right, one of these has to happen:
 | 28 Jan | 15.1 Mt | 15.4 Mt | 16.0 Mt |
 | 25 Feb | 16.5 Mt | 16.9 Mt | 17.6 Mt |
 
-If bookings track the 1,700 column into January, we'll revise down. If they track our 1,760 column or above (as the current pace suggests), we'd suggest you revise up.
+We suggest we both track these milestones. If bookings follow the 1,700 column into January, we'd move our number down. If they follow the 1,760 column or above (as the current pace suggests), it would be good to know at what point you'd move yours up.
 
 Data: USDA FAS weekly export sales through w/e 29 Oct (week 9); monthly US and Brazil customs exports by destination, 2016/17–2025/26. Happy to share the workbooks before the meeting.
 
