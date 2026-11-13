@@ -25,6 +25,8 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 - China +0.69 Mt (including 0.25 Mt switched from Unknown). China plus 60% of Unknown is now 19.9 Mt, so 5.1 Mt is left to reach 25 Mt.
 - Shipments of 1.88 Mt. Exports to date are 13.9 Mt, 30% of 1,700.
 - Mexico (+53 kt) and East Asia (+58 kt) were again below what 1,700 needs.
+- **Versus a week ago:** the rest-of-world requirement for 1,700 fell from 12.6 to 11.9 Mt, and for 1,720 from 13.1 to 12.4 Mt. Last week 1,720 equalled the weakest season; this week it is below all 10.
+- Headline net sales were down 21% on the week, but that was China slowing. The rest of the world booked more than it needs.
 
 **Why we think the risk is to the upside**
 
