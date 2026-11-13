@@ -15,8 +15,6 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 | Where that ranks | **below all 10** | **equal to the weakest** (2023/24) | |
 | Rest-of-world weekly sales needed now | ~570 kt | ~595 kt | **actual, last 4 weeks: 689 kt** |
 
-[Chart 1: what 1,700 and 1,720 need vs 10 seasons of history]
-
 **Why we think the risk is to the upside**
 
 - **The current pace is above both numbers.** The rest of the world is booking ~20% above what 1,700 needs and ~15% above what 1,720 needs.
@@ -44,11 +42,11 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 2. What is behind your 1,700: how much China, how much rest of world, how much Brazil?
 3. What would you need to see in the coming weeks to move your number?
 
-**Milestones we suggest we both track** (rest-of-world bookings, cumulative)
+**Milestones we suggest we both track** (rest-of-world bookings, cumulative, Mt)
 
 | Date | 1,700 | 1,720 | 1,760 |
 |---|---|---|---|
-| Today (29 Oct) | 8.7 Mt booked | | |
+| Booked today (29 Oct) | 8.7 | 8.7 | 8.7 |
 | 26 Nov | 11.0 | 11.1 | 11.3 |
 | 24 Dec | 12.8 | 13.0 | 13.4 |
 | 28 Jan | 15.1 | 15.4 | 16.0 |

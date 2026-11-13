@@ -9,9 +9,9 @@ def img(m):
 md = re.sub(r'^\[(Chart \d[^\]]*)\]$', lambda m: f'@@IMG@@{m.group(1)}@@', md, flags=re.M)
 html = markdown.markdown(md, extensions=['tables'])
 html = re.sub(r'<p>@@IMG@@(.*?)@@</p>', img, html)
-css = """body{font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0b0b0b;max-width:920px;margin:16px auto;padding:0 16px;line-height:1.45}
-table{border-collapse:collapse;margin:8px 0 14px;font-size:13px}th{background:#1F4E78;color:#fff;padding:6px 8px;text-align:left}
-td{border-bottom:1px solid #e4e3df;padding:5px 8px;vertical-align:top}hr{border:0;border-top:1px solid #e4e3df;margin:18px 0}
-strong{color:#0b0b0b}th strong{color:#fff}h1,h2,h3{color:#1F4E78}"""
-open('email.html', 'w', encoding='utf-8').write(f'<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>US soybean exports: 1,700 challenge</title><style>{css}</style></head><body>{html}</body></html>')
+css = """body{font-family:Calibri,Carlito,Arial,sans-serif;font-size:11pt;color:#000;margin:12px;line-height:1.3;background:#fff}
+p{margin:0 0 11pt}ul,ol{margin:0 0 11pt;padding-left:28px}li{margin:0}
+table{border-collapse:collapse;margin:0 0 11pt;font-size:11pt}th,td{border:1px solid #000;padding:2px 6px;text-align:left;vertical-align:top}
+th{font-weight:bold;background:#fff;color:#000}"""
+open('email.html', 'w', encoding='utf-8').write(f'<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>US soybean exports email</title><style>{css}</style></head><body>{html}</body></html>')
 print('ok', len(html))
