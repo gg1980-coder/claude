@@ -57,6 +57,16 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 
 If bookings track the 1,700 column into January, we'll move down. If they track 1,760 or above, it would be good to know at what point you'd move up.
 
+**How we calculated this, in simple terms**
+
+1. **What 1,700 leaves for the rest of the world.** 1,700 mln bu is 46.3 Mt. Take off China at 25 Mt and what the rest of the world has already booked (8.7 Mt, shipped and unshipped). What remains, **12.6 Mt**, is what the rest of the world still has to buy between now and the end of August. The same calculation gives 13.1 Mt for 1,720 and 14.2 Mt for 1,760.
+2. **What the rest of the world actually bought from this point in past seasons.** For each of the last 10 seasons, we took its final exports to the rest of the world and subtracted what it had booked at the same week (week 9). That gives a range of 13.1–20.5 Mt. There is no model here: these are actual outcomes.
+3. **The comparison.** 12.6 Mt is below all 10 seasons. 13.1 Mt equals the weakest one (2023/24). Chart 1 uses only these two steps. Chart 2 is simpler still: each season's sales at week 9 divided by its final exports.
+4. **Regions and weekly pace.** To split the 12.6 Mt by region, we shared it out in proportion to what each region normally buys from this point (5-year average). The weekly figures and milestones spread each region's amount across the coming weeks using its usual seasonal pattern. These figures are indicative; the headline comparison does not depend on them.
+5. **Unknown destinations.** We count 60% of "Unknown" as China, in line with history. This does not change the rest-of-world requirement, because China is fixed at 25 Mt in total.
+6. **One simplification that favours 1,700.** We converted 1,700 straight to tonnes. Weekly sales data usually end the year about 2% below the official Census export total, so on a like-for-like basis 1,700 would need only ~11.5 Mt from the rest of the world, even further below history.
+7. **Probability.** The ~71% / ~64% figures come from how far our method's forecast at this point of the season was from the final number in each of the last 10 seasons (about ±3 Mt).
+
 Data: USDA FAS weekly export sales through week 9 (w/e 29 Oct), 10 seasons. We'll refresh with this week's report before the meeting. Happy to share the full analysis.
 
 Best regards,
