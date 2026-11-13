@@ -15,6 +15,10 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 | Where that ranks | **below all 10** | **equal to the weakest** (2023/24) | |
 | Rest-of-world weekly sales needed now | ~570 kt | ~595 kt | **actual, last 4 weeks: 689 kt** |
 
+[Chart 1: rest of world vs history]
+
+[Chart 2: share already sold vs history]
+
 **Why we think the risk is to the upside**
 
 - **The current pace is above both numbers.** The rest of the world is booking ~20% above what 1,700 needs and ~15% above what 1,720 needs.

@@ -1,11 +1,11 @@
 """Render email.md to a self-contained HTML email (charts embedded) for preview / pasting into Outlook."""
 import base64, re, markdown
 md = open('email.md', encoding='utf-8').read()
-charts = {'Chart': 'chart_1700_vs_history.png'}
+charts = {'1': 'chart1_row_vs_history.png', '2': 'chart2_share_sold.png'}
 def img(m):
-    key = 'Chart'
+    key = m.group(1).split()[1].rstrip(':')
     b64 = base64.b64encode(open(charts[key], 'rb').read()).decode()
-    return f'<img src="data:image/png;base64,{b64}" alt="{m.group(1)}" style="width:100%;max-width:900px;border:1px solid #e4e3df;margin:6px 0">'
+    return f'<img src="data:image/png;base64,{b64}" alt="{m.group(1)}" width="700" style="width:700px;max-width:100%;display:block;margin:0 0 11pt">'
 md = re.sub(r'^\[(Chart \d[^\]]*)\]$', lambda m: f'@@IMG@@{m.group(1)}@@', md, flags=re.M)
 html = markdown.markdown(md, extensions=['tables'])
 html = re.sub(r'<p>@@IMG@@(.*?)@@</p>', img, html)
