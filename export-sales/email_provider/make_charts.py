@@ -1,4 +1,4 @@
-"""Black-and-grey charts for the provider email (Outlook style). ESR weekly data, week 9."""
+"""Black-and-grey charts for the provider email (Outlook style). ESR weekly data, week 10."""
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 OUT = '/home/user/claude/export-sales/email_provider/'
@@ -15,28 +15,28 @@ def bars(ax, vals, fmt, lab_y):
     ax.set_xticks(range(10), [S[i] for i in order])
     ax.spines[['top', 'right']].set_visible(False); ax.grid(axis='y', color=GRID, lw=0.8, zorder=0)
 
-# Chart 1: rest of world still to book after week 9
-rw = [15.09, 20.52, 18.71, 17.99, 14.09, 18.94, 13.47, 13.08, 18.11, 15.22]
+# Chart 1: rest of world still to book after week 10
+rw = [14.62, 19.86, 17.69, 17.64, 13.47, 17.74, 12.98, 12.56, 17.41, 14.87]   # RoW booked after week 10, Mt
 fig, a = plt.subplots(figsize=(8, 4.6))
-bars(a, rw, lambda v: f'{v:.1f}', lambda v: v - 1.4 if v > 15.5 else 10.6)
-a.axhline(12.6, color=BLK, lw=2.0, zorder=4, label='1,700 (yours): needs 12.6 Mt, below all 10 seasons')
-a.axhline(13.1, color=BLK, lw=1.8, ls=(0, (6, 3)), zorder=4, label='1,720 (USDA): needs 13.1 Mt, equal to the weakest season')
-a.axhline(14.2, color=DGR, lw=1.6, ls=(0, (1.5, 2)), zorder=4, label='1,760 (our base case): needs 14.2 Mt')
+bars(a, rw, lambda v: f'{v:.1f}', lambda v: v - 1.4 if v > 15.5 else 9.6)
+a.axhline(11.9, color=BLK, lw=2.0, zorder=4, label='1,700 (yours): needs 11.9 Mt, below all 10 seasons')
+a.axhline(12.4, color=BLK, lw=1.8, ls=(0, (6, 3)), zorder=4, label='1,720 (USDA): needs 12.4 Mt, also below all 10 seasons')
+a.axhline(13.5, color=DGR, lw=1.6, ls=(0, (1.5, 2)), zorder=4, label='1,760 (our base case): needs 13.5 Mt')
 a.legend(frameon=False, loc='upper left', fontsize=10)
-a.set_ylim(0, 27); a.set_ylabel('Mt booked after week 9')
-a.set_title('Chart 1. Rest of world: Mt booked after week 9, last 10 seasons\nvs what each export number needs from here (China at 25 Mt)', loc='left', fontsize=12)
-fig.text(0.01, 0.01, 'Source: USDA FAS weekly export sales. Rest of world = all except China and Unknown. Seasons sorted low to high.', fontsize=8.5, color=DGR)
+a.set_ylim(0, 27); a.set_ylabel('Mt booked after week 10')
+a.set_title('Chart 1. Rest of world: Mt booked after week 10, last 10 seasons\nvs what each export number needs from here (China at 25 Mt)', loc='left', fontsize=12)
+fig.text(0.01, 0.01, 'Source: USDA FAS weekly export sales, through w/e 5 Nov. Rest of world = all except China and Unknown. Seasons sorted low to high.', fontsize=8.5, color=DGR)
 fig.tight_layout(rect=(0, 0.04, 1, 1)); fig.savefig(OUT + 'chart1_row_vs_history.png', dpi=200); plt.close(fig)
 
-# Chart 2: share of the year already sold by week 9
-sh = [62.2, 55.9, 46.1, 46.5, 80.0, 56.0, 61.7, 54.5, 55.7, 41.9]
+# Chart 2: share of the year already sold by week 10
+sh = [63.8, 57.8, 46.8, 49.3, 82.3, 58.1, 63.0, 63.1, 58.8, 43.0]   # % sold by week 10
 fig, a = plt.subplots(figsize=(8, 4.6))
 bars(a, sh, lambda v: f'{v:.0f}%', lambda v: v - 6 if v > 70 else v / 2)
-a.axhline(65.3, color=BLK, lw=2.0, zorder=4, label='1,700 and 1,720 imply 64-65% already sold')
-a.axhline(63.1, color=DGR, lw=1.6, ls=(0, (1.5, 2)), zorder=4, label='1,760 (our base case) implies 63%')
+a.axhline(67.5, color=BLK, lw=2.0, zorder=4, label='1,700 and 1,720 imply 67-68% already sold')
+a.axhline(65.5, color=DGR, lw=1.6, ls=(0, (1.5, 2)), zorder=4, label='1,760 (our base case) implies 65.5%')
 a.legend(frameon=False, loc='upper left', fontsize=10)
-a.set_ylim(0, 100); a.set_ylabel('% of final exports sold by week 9')
-a.set_title('Chart 2. Share of the year already sold by week 9, last 10 seasons\nOnly 2020/21 (record China front-loading) was higher than 1,700/1,720 imply', loc='left', fontsize=12)
-fig.text(0.01, 0.01, 'Source: USDA FAS weekly export sales (commitments at week 9 / final exports). Seasons sorted low to high.', fontsize=8.5, color=DGR)
+a.set_ylim(0, 100); a.set_ylabel('% of final exports sold by week 10')
+a.set_title('Chart 2. Share of the year already sold by week 10, last 10 seasons\nOnly 2020/21 (record China front-loading) was higher than 1,700/1,720 imply', loc='left', fontsize=12)
+fig.text(0.01, 0.01, 'Source: USDA FAS weekly export sales (commitments at week 10 / final exports). Seasons sorted low to high.', fontsize=8.5, color=DGR)
 fig.tight_layout(rect=(0, 0.04, 1, 1)); fig.savefig(OUT + 'chart2_share_sold.png', dpi=200); plt.close(fig)
 print('ok')
