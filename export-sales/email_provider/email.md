@@ -26,7 +26,7 @@ Ahead of next week's meeting, we'd like your view on the **1,700 mln bu** US exp
 - Shipments of 1.88 Mt. Exports to date are 13.9 Mt, 30% of 1,700.
 - Mexico (+53 kt) and East Asia (+58 kt) were again below what 1,700 needs.
 - **Versus a week ago:** the rest-of-world requirement for 1,700 fell from 12.6 to 11.9 Mt, and for 1,720 from 13.1 to 12.4 Mt. Last week 1,720 equalled the weakest season; this week it is below all 10.
-- Headline net sales were down 21% on the week, but that was China slowing. The rest of the world booked more than it needs.
+- Headline net sales were down 21% on the week: China slowed (874 to 689 kt) and so did the rest of the world (793 to 700 kt). Even so, the rest of the world still booked more than 1,700 or 1,720 need.
 
 **Why we think the risk is to the upside**
 
