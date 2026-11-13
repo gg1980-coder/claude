@@ -26,12 +26,47 @@ The only season that sold less than 16 Mt after week 9 was **2020/21**. That yea
 - Our 1,760 base case assumes **14.2 Mt**, below the 5-year average and in the bottom half of the 10 seasons.
 - The current pace is above both. Rest-of-world sales over the last 4 weeks averaged **689 kt/week**. That compares with ~570 kt/week needed for 1,700, ~645 for our 1,760, and a 5-year average of ~715.
 
-**3. Or, if the rest of the world books normally, 1,700 needs China to stop well short of 25 Mt**
+**3. Region by region: what 1,700 requires (China fixed at 25 Mt)**
+
+We split the rest-of-world requirement by region in proportion to what each region normally books from this point of the season.
+
+| Region | Booked so far (Mt) | Needed from here for 1,700 (Mt) | Needed from here for our 1,760 (Mt) | Normally books from here (5-yr avg, Mt) | Full year implied by 1,700 (Mt) | Where that ranks in the last 10 seasons |
+|---|---|---|---|---|---|---|
+| Mexico | 2.13 | 2.00 | 2.26 | 2.51 | 4.1 | 2nd lowest (10-yr avg 4.7) |
+| East Asia ex-China | 1.12 | 1.89 | 2.14 | 2.37 | 3.0 | **lowest** (avg 4.2) |
+| Southeast Asia | 1.51 | 2.07 | 2.34 | 2.60 | 3.6 | 4th lowest (avg 4.4) |
+| South Asia | 0.57 | 0.40 | 0.45 | 0.50 | 1.0 | 3rd lowest (avg 1.7) |
+| Middle East & N. Africa | 1.83 | 2.46 | 2.78 | 3.08 | 4.3 | mid-range (avg 4.1) |
+| Europe | 1.18 | 3.07 | 3.47 | 3.85 | 4.3 | 2nd lowest (avg 5.5) |
+| Other Americas, Africa & rest | 0.34 | 0.69 | 0.78 | 0.86 | 1.0 | 2nd lowest (avg 1.6) |
+| **Rest of world** | **8.68** | **12.6** | **14.2** | **15.8** | **21.3** | 3rd lowest (avg 26.2) |
+| China (+60% of Unknown) | 19.3 | 5.7 | 5.7 | — | 25.0 | assumption |
+
+**Current weekly pace vs what each path needs in November (kt/week)**
+
+| Region | Last 4 weeks (actual) | 5-yr avg, same weeks | Needed for 1,700 | Needed for our 1,760 | Read |
+|---|---|---|---|---|---|
+| Mexico | 45 | 126 | 94 | 106 | **Behind: weak spot** |
+| East Asia ex-China | 59 | 101 | 82 | 93 | **Behind: weak spot** |
+| Southeast Asia | 104 | 73 | 72 | 81 | Ahead |
+| South Asia | 109 | 73 | 19 | 21 | Well ahead |
+| Middle East & N. Africa | 154 | 107 | 110 | 124 | Ahead |
+| Europe | 200 | 176 | 175 | 198 | Ahead |
+| Other Americas, Africa & rest | 18 | 21 | 19 | 21 | On pace |
+| **Rest of world** | **689** | **678** | **571** | **645** | **Ahead of both** |
+
+**What the regional view says**
+
+- **1,700 needs weakness everywhere at once.** It implies East Asia at its lowest full year in 10 seasons, and Mexico, Europe and the smaller markets at their second lowest, all in the same season.
+- **Mexico and East Asia are genuinely weak today.** They are booking below even the 1,700 pace, so that is where the downside risk sits, and where we would like to understand your view.
+- **The other five regions are ahead.** Southeast Asia, South Asia, the Middle East & N. Africa and Europe are already above the 1,760 pace. In total, the rest of the world is booking ~20% above what 1,700 needs.
+
+**4. Or, if the rest of the world books normally, 1,700 needs China to stop well short of 25 Mt**
 
 - With the rest of the world at its normal (5-year) pace, 1,700 implies China ends the season at **~21.8 Mt**.
 - China already has 19.3 Mt. So **1,700 assumes China buys only ~2.5 Mt more** for the rest of the season, against a 25 Mt purchase commitment.
 
-**4. Every method we tested lands above 1,700**
+**5. Every method we tested lands above 1,700**
 
 | Method (all backtested on 10 seasons) | Full year (mln bu) | Chance of finishing above 1,700 |
 |---|---|---|
@@ -42,16 +77,16 @@ The only season that sold less than 16 Mt after week 9 was **2020/21**. That yea
 | Classic multiplier ("share sold by now"), 10-yr | 1,947 | — |
 | Each of the last 10 seasons' patterns applied to this year (China 25 Mt) | 1,718–1,992 | **10 of 10 above 1,700** |
 
-Our regional method was within about ±3 Mt (±110 mln bu) of the final number across the 10 seasons. So 1,700 is not impossible: it sits inside the error band of our conservative 1,760. But it is below **every** outcome built from actual history, and it needs one of the conditions in section 6 to happen.
+Our regional method was within about ±3 Mt (±110 mln bu) of the final number across the 10 seasons. So 1,700 is not impossible: it sits inside the error band of our conservative 1,760. But it is below **every** outcome built from actual history, and it needs one of the conditions in section 7 to happen.
 
-**5. Brazil is the real risk, but not enough on its own to get to 1,700**
+**6. Brazil is the real risk, but not enough on its own to get to 1,700**
 
 - Outside China, the US still holds ~9 Mt of March–August business (31% market share), and that is the volume Brazil competes for.
 - We measured which buyers switch to Brazil (Netherlands, Bangladesh, Taiwan, S. Korea, Thailand, Turkey) and how much US business they still have to book.
 - Even if Brazil ships **33.5 Mt to non-China buyers** (a new record, +7 Mt vs its 5-year average, and the forecast in the monthly trade dataset we use), the model gives **~1,728**, still above 1,700.
 - The same dataset carries a 2026/27 US export forecast of **49.5 Mt (≈1,819 mln bu) with China at 25.0 Mt**. If that is your dataset, it would be worth reconciling with the 1,700.
 
-**6. Why it matters, and what would have to be true for 1,700**
+**7. Why it matters, and what would have to be true for 1,700**
 
 The difference between 1,700 and 1,760 is ~60 mln bu of US ending stocks: **~320 mln bu at 1,700 vs ~260 at 1,760** (USDA: 300 at 1,720, with crush unchanged).
 
@@ -64,7 +99,7 @@ For 1,700 to be right, one of these has to happen:
 **Questions we'd like to cover next week**
 
 1. What China number (and timing) is behind 1,700? Do you assume cancellations or roll-overs of the current book?
-2. What rest-of-world total do you assume, and which destinations are lower than in a normal year?
+2. What rest-of-world total do you assume, and which regions are lower than in a normal year? Is the 1,700 driven by Mexico and East Asia, or by a broader slowdown?
 3. What do you assume for Brazil's exports to non-China buyers, and how much US business do they displace?
 4. Which data would make you move toward 1,750 or higher?
 
