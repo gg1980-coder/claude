@@ -341,7 +341,7 @@ if CHART_DIR:
     a.legend(frameon=False, loc='upper left', fontsize=10)
     a.set_xticks(range(10), [lab(PRIOR[i])[2:] for i in order]); a.set_ylim(0, 65); a.set_ylabel(f'Mt sold after week {WK}')
     a.spines[['top', 'right']].set_visible(False); a.grid(axis='y', color=GRID, lw=0.8, zorder=0)
-    a.set_title(f'US corn: Mt sold after week {WK}, last 10 seasons\nvs what USDA {USDA:,.0f} mln bu needs from here', loc='left', fontsize=12)
+    a.set_title(f'Chart 1. US corn: Mt sold after week {WK}, last 10 seasons\nvs what USDA {USDA:,.0f} mln bu needs from here', loc='left', fontsize=12)
     fig.text(0.01, 0.01, f'Source: USDA FAS weekly export sales, through w/e {LAST:%d %b}. USDA bar on weekly-sales basis. Seasons sorted low to high.', fontsize=8.5, color=DGR)
     fig.tight_layout(rect=(0, 0.04, 1, 1)); fig.savefig(os.path.join(CHART_DIR, 'corn_chart1_after_wk_vs_usda.png'), dpi=200); plt.close(fig)
 
