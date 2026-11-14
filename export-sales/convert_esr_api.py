@@ -1,6 +1,6 @@
 """Convert the ESR API workbook (Raw sheet, 'ESR Raw Weekly - Corn and Soy All Countries.xlsm') into the CSV layout
-of the USDA ESR query export used by the build scripts. Soybeans only.
-Usage: python convert_esr_api.py <api.xlsm> <old_query_export.csv or -> <out.csv>
+of the USDA ESR query export used by the build scripts.
+Usage: python convert_esr_api.py <api.xlsm> <old_query_export.csv or -> <out.csv> [Soybeans|Corn]  (default Soybeans)
 - Stub (changeover) week rows are renumbered week 53 (they are the MY's final report, dated in September).
 - Country names: taken from the old query export by country code where available (full names), else from EXTRA."""
 import sys
@@ -8,9 +8,10 @@ import openpyxl
 import pandas as pd
 
 api, old, out = sys.argv[1:4]
+COMM = sys.argv[4] if len(sys.argv) > 4 else 'Soybeans'
 wb = openpyxl.load_workbook(api, read_only=True, data_only=True)
 it = wb['Raw'].iter_rows(values_only=True); hdr = next(it)
-d = pd.DataFrame([r for r in it if r[0] == 'Soybeans'], columns=hdr)
+d = pd.DataFrame([r for r in it if r[0] == COMM], columns=hdr)
 EXTRA = {5330: 'INDIA', 7420: 'CAMEROON', 7790: 'KENYA', 6040: 'PAPUA NEW GUINEA', 5200: 'UNITED ARAB EMIRATES'}
 names = dict(EXTRA)
 if old != '-':
@@ -22,7 +23,7 @@ d['WeekNumber'] = d.WeekNo.where(d.StubWeek != 1, 53)
 d['ReportingMarketingYearName'] = d.MYStart.map(lambda y: f' MY -  Sep {y}/Aug {y+1}')
 tot = d.groupby(['MarketYear', 'WeekEnding']).currentMYTotalCommitment.sum()
 outdf = pd.DataFrame({
-    'Commodity': 'SOYBEANS',
+    'Commodity': COMM.upper(),
     'WeekendingDate': d.WeekEnding.dt.strftime('%m/%d/%Y'),
     'ReportingMarketingYearName': d.ReportingMarketingYearName,
     'WeekNumber': d.WeekNumber,
