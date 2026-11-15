@@ -61,4 +61,4 @@ for c in CONV:
     print(f'  2026/27: Nov {cur.usda_nov:.0f}, pace {cur.pace_wk10:.0f}, gap {cur.gap:.0f} -> regression revision {pred:+.0f} (se {se:.0f}); P(cut) {stats.t.cdf(-pred / se, len(pz) - 2):.0%}')
 if OUT:
     with pd.ExcelWriter(OUT) as xw:
-        S.round(1).to_excel(xw, 'Seasons', index=False); T.to_excel(xw, 'Monthly steps', index=False)
+        S.round(1).to_excel(xw, sheet_name='Seasons', index=False); T.to_excel(xw, sheet_name='Monthly steps', index=False)
