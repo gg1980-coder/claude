@@ -2,17 +2,17 @@
 
 Hi all,
 
-A short note on how we are tracking US corn and soybean exports, and what we expect from USDA in the December and January WASDE reports.
+A short note on how I am tracking US corn and soybean exports, and what I expect from USDA in the December and January WASDE reports.
 
-**What we are doing**
+**What I am doing**
 
-- Every Thursday we take USDA's weekly export sales (all destinations, 10 seasons of history) and compare this season's sales with what each export number needs from here.
-- From that we build a **pace estimate** of full-year exports: sales so far + what buyers normally book from this point of the season.
-- We have tested this against **16 years of WASDE reports (2010–2026)**: how USDA revises its export forecast after November, how big the steps are, in which months they come, and whether the pace told us the direction in advance.
+- Every Thursday I take USDA's weekly export sales (all destinations, 10 seasons of history) and compare this season's sales with what each export number needs from here.
+- From that I build a **pace estimate** of full-year exports: sales so far + what buyers normally book from this point of the season.
+- I have tested this against **16 years of WASDE reports (2010–2026)**: how USDA revises its export forecast after November, how big the steps are, in which months they come, and whether the pace pointed to the direction in advance.
 
-**Where we are (week 10, w/e 5 November; mln bu)**
+**Where things stand (week 10, w/e 5 November; mln bu)**
 
-| | USDA November | Our pace estimate | Gap |
+| | USDA November | My pace estimate | Gap |
 |---|---|---|---|
 | Corn | 3,275 | ~2,500 | about −800 |
 | Soybeans | 1,720 | ~1,760–1,820 (China capped at 25 Mt) | about +40 to +100 |
@@ -40,7 +40,7 @@ In short: **USDA moves gradually and in the direction of the sales pace, but rar
 | Higher | ~5–10% | ~20% |
 | Most likely level | **3,275** | **~3,150–3,225** |
 
-The closest past case is 2022/23: pace well below USDA, USDA cut −75 in December and −150 in January, then kept cutting through August (−488 in total). We expect the full-season cut this year to be ~300–500, ending ~2,750–2,950, but spread over several reports.
+The closest past case is 2022/23: pace well below USDA, USDA cut −75 in December and −150 in January, then kept cutting through August (−488 in total). I expect the full-season cut this year to be ~300–500, ending ~2,750–2,950, but spread over several reports.
 
 *Soybeans (USDA 1,720)*
 
@@ -51,7 +51,7 @@ The closest past case is 2022/23: pace well below USDA, USDA cut −75 in Decemb
 | Lower | ~10–15% | ~30% |
 | Most likely level | **1,720** | **~1,720–1,745** |
 
-For soybeans the pace leans up, but USDA usually waits: most soybean revisions come between February and May. By the January report we expect little change. Over the full season we see ~55–70% odds that USDA ends above 1,720, most likely ~1,720–1,780.
+For soybeans the pace leans up, but USDA usually waits: most soybean revisions come between February and May. By the January report I expect little change. Over the full season I see ~55–70% odds that USDA ends above 1,720, most likely ~1,720–1,780.
 
 **What would change this view (weekly sales to watch)**
 
@@ -66,6 +66,6 @@ For soybeans the pace leans up, but USDA usually waits: most soybean revisions c
 - For corn, the last two seasons had late-season surges that both USDA and the pace underestimated. That is the main risk to the corn call.
 - For soybeans, the call depends on China landing near its 25 Mt purchase commitment.
 
-We will update this every Thursday with the new export sales data and after each WASDE.
+I will update this every Thursday with the new export sales data and after each WASDE.
 
 Best regards,
