@@ -18,7 +18,9 @@ for c, (K, R, p) in CONV.items():
     s = x[x.Commodity == c]
     for my, g in s.groupby('MarketYear'):
         y = int(my[:4]); g = g.sort_values('ReleaseDate')
-        nov = g[(g.ReleaseDate.dt.month == 11) & (g.ReleaseDate.dt.year == y)]
+        nov = g[(g.ReleaseDate.dt.month == 11) & (g.ReleaseDate.dt.year == y)]; ref = 'Nov'
+        if nov.empty:   # November report missing: use December of the same year as a proxy
+            nov = g[(g.ReleaseDate.dt.month == 12) & (g.ReleaseDate.dt.year == y)]; ref = 'Dec (proxy)'
         if nov.empty: continue
         final = g.Value.iloc[-1]; final_date = g.ReleaseDate.iloc[-1]
         o = [q for q in P if q != y]
@@ -27,7 +29,7 @@ for c, (K, R, p) in CONV.items():
         steps = after.assign(chg=after.Value.diff().fillna(after.Value.iloc[0] - nov.Value.iloc[0]) if len(after) else None)
         steps = ', '.join(f"{r.ReleaseDate:%b%y} {r.chg:+.0f}" for r in steps.itertuples() if abs(r.chg) > 0.5) if len(after) else ''
         done = final_date.year >= y + 2 or (final_date.year == y + 1 and final_date.month >= 10)
-        rows.append(dict(commodity=c, season=my, usda_nov=nov.Value.iloc[0], pace_wk10=round(pace), gap=round(pace - nov.Value.iloc[0]),
+        rows.append(dict(commodity=c, season=my, ref=ref, usda_nov=nov.Value.iloc[0], pace_wk10=round(pace), gap=round(pace - nov.Value.iloc[0]),
                          usda_latest=final, nov_to_latest=final - nov.Value.iloc[0], complete=done, steps=steps))
 r = pd.DataFrame(rows)
 r['same_direction'] = np.where(r.complete & (r.nov_to_latest.abs() > 0), np.sign(r.gap) == np.sign(r.nov_to_latest), None)
