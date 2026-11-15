@@ -17,7 +17,7 @@ A short note on how I am tracking US corn and soybean exports, and what I expect
 | Corn | 3,275 | ~2,500 | about −800 |
 | Soybeans | 1,720 | ~1,760–1,820 (China capped at 25 Mt) | about +40 to +100 |
 
-**What 16 years of WASDE history tell us**
+**What 16 years of WASDE history show**
 
 | | Corn | Soybeans |
 |---|---|---|
