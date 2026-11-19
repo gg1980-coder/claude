@@ -26,6 +26,6 @@ Quick update on where US soybean sales stand against USDA's 1,720 mln bu (46.8 M
 **What to watch each Thursday**
 
 - China: weekly sales falling below ~300 kt by late December = cap holding.
-- Rest of world: staying above ~430 kt/week (or ~235 incl. Unknown) keeps exports on track above 1,720. Weak spots today: Mexico, Japan, Korea, Indonesia, Germany.
+- Rest of world: staying above ~430 kt/week (or ~235 incl. Unknown) keeps exports on track above 1,720. Weak spots today: Japan, Korea, Germany and the Netherlands. Mexico, Indonesia and Egypt picked up this week.
 
 Best regards,
