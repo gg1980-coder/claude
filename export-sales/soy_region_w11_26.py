@@ -75,3 +75,51 @@ for row in ws.iter_rows(min_row=4, max_row=ws.max_row, max_col=ws.max_column):
 ws.row_dimensions[4].height = 58; ws.column_dimensions['A'].width = 34
 for col in 'BCDEFGHIJK': ws.column_dimensions[col].width = 12
 wb.save(out)
+
+# ---------- country breakdown within each region ----------
+ccum = d.pivot_table(index=['C', 'WeekNumber'], columns='Y', values='TotalCommitment', aggfunc='sum').fillna(0) / 1e6
+creg = d.drop_duplicates('C').set_index('C').R
+def cc(cn, y, w):
+    try: return float(ccum.loc[(cn, w), y])
+    except KeyError: return 0.0
+need_by_reg = dict(zip(T.Region, T['Needed wk11-26 for USDA (kt/wk)'])); a5_by_reg = dict(zip(T.Region, T['5-yr avg wk11-26 (kt/wk)']))
+crow = []
+for r in REGS:
+    for cn in sorted(creg[creg == r].index):
+        h = {y: (cc(cn, y, W1) - cc(cn, y, W0)) * 1000 / NWK for y in B10}
+        a5 = np.mean([h[y] for y in B5]); l4 = (cc(cn, CY, WK) - cc(cn, CY, WK - 4)) * 1000 / 4; bk = cc(cn, CY, WK)
+        crow.append(dict(Region=r, Country=cn.title(), booked=bk, need=need_by_reg[r] * a5 / a5_by_reg[r] if a5_by_reg[r] else 0, a5=a5,
+                         lo=min(h.values()), hi=max(h.values()), ly=h[LY], l4=l4))
+Cdf = pd.DataFrame(crow)
+keep = (Cdf.a5 >= 3) | (Cdf.l4.abs() >= 3) | (Cdf.booked >= 0.05)
+out_rows = []
+for r in REGS:
+    s = Cdf[(Cdf.Region == r) & keep].sort_values('a5', ascending=False); o = Cdf[(Cdf.Region == r) & ~keep]
+    out_rows += s.to_dict('records')
+    if len(o): out_rows.append(dict(Region=r, Country=f'Others ({len(o)})', booked=o.booked.sum(), need=o.need.sum(), a5=o.a5.sum(), lo=np.nan, hi=np.nan, ly=o.ly.sum(), l4=o.l4.sum()))
+    out_rows.append(dict(Region=r, Country=f'TOTAL {r}', **{k: Cdf[Cdf.Region == r][k].sum() for k in ('booked', 'need', 'a5', 'ly', 'l4')}, lo=np.nan, hi=np.nan))
+CB = pd.DataFrame(out_rows)
+def read(x):
+    if 'TOTAL' in x.Country or x.need < 2: return ''
+    return 'ahead' if x.l4 > x.need * 1.1 else ('behind' if x.l4 < x.need * 0.9 else 'on pace')
+CB['Read'] = CB.apply(read, axis=1)
+CB = CB.rename(columns={'booked': 'Booked so far (Mt)', 'need': 'Needed wk11-26 for USDA (kt/wk)', 'a5': '5-yr avg wk11-26 (kt/wk)', 'lo': '10-yr low (kt/wk)',
+                        'hi': '10-yr high (kt/wk)', 'ly': 'Last season wk11-26 (kt/wk)', 'l4': 'Last 4 weeks actual (kt/wk)'})
+CB = CB[['Region', 'Country', 'Booked so far (Mt)', 'Needed wk11-26 for USDA (kt/wk)', '5-yr avg wk11-26 (kt/wk)', '10-yr low (kt/wk)', '10-yr high (kt/wk)',
+         'Last season wk11-26 (kt/wk)', 'Last 4 weeks actual (kt/wk)', 'Read']]
+print(CB.round(1).to_string(index=False))
+with pd.ExcelWriter(out, mode='a', engine='openpyxl') as xw: CB.to_excel(xw, sheet_name='By country', index=False, startrow=3)
+wb = load_workbook(out); ws = wb['By country']
+ws['A1'] = 'US soybeans: weekly bookings by country, weeks 11-26, vs what USDA 1,720 needs'; ws['A1'].font = Font(name='Calibri', size=13, bold=True)
+ws['A2'] = 'Each region\'s requirement is shared among its countries by their 5-yr average bookings over weeks 11-26. Read: last 4 weeks vs needed (±10% = on pace).'
+ws['A2'].font = Font(name='Calibri', size=9, italic=True)
+for row in ws.iter_rows(min_row=4, max_row=ws.max_row, max_col=10):
+    tot = str(row[1].value).startswith('TOTAL')
+    for cell in row:
+        cell.border = Border(left=thin, right=thin, top=thin, bottom=thin); cell.font = Font(name='Calibri', size=10, bold=cell.row == 4 or tot)
+        if cell.row == 4: cell.alignment = Alignment(wrap_text=True, vertical='center')
+        elif cell.column == 3: cell.number_format = '0.00'
+        elif 4 <= cell.column <= 9: cell.number_format = '#,##0;-#,##0'
+ws.row_dimensions[4].height = 58; ws.column_dimensions['A'].width = 24; ws.column_dimensions['B'].width = 26
+for col in 'CDEFGHIJ': ws.column_dimensions[col].width = 12
+wb.save(out)
