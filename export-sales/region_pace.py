@@ -2,7 +2,7 @@
 Needed from week N to week 26 and full season; 10-yr normal; last 4 weeks; full year implied by USDA vs 10-season history.
 Usage: python3 region_pace.py soy|corn <esr.csv> [usda] [out.xlsx|-] [cut_week=26]"""
 import sys, numpy as np, pandas as pd
-crop, src = sys.argv[1:3]; USDA = float(sys.argv[3]) if len(sys.argv) > 3 else (1720 if crop == 'soy' else 3275); OUT = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != '-' else None
+crop, src = sys.argv[1:3]; MIKE = crop == 'soy_mike'; crop = 'soy' if MIKE else crop; USDA = float(sys.argv[3]) if len(sys.argv) > 3 else (1720 if crop == 'soy' else 3275); OUT = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != '-' else None
 W1 = int(sys.argv[5]) if len(sys.argv) > 5 else 26; WE, YRS = 53, 10
 d = pd.read_csv(src); d['C'] = d.CountryName.str.strip(); d['dt'] = pd.to_datetime(d.WeekendingDate)
 d['Y'] = d.ReportingMarketingYearName.str.extract(r'(\d{4})/').astype(int)
@@ -31,7 +31,7 @@ else:
 for lst, nm in groups:
     for c_ in lst: M[c_] = nm
 d['R'] = d.C.map(M).fillna(OTHER)
-REGS = [g[1] for g in groups if g[1] not in ('Unknown',)] + [OTHER]
+REGS = [g[1] for g in groups if g[1] not in ('Unknown',)] + [OTHER] + (['Unknown'] if MIKE else [])
 cum = d.pivot_table(index=['R', 'WeekNumber'], columns='Y', values='TotalCommitment', aggfunc='sum').fillna(0) / 1e6
 fin = d[d.Y < CY].sort_values('dt').groupby(['Y', 'C']).tail(1).groupby(['R', 'Y']).AccumulatedExports.sum().unstack().fillna(0) / 1e6
 def c(r, y, w):
@@ -40,7 +40,8 @@ def c(r, y, w):
 def f(r, y): return float(fin.loc[r, y]) if (r in fin.index and y in fin.columns) else 0.0
 BAR = USDA * K * RATIO; unk = c('Unknown', CY, WK)
 if crop == 'soy':   # China fixed at 25 incl. 60% of Unknown; rest of world shares the rest
-    china_now = c('China', CY, WK) + 0.6 * unk; china_need = 25.0 - china_now
+    UC = 0.0 if MIKE else 0.6                          # Mike: China = named only, all Unknown in rest of world
+    china_now = c('China', CY, WK) + UC * unk; china_need = 25.0 - china_now
     named = [r for r in REGS if r != 'China']; named_now = sum(c(r, CY, WK) for r in named); pool = BAR - 25.0 - named_now
 else:
     named = REGS; named_now = sum(c(r, CY, WK) for r in named); pool = BAR - named_now
@@ -63,12 +64,12 @@ for r in named:
     rows.append(row(r, c(r, CY, WK), rem[r] * scale, [f(r, y) - c(r, y, WK) for y in P], [c(r, y, W1) - c(r, y, WK) for y in P],
                     [f(r, y) for y in P], (c(r, CY, WK) - c(r, CY, WK - 4)) * 1000 / 4, c(r, LY, WK)))
 if crop == 'soy':
-    cs = lambda y, w: c('China', y, w) + 0.6 * c('Unknown', y, w)
-    rows.insert(0, row('China (+60% of Unknown), capped at 25 Mt', china_now, china_need, [f('China', y) - cs(y, WK) for y in P], [cs(y, W1) - cs(y, WK) for y in P],
+    cs = lambda y, w: c('China', y, w) + UC * c('Unknown', y, w)
+    rows.insert(0, row('China (named only), capped at 25 Mt' if MIKE else 'China (+60% of Unknown), capped at 25 Mt', china_now, china_need, [f('China', y) - cs(y, WK) for y in P], [cs(y, W1) - cs(y, WK) for y in P],
                        [f('China', y) for y in P], (cs(CY, WK) - cs(CY, WK - 4)) * 1000 / 4, cs(LY, WK)))
 T = pd.DataFrame(rows)
 tot_named = T[~T.Region.str.startswith('China (')]
-tot = {'Region': 'Rest of world' if crop == 'soy' else 'TOTAL (named destinations)'}
+tot = {'Region': ('Rest of world incl. Unknown' if MIKE else 'Rest of world') if crop == 'soy' else 'TOTAL (named destinations)'}
 for k in ('Booked (Mt)', 'vs last season (Mt)', 'Needed to cut (kt/wk)', 'Normal to cut, 10-yr (kt/wk)', 'Last 4 weeks (kt/wk)', 'Needed after cut (kt/wk)', 'Normal after cut, 10-yr (kt/wk)', 'Needed full season (kt/wk)', 'Still to book, full season (Mt)',
           'Normally booked from here (Mt)', 'Full year implied by USDA (Mt)', '10-yr avg full year (Mt)'):
     tot[k] = tot_named[k].sum()
