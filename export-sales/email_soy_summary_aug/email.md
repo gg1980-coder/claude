@@ -6,23 +6,23 @@ Where US soybean sales stand against USDA's 1,720 mln bu (46.8 Mt) for the rest 
 
 **Full season: what is still needed vs what is normally booked from here**
 
-| | Booked so far (Mt) | Still to book for 1,720 (Mt) | Normally booked from here (Mt, 5-yr) | Needed as % of normal | Needed per week, flat (kt) | Last 4 weeks (kt/wk) |
+| | Booked so far (Mt) | Still to book for 1,720 (Mt) | Normally booked from here (Mt, 10-yr) | Needed as % of normal | Needed per week, flat (kt) | Last 4 weeks (kt/wk) |
 |---|---|---|---|---|---|---|
-| **China**, Unknown 60% to China | 19.9 | 5.1 | 7.2 | 72% | ~120 | ~1,300 |
-| **China**, named only | 16.6 | 8.4 | 10.5 | 80% | ~195 | ~1,340 |
-| **Rest of world**, 40% of Unknown | 9.4 | 12.4 | 15.1 | 82% | ~290 | ~730 |
-| **Rest of world**, incl. all Unknown | 14.8 | 7.1 | 10.0 | 71% | ~165 | ~665 |
+| **China**, Unknown 60% to China | 19.9 | 5.1 | 7.2 | 71% | ~120 | ~1,300 |
+| **China**, named only | 16.6 | 8.4 | 10.8 | 78% | ~195 | ~1,340 |
+| **Rest of world**, 40% of Unknown | 9.4 | 12.4 | 15.9 | 78% | ~290 | ~730 |
+| **Rest of world**, incl. all Unknown | 14.8 | 7.1 | 9.9 | 71% | ~165 | ~665 |
 
 **Split by period: needed per week vs normal (kt/week)**
 
 | | Nov–Feb (wk 11–26): needed | Nov–Feb: normal | Mar–Aug (wk 27–53): needed | Mar–Aug: normal |
 |---|---|---|---|---|
-| **China**, Unknown 60% to China | ~290 | ~415 | ~20 | ~20 |
-| **China**, named only | ~415 | ~525 | ~65 | ~80 |
-| **Rest of world**, 40% of Unknown | ~475 | ~575 | ~180 | ~220 |
-| **Rest of world**, incl. all Unknown | ~295 | ~415 | ~90 | ~125 |
+| **China**, Unknown 60% to China | ~280 | ~420 | ~25 | ~15 |
+| **China**, named only | ~425 | ~550 | ~60 | ~75 |
+| **Rest of world**, 40% of Unknown | ~455 | ~585 | ~190 | ~240 |
+| **Rest of world**, incl. all Unknown | ~265 | ~370 | ~105 | ~150 |
 
-"Needed" in each period follows the normal seasonal pattern (last 5 seasons; China excluding 2025/26, when China was absent).
+"Needed" in each period follows the normal seasonal pattern. "Normal" = 10-season average (2016/17–2025/26), for both China and rest of world.
 
 **What it shows**
 
@@ -31,6 +31,6 @@ Where US soybean sales stand against USDA's 1,720 mln bu (46.8 Mt) for the rest 
 - **China:** at the current pace it reaches 25 Mt in early-to-mid December. After that its weekly sales should drop close to zero if the 25 Mt cap holds.
 - **Rest of world:** after February the requirement is light (~90–180 kt/week). The risk to 1,720 being too low is a sharp rest-of-world slowdown from December, not the spring.
 
-**Bottom line:** on a normal pace from here, exports land around 1,820–1,880 (depending on how the Unknown is counted). USDA's 1,720 needs buying to fall to 70–80% of normal for the rest of the season.
+**Bottom line:** on a normal pace from here, exports land around 1,825–1,880 (depending on how the Unknown is counted). USDA's 1,720 needs buying to fall to 70–80% of normal for the rest of the season.
 
 Best regards,

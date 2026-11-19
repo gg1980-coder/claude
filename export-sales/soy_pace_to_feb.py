@@ -15,8 +15,9 @@ def series(y, w, kind):
     return {'cn60': t['China'] + .6 * t['Unk'], 'cn0': t['China'], 'row40': t['RoW'], 'row100': t['RoW'] + t['Unk']}[kind]
 def final(y, kind):
     f = fin[y]; return {'cn60': f.get('China', 0), 'cn0': f.get('China', 0), 'row40': f.get('RoW', 0), 'row100': f.get('RoW', 0)}[kind]
-CN_YRS = [y for y in range(CY - 5, CY) if y != CY - 1]      # China pattern: last 5 seasons excl. 2025/26 (China absent)
-ROW_YRS = list(range(CY - 5, CY))
+YRS = int(sys.argv[4]) if len(sys.argv) > 4 else 10            # history window (seasons) for the seasonal pattern and 'normal' pace
+CN_YRS = list(range(CY - YRS, CY))
+ROW_YRS = list(range(CY - YRS, CY))
 def shape(kind, yrs):   # pooled share of the remaining season (week N -> final) booked by week W1
     num = sum(min(max(series(y, W1, kind) - series(y, WK, kind), 0), max(final(y, kind) - series(y, WK, kind), 1e-9)) for y in yrs)
     den = sum(max(final(y, kind) - series(y, WK, kind), 1e-9) for y in yrs)
@@ -32,7 +33,7 @@ for lab, kind, target_fn, yrs in [('China, Unknown 60% to China (ours)', 'cn60',
     l4 = (series(CY, WK, kind) - series(CY, WK - 4, kind)) * 1000 / 4
     rows.append({'Group': lab, 'Full-year target (Mt)': tgt, 'Booked wk %d (Mt)' % WK: now, 'Still to book, full season (Mt)': rem,
                  'Normal share of remaining done by wk %d' % W1: sh, 'Needed by end-Feb (Mt)': need, 'Needed per week (kt)': need * 1000 / NW,
-                 'Normal wk %d-%d, 5-yr avg (kt/wk)' % (WK + 1, W1): hist_w(kind, yrs) * 1000 / NW, 'Last 4 weeks (kt/wk)': l4,
+                 'Normal wk %d-%d, %d-yr avg (kt/wk)' % (WK + 1, W1, YRS): hist_w(kind, yrs) * 1000 / NW, 'Last 4 weeks (kt/wk)': l4,
                  'Booked by end-Feb on pace (Mt)': now + need})
 R = pd.DataFrame(rows)
 pd.set_option('display.width', 250)
